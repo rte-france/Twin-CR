@@ -17,6 +17,7 @@ import {
 } from "solid-js";
 import * as d3 from "d3";
 import { useSld } from "../hooks/useSld";
+import type { ElementType } from "../types/ElementType";
 
 interface SavedViewState {
   x: number;
@@ -51,11 +52,15 @@ export const useSldContext = () => {
 
 interface SldProviderProps {
   equipmentId: string;
+  type: ElementType;
   children: JSX.Element;
 }
 
 export const SldProvider: Component<SldProviderProps> = (props) => {
-  const { sld } = useSld(() => props.equipmentId);
+  const { sld } = useSld(
+    () => props.equipmentId,
+    () => props.type,
+  );
 
   const [svgRef, setSvgRef] = createSignal<SVGSVGElement>();
   const [gRef, setGRef] = createSignal<SVGGElement>();

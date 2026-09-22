@@ -8,17 +8,19 @@ co-simulation of power systems.
 
 import { type Component } from "solid-js";
 import { SldProvider } from "../providers/SldProvider";
+import type { ElementType } from "../types/ElementType";
 import { SldHeader } from "./SldHeader";
 import { SldCanvas } from "./SldCanvas";
 import { SldControls } from "./SldControls";
 
 interface SldViewerProps {
   equipmentId: string;
+  type: ElementType;
 }
 
 export const SldViewer: Component<SldViewerProps> = (props) => {
   return (
-    <SldProvider equipmentId={props.equipmentId}>
+    <SldProvider equipmentId={props.equipmentId} type={props.type}>
       <div class="relative w-full h-full flex flex-col bg-bg overflow-hidden">
         <SldHeader />
 

@@ -12,10 +12,10 @@ import { GmClient } from "@/services/game-master/service";
 import { ScadaClient } from "@/services/scada/service";
 import { Console, Effect, Schedule } from "effect";
 import { createEffect, createSignal, onCleanup } from "solid-js";
+import { ElementType } from "../types/ElementType";
 import { Metadata } from "../types/Metadata";
 
 export interface Sld {
-  element_id: string;
   metadata: Metadata;
   svg_content?: string;
   svg?: string;
@@ -26,13 +26,22 @@ export interface SldElement {
   last_sync: number;
 }
 
-export const useSld = (equipmentIdAccessor: () => string) => {
+export const useSld = (
+  equipmentIdAccessor: () => string,
+  typeAccessor: () => ElementType,
+) => {
   const [sld, setSld] = createSignal<SldElement>();
 
   createEffect(() => {
     const equipmentId = equipmentIdAccessor();
 
     if (!equipmentId) return;
+
+    const body = JSON.stringify(
+      typeAccessor() === "vl"
+        ? { voltage_levels: [equipmentId] }
+        : { substations: [equipmentId] },
+    );
 
     const program = Effect.gen(function* () {
       const appMode = yield* AppMode;
@@ -43,12 +52,12 @@ export const useSld = (equipmentIdAccessor: () => string) => {
       switch (mode) {
         case Mode.GameMaster: {
           const gm = yield* GmClient;
-          fetchedRawSld = yield* gm.get(`/sld/${equipmentId}`);
+          fetchedRawSld = yield* gm.post("/sld", body);
           break;
         }
         case Mode.Scada: {
           const scada = yield* ScadaClient;
-          fetchedRawSld = yield* scada.get(`/sld/${equipmentId}`);
+          fetchedRawSld = yield* scada.post("/sld", body);
           break;
         }
       }
