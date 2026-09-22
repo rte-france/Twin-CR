@@ -11,7 +11,6 @@ package org.TwinCR.argus_backends.common.api;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.powsybl.commons.PowsyblException;
 import com.powsybl.commons.datasource.MemDataSource;
 import com.powsybl.iidm.network.Network;
 import com.powsybl.iidm.network.VoltageLevel;
@@ -22,9 +21,11 @@ import com.powsybl.nad.layout.BasicForceLayout;
 import com.powsybl.nad.layout.GeographicalLayoutFactory;
 import com.powsybl.nad.svg.iidm.DefaultLabelProvider;
 import com.powsybl.nad.svg.iidm.LabelProviderFactory;
-import com.powsybl.iidm.network.Substation;
 import com.powsybl.sld.SingleLineDiagram;
 import com.powsybl.sld.SldParameters;
+import com.powsybl.sld.layout.ManuallyPositionedZoneLayoutFactory;
+import com.powsybl.sld.layout.MatrixZoneLayoutFactory;
+import com.powsybl.sld.model.coordinate.Point;
 import com.powsybl.sld.svg.styles.DefaultStyleProviderFactory;
 import com.powsybl.sld.svg.styles.StyleProvidersList;
 
@@ -40,6 +41,7 @@ import org.TwinCR.argus_backends.common.gridmodel.NetworkTableExtractor;
 import org.TwinCR.argus_backends.common.gridmodel.TitienDiagramLabelProvider;
 import org.TwinCR.argus_backends.common.gridmodel.TitienResourcesComponentLibrary;
 import org.TwinCR.argus_backends.common.telemetry.TelemetryConsumerCommon;
+import org.jgrapht.alg.util.Pair;
 import org.eclipse.jetty.http2.server.HTTP2CServerConnectionFactory;
 import org.eclipse.jetty.io.EofException;
 import org.eclipse.jetty.server.HttpConfiguration;
@@ -82,6 +84,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
@@ -215,7 +218,6 @@ public abstract class ApiServerCommon {
         registry.add(new HealthHandler());
         registry.add(new IidmHandler());
         registry.add(new SldHandler());
-        registry.add(new SldMultiHandler());
         registry.add(new NadHandler());
         registry.add(new SubstationListHandler());
         registry.add(new NetworkComponentTypesHandler());
@@ -370,117 +372,59 @@ public abstract class ApiServerCommon {
         }
     }
 
-    @Path("/sld/{substationName}")
+    @Path("/sld")
     class SldHandler extends RouteHandler {
         @Override public String path() { return "/sld"; }
 
-        @GET
+        @POST
         @Tag(name = "Grid")
-        @Operation(summary = "Get single-line diagram for a substation or voltage level")
-        @Parameter(name = "substationName", in = ParameterIn.PATH, required = true, description = "Substation or voltage level ID")
+        @Operation(summary = "Get a single-line diagram for one or several substations/voltage levels", description = """
+            Body: {"substations": [], "voltage_levels": [], "layout_parameters": {}}.
+            A single element is drawn on its own, and "layout_parameters" is then ignored.
+            From two elements on, "layout_parameters" is mandatory and is either
+            {"layout_type": "matrix", "matrix": [["sub1", "sub2"], ["sub3", ""]]} or
+            {"layout_type": "positioned", "positions": [{"id": "sub1", "x": 100, "y": 100}]},
+            which must place exactly the requested substations. Powsybl lays out whole substations
+            only in that case, so each requested voltage level is replaced by its substation.""")
         @ApiResponse(responseCode = "200", description = "SVG and metadata as JSON")
+        @ApiResponse(responseCode = "400", description = "Invalid body or layout parameters")
         @ApiResponse(responseCode = "404", description = "Element not found")
         @Override
         public void handle(String target, HttpServletRequest req, HttpServletResponse resp) throws Exception {
             addCorsHeaders(resp);
-            if (!"GET".equalsIgnoreCase(req.getMethod())) {
+            if (!"POST".equalsIgnoreCase(req.getMethod())) {
                 respondError(resp, 405, "Method Not Allowed");
                 return;
             }
-            // Note: target is already automatically URI decoded by Jetty
-            String substationName = target.substring("/sld/".length());
-            VoltageLevel vl = GridModel.network.getVoltageLevel(substationName);
-            Substation sub = GridModel.network.getSubstation(substationName);
-
-            String subTopic;
-            if (sub != null) {
-                subTopic = substationName;
-            } else if (vl != null) {
-                subTopic = vl.getSubstation().get().getId();
-            } else {
-                respondError(resp, 404, substationName + " is neither a VoltageLevel nor a Substation");
-                return;
-            }
-
-            telemetryConsumer.temporarilyAcquireSubTopic(subTopic);
-
-            Writer svgWriter = new StringWriter();
-            Writer metadataWriter = new StringWriter();
-
-            com.powsybl.sld.svg.SvgParameters svgParams = new com.powsybl.sld.svg.SvgParameters()
-                .setUseName(true)
-                .setLabelCentered(true)
-                .setLabelDiagonal(false)
-                .setTooltipEnabled(true)
-                .setActivePowerUnit("MW")
-                .setReactivePowerUnit("MVar")
-                .setBusesLegendAdded(true)
-                .setFeederInfoSymmetry(true);
-
-            boolean showMeasurements = showMeasurementsOnSld();
-            com.powsybl.sld.layout.LayoutParameters layoutParameters = new com.powsybl.sld.layout.LayoutParameters()
-                .setSpaceForFeederInfos(80)  // Add room to display TI's
-                .setCellWidth(60)
-                .setStackHeight(0);
-            if (showMeasurements) {
-                layoutParameters
-                    .setSpaceForFeederInfos(120)  // Even more room for measurements
-                    .setCellWidth(70);
-            }
-
-            SldParameters params = new SldParameters()
-                .setSvgParameters(svgParams)
-                .setLayoutParameters(layoutParameters)
-                .setComponentLibrary(new TitienResourcesComponentLibrary())
-                .setStyleProviderFactory(getSldStyleProviderFactory())
-                .setLabelProviderFactory(
-                    (network, componentLibrary, layoutParams, svgParameters) ->
-                        new TitienDiagramLabelProvider(componentLibrary, layoutParams, svgParameters, network, showMeasurements))
-                .setLegendWriterFactory(getSldLegendWriterFactory());
-
-            SingleLineDiagram.draw(GridModel.network, substationName, svgWriter, metadataWriter, params);
-
-            Map<String, String> responseMap = new HashMap<>();
-            responseMap.put("svg", svgWriter.toString());
-            responseMap.put("metadata", metadataWriter.toString());
-            responseMap.put("element_id", substationName);
-            respondjson(resp, 200, MAPPER.writeValueAsString(responseMap));
-        }
-    }
-
-    @Path("/sld-multi")
-    class SldMultiHandler extends RouteHandler {
-        @Override public String path() { return "/sld-multi"; }
-        @GET
-        @Tag(name = "Grid")
-        @Operation(summary = "Get single-line diagram for multiple substations")
-        @Parameter(name = "substations", in = ParameterIn.QUERY, required = true, description = "Comma-separated list of substation IDs")
-        @ApiResponse(responseCode = "200", description = "SVG and metadata as JSON")
-        @ApiResponse(responseCode = "400", description = "Missing substations parameter")
-        @ApiResponse(responseCode = "404", description = "One or more substations not found")
-        @Override
-        public void handle(String target, HttpServletRequest req, HttpServletResponse resp) throws Exception {
-            addCorsHeaders(resp);
             try {
-                if (!"GET".equalsIgnoreCase(req.getMethod())) {
-                    respondError(resp, 405, "Method Not Allowed");
+                JsonNode body = MAPPER.readTree(req.getInputStream());
+                List<String> substationNames = readJsonList(body, "substations");
+                List<String> voltageLevelNames = readJsonList(body, "voltage_levels");
+                if (substationNames.isEmpty() && voltageLevelNames.isEmpty()) {
+                    respondError(resp, 400, "At least one substation or voltage level is required");
                     return;
                 }
-                Map<String, String> queryParams = splitQuery(req.getQueryString());
-                String raw = queryParams.get("substations");
-                if (raw == null || raw.isBlank()) {
-                    respondError(resp, 400, "Missing required query parameter: substations");
-                    return;
-                }
-                List<String> substationIds = Arrays.stream(raw.split(","))
-                    .map(String::trim)
-                    .filter(s -> !s.isEmpty())
-                    .collect(Collectors.toList());
 
-                substationIds.forEach(id -> telemetryConsumer.temporarilyAcquireSubTopic(id));
+                Set<String> subTopics = new LinkedHashSet<>(substationNames);
+                for (String name : substationNames) {
+                    if (GridModel.network.getSubstation(name) == null) {
+                        respondError(resp, 404, name + " is not a Substation");
+                        return;
+                    }
+                }
+                for (String name : voltageLevelNames) {
+                    VoltageLevel vl = GridModel.network.getVoltageLevel(name);
+                    if (vl == null) {
+                        respondError(resp, 404, name + " is not a VoltageLevel");
+                        return;
+                    }
+                    subTopics.add(vl.getSubstation().orElseThrow().getId());
+                }
+                subTopics.forEach(telemetryConsumer::temporarilyAcquireSubTopic);
 
                 Writer svgWriter = new StringWriter();
                 Writer metadataWriter = new StringWriter();
+
                 com.powsybl.sld.svg.SvgParameters svgParams = new com.powsybl.sld.svg.SvgParameters()
                     .setUseName(true)
                     .setLabelCentered(true)
@@ -491,23 +435,111 @@ public abstract class ApiServerCommon {
                     .setBusesLegendAdded(true)
                     .setFeederInfoSymmetry(true);
 
+                boolean showMeasurements = showMeasurementsOnSld();
+                com.powsybl.sld.layout.LayoutParameters layoutParameters = new com.powsybl.sld.layout.LayoutParameters()
+                    .setSpaceForFeederInfos(80)  // Add room to display TI's
+                    .setCellWidth(60)
+                    .setStackHeight(0);
+                if (showMeasurements) {
+                    layoutParameters
+                        .setSpaceForFeederInfos(120)  // Even more room for measurements
+                        .setCellWidth(70);
+                }
+
                 SldParameters params = new SldParameters()
                     .setSvgParameters(svgParams)
+                    .setLayoutParameters(layoutParameters)
                     .setComponentLibrary(new TitienResourcesComponentLibrary())
-                    .setStyleProviderFactory((network, svgParameters) -> new StyleProvidersList(
-                        new DefaultStyleProviderFactory().create(network, svgParameters),
-                        controllableSwitchStyleProvider
-                    ));
+                    .setStyleProviderFactory(getSldStyleProviderFactory())
+                    .setLabelProviderFactory(
+                        (network, componentLibrary, layoutParams, svgParameters) ->
+                            new TitienDiagramLabelProvider(componentLibrary, layoutParams, svgParameters, network, showMeasurements))
+                    .setLegendWriterFactory(getSldLegendWriterFactory());
 
-                SingleLineDiagram.drawMultiSubstations(GridModel.network, substationIds, svgWriter, metadataWriter, params);
+                List<String> elementNames = new ArrayList<>(substationNames);
+                elementNames.addAll(voltageLevelNames);
 
-                Map<String, Object> responseMap = new HashMap<>();
+                if (elementNames.size() == 1) {
+                    SingleLineDiagram.draw(GridModel.network, elementNames.get(0), svgWriter, metadataWriter, params);
+                } else {
+                    JsonNode zoneLayoutParameters = body.get("layout_parameters");
+                    if (zoneLayoutParameters == null || zoneLayoutParameters.isNull()) {
+                        respondError(resp, 400, "layout_parameters is required when several elements are requested");
+                        return;
+                    }
+                    List<String> zoneSubstationIds = new ArrayList<>(subTopics);
+                    String layoutType = zoneLayoutParameters.path("layout_type").asText();
+                    params.setZoneLayoutFactory(switch (layoutType) {
+                        case "matrix" -> new MatrixZoneLayoutFactory(readMatrix(zoneLayoutParameters, zoneSubstationIds));
+                        case "positioned" -> new ManuallyPositionedZoneLayoutFactory(readPositions(zoneLayoutParameters, zoneSubstationIds));
+                        default -> throw new IllegalArgumentException("layout_type must be 'matrix' or 'positioned' (" + layoutType + " given)");
+                    });
+                    SingleLineDiagram.drawMultiSubstations(GridModel.network, zoneSubstationIds, svgWriter, metadataWriter, params);
+                }
+
+                Map<String, String> responseMap = new HashMap<>();
                 responseMap.put("svg", svgWriter.toString());
                 responseMap.put("metadata", metadataWriter.toString());
                 respondjson(resp, 200, MAPPER.writeValueAsString(responseMap));
-            } catch (PowsyblException e) {  // One or several substations not found
-                respondError(resp, 404, e.getMessage());
+            } catch (IllegalArgumentException e) {  // Invalid body or layout parameters
+                respondError(resp, 400, e.getMessage());
             }
+        }
+    }
+
+    // Return a matrix for MatrixZoneLayoutFactory from a JsonNode. Adding padding if need to have an equal number of columns in each row
+    private static String[][] readMatrix(JsonNode layoutParameters, List<String> substationIds) {
+        JsonNode rows = layoutParameters.get("matrix");
+        if (rows == null || !rows.isArray()) {
+            throw new IllegalArgumentException("layout_type 'matrix' requires a 'matrix' array of rows of substation ids");
+        }
+        int columnCount = 0;
+        for (JsonNode row : rows) {
+            columnCount = Math.max(columnCount, row.size());
+        }
+        String[][] matrix = new String[rows.size()][columnCount];
+        List<String> placed = new ArrayList<>();
+        for (int row = 0; row < rows.size(); row++) {
+            for (int col = 0; col < columnCount; col++) {
+                String id = rows.get(row).path(col).asText("");
+                matrix[row][col] = id;
+                if (!id.isEmpty()) {
+                    placed.add(id);
+                }
+            }
+        }
+        checkLayoutCoverage(placed, substationIds, "matrix");
+        return matrix;
+    }
+
+    private static List<Pair<String, Point>> readPositions(JsonNode layoutParameters, List<String> substationIds) {
+        JsonNode nodes = layoutParameters.get("positions");
+        if (nodes == null || !nodes.isArray()) {
+            throw new IllegalArgumentException("layout_type 'positioned' requires a 'positions' array of {id, x, y}");
+        }
+        List<Pair<String, Point>> positions = new ArrayList<>();
+        for (JsonNode node : nodes) {
+            if (!node.hasNonNull("id") || !node.hasNonNull("x") || !node.hasNonNull("y")) {
+                throw new IllegalArgumentException("Each entry of 'positions' requires an id, an x and a y");
+            }
+            positions.add(Pair.of(node.get("id").asText(), new Point(node.get("x").asDouble(), node.get("y").asDouble())));
+        }
+        checkLayoutCoverage(positions.stream().map(Pair::getFirst).toList(), substationIds, "positions");
+        return positions;
+    }
+
+    private static void checkLayoutCoverage(List<String> placed, List<String> substationIds, String field) {
+        Set<String> placedIds = new HashSet<>(placed);
+        if (placedIds.size() != placed.size()) {
+            throw new IllegalArgumentException("A substation appears several times in " + field);
+        }
+        List<String> missing = substationIds.stream().filter(id -> !placedIds.contains(id)).toList();
+        if (!missing.isEmpty()) {
+            throw new IllegalArgumentException("Substations not placed by " + field + ": " + String.join(", ", missing));
+        }
+        List<String> unexpected = placed.stream().filter(id -> !substationIds.contains(id)).toList();
+        if (!unexpected.isEmpty()) {
+            throw new IllegalArgumentException("Substations placed by " + field + " but not requested: " + String.join(", ", unexpected));
         }
     }
 
@@ -1440,6 +1472,19 @@ public abstract class ApiServerCommon {
 
     protected boolean showMeasurementsOnSld() {
         return false;
+    }
+
+    private static List<String> readJsonList(JsonNode body, String field) {
+        JsonNode node = body.get(field);
+        if (node == null || node.isNull()) {
+            return List.of();
+        }
+        if (!node.isArray()) {
+            throw new IllegalArgumentException(field + " must be an array of ids");
+        }
+        List<String> ids = new ArrayList<>();
+        node.forEach(id -> ids.add(id.asText()));
+        return ids;
     }
 
     protected com.powsybl.sld.svg.LegendWriterFactory getSldLegendWriterFactory() {
