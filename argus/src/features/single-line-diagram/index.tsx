@@ -9,6 +9,7 @@ co-simulation of power systems.
 import { render } from "solid-js/web";
 import { createSignal } from "solid-js";
 import { SldViewer } from "./components/SldViewer";
+import { SldExplorer } from "./components/SldExplorer";
 
 class MfSingleLineDiagram extends HTMLElement {
   private dispose: (() => void) | null = null;
@@ -50,4 +51,25 @@ class MfSingleLineDiagram extends HTMLElement {
 
 if (!customElements.get("sld-viewer")) {
   customElements.define("sld-viewer", MfSingleLineDiagram);
+}
+
+class MfSldExplorer extends HTMLElement {
+  private dispose: (() => void) | null = null;
+
+  connectedCallback() {
+    if (this.dispose) return;
+    this.dispose = render(() => <SldExplorer />, this);
+  }
+
+  disconnectedCallback() {
+    if (this.dispose) {
+      this.dispose();
+      this.dispose = null;
+      this.innerHTML = "";
+    }
+  }
+}
+
+if (!customElements.get("sld-explorer")) {
+  customElements.define("sld-explorer", MfSldExplorer);
 }

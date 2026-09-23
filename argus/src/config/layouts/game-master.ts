@@ -59,6 +59,12 @@ export const rightSidebarPanels: PanelManifest[] = [
     elementTag: "nad-explorer",
   },
   {
+    id: "sld",
+    label: "Single Line Diagram",
+    iconId: "lucide:git-fork",
+    elementTag: "sld-explorer",
+  },
+  {
     id: "ifl",
     label: "Information flow model",
     iconId: "mdi:graph-outline",

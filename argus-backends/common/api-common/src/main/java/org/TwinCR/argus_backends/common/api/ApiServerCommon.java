@@ -502,9 +502,9 @@ public abstract class ApiServerCommon {
         for (int row = 0; row < rows.size(); row++) {
             for (int col = 0; col < columnCount; col++) {
                 String id = rows.get(row).path(col).asText("");
-                matrix[row][col] = id;
+                matrix[row][col] = id.isEmpty() ? id : layoutSubstationId(id);
                 if (!id.isEmpty()) {
-                    placed.add(id);
+                    placed.add(matrix[row][col]);
                 }
             }
         }
@@ -522,10 +522,17 @@ public abstract class ApiServerCommon {
             if (!node.hasNonNull("id") || !node.hasNonNull("x") || !node.hasNonNull("y")) {
                 throw new IllegalArgumentException("Each entry of 'positions' requires an id, an x and a y");
             }
-            positions.add(Pair.of(node.get("id").asText(), new Point(node.get("x").asDouble(), node.get("y").asDouble())));
+            positions.add(Pair.of(layoutSubstationId(node.get("id").asText()),
+                new Point(node.get("x").asDouble(), node.get("y").asDouble())));
         }
         checkLayoutCoverage(positions.stream().map(Pair::getFirst).toList(), substationIds, "positions");
         return positions;
+    }
+
+    // Powsybl lays out whole substations only, so a voltage level placed by a layout stands for its substation
+    private static String layoutSubstationId(String id) {
+        VoltageLevel voltageLevel = GridModel.network.getVoltageLevel(id);
+        return voltageLevel == null ? id : voltageLevel.getSubstation().orElseThrow().getId();
     }
 
     private static void checkLayoutCoverage(List<String> placed, List<String> substationIds, String field) {

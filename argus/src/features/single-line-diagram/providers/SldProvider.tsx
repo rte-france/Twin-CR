@@ -17,7 +17,7 @@ import {
 } from "solid-js";
 import * as d3 from "d3";
 import { useSld } from "../hooks/useSld";
-import type { ElementType } from "../types/ElementType";
+import type { SldDiagramParams } from "../types/SldDiagram";
 
 interface SavedViewState {
   x: number;
@@ -26,7 +26,8 @@ interface SavedViewState {
 }
 
 interface SldContextValue {
-  equipmentId: string;
+  viewId: string;
+  label: string;
   sldData: () => any;
   svgRef: () => SVGSVGElement | undefined;
   setSvgRef: (el: SVGSVGElement) => void;
@@ -51,16 +52,14 @@ export const useSldContext = () => {
 };
 
 interface SldProviderProps {
-  equipmentId: string;
-  type: ElementType;
+  viewId: string;
+  label: string;
+  params: SldDiagramParams;
   children: JSX.Element;
 }
 
 export const SldProvider: Component<SldProviderProps> = (props) => {
-  const { sld } = useSld(
-    () => props.equipmentId,
-    () => props.type,
-  );
+  const { sld } = useSld(() => props.params);
 
   const [svgRef, setSvgRef] = createSignal<SVGSVGElement>();
   const [gRef, setGRef] = createSignal<SVGGElement>();
@@ -69,7 +68,7 @@ export const SldProvider: Component<SldProviderProps> = (props) => {
   const [showMeasurementLabels, setShowMeasurementLabels] = createSignal(true);
 
   let zoomBehavior: d3.ZoomBehavior<SVGSVGElement, unknown>;
-  let currentEquipmentId: string | null = null;
+  let currentViewId: string | null = null;
 
   const getStorageKey = (id: string) => `sld_d3_view_${id}`;
   const getSavedViewState = (id: string): SavedViewState | null => {
@@ -89,14 +88,14 @@ export const SldProvider: Component<SldProviderProps> = (props) => {
         d3.select(g).attr("transform", event.transform);
       })
       .on("end", (event) => {
-        if (!props.equipmentId) return;
+        if (!props.viewId) return;
         const state: SavedViewState = {
           x: event.transform.x,
           y: event.transform.y,
           k: event.transform.k,
         };
         localStorage.setItem(
-          getStorageKey(props.equipmentId),
+          getStorageKey(props.viewId),
           JSON.stringify(state),
         );
       });
@@ -118,8 +117,8 @@ export const SldProvider: Component<SldProviderProps> = (props) => {
     const svgString = data.sld.svg_content || (data.sld as any).svg;
     if (!svgString) return;
 
-    const isNewEquipment = currentEquipmentId !== props.equipmentId;
-    currentEquipmentId = props.equipmentId;
+    const isNewView = currentViewId !== props.viewId;
+    currentViewId = props.viewId;
 
     const parser = new DOMParser();
     const doc = parser.parseFromString(svgString, "image/svg+xml");
@@ -132,8 +131,8 @@ export const SldProvider: Component<SldProviderProps> = (props) => {
 
     g.replaceChildren(...Array.from(incomingSvg.childNodes));
 
-    if (isNewEquipment) {
-      const savedState = getSavedViewState(props.equipmentId);
+    if (isNewView) {
+      const savedState = getSavedViewState(props.viewId);
       if (savedState) {
         const t = d3.zoomIdentity
           .translate(savedState.x, savedState.y)
@@ -170,7 +169,8 @@ export const SldProvider: Component<SldProviderProps> = (props) => {
   return (
     <SldContext.Provider
       value={{
-        equipmentId: props.equipmentId,
+        viewId: props.viewId,
+        label: props.label,
         sldData: sld,
         svgRef,
         setSvgRef,

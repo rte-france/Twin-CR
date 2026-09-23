@@ -16,7 +16,7 @@ export const SldHeader: Component = () => {
     <header class="flex flex-wrap sm:flex-nowrap items-center justify-between px-3 sm:px-5 py-2.5 bg-sidebar-bg border-b border-border shrink-0 gap-3 min-h-9 h-9">
       <div class="flex items-center gap-3 min-w-0">
         <h2 class="text-[13px] font-bold text-fg truncate">
-          Equipment: <span class="text-links">{ctx.equipmentId}</span>
+          Equipment: <span class="text-links">{ctx.label}</span>
         </h2>
       </div>
     </header>
