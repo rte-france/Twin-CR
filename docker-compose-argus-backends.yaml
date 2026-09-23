@@ -31,7 +31,7 @@ services:
       interval: 5s
       timeout: 10s
       start_period: 30s
-    entrypoint: ["java", "-Xmx2g", "-XX:+ExitOnOutOfMemoryError", "-jar", "/app/app_scada.jar",
+    entrypoint: ["java", "-Xmx2560m", "-XX:+ExitOnOutOfMemoryError", "-jar", "/app/app_scada.jar",
                  "--http-port", "${SCADA_BACKEND_PORT}",
                  "--nats-url", "nats://${NATS_HOST}:${NATS_PORT}",
                  "--config-path", "${CONFIG_PATH}",
@@ -70,7 +70,7 @@ services:
       interval: 5s
       timeout: 10s
       start_period: 30s
-    entrypoint: ["java", "-Xmx1536m", "-XX:+ExitOnOutOfMemoryError", "-jar", "/app/app_gm.jar",
+    entrypoint: ["java", "-Xmx2048m", "-XX:+ExitOnOutOfMemoryError", "-jar", "/app/app_gm.jar",
                  "--http-port", "${GAMEMASTER_BACKEND_PORT}",
                  "--nats-url", "nats://${NATS_HOST}:${NATS_PORT}",
                  "--config-path", "${CONFIG_PATH}",
