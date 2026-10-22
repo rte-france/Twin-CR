@@ -61,6 +61,13 @@ struct SCADA_output {
     double period;
     double last_publication_time;
     std::atomic_bool requested = false;
+    // EX-COMP-2: anticipate this position when a command reaches its RTU (fast devices only)
+    bool fast_return = false;
+    // While an anticipated position awaits the simulator's confirmation, the simulator's
+    // unchanged reports are withheld (until anticipated_until, simulation seconds; negative =
+    // no window open). The simulator reporting anticipated_value closes the window silently.
+    double anticipated_until = -1.0;
+    double anticipated_value = 0.0;
 };
 
 struct IIDM_key {
@@ -156,6 +163,25 @@ class DynawoInterface : public DynawoInterfaceInterface {
         void onActualControl(const ActualControl& info);
 
         /**
+         * EX-COMP-2 (fast command return). A real device answers a command within a fraction of a
+         * second, but Dynawo only shows the new position after its next step, one second later.
+         * Control applications pair each command with its position indication and run a timeout
+         * between the two, so the platform anticipates the position itself for fast devices
+         * (breakers): as soon as the command has reached its RTU, the paired state output
+         * (same id, "fast_return": true) is sent with the commanded value, from that RTU, as an
+         * ordinary MeasurementSent. It crosses the information flow model like a real one (delays,
+         * drops and corruption of the return path apply), lands on the usual subjects, and the
+         * RTU keeps it as the last known position for general interrogations.
+         *
+         * Reconciliation with Dynawo: the anticipated value becomes the output's last_value, so
+         * the next step publishes nothing when Dynawo confirms it (the position was already
+         * sent) and publishes the real position as a corrective indication when Dynawo ends up
+         * elsewhere (rejected or diverged command).
+         */
+        void anticipateStateReturn(const ControlReceived& info);
+        void emitAnticipatedState(std::shared_ptr<SCADA_output> scada_output, double value, double time);
+
+        /**
          * Reset the Dynawo event used in applyControl(). Must be called one timestep after applyControl() so that the Dynawo event can be reused in the future.
          */
         void resetControl(const std::string& control_id);
@@ -190,6 +216,8 @@ class DynawoInterface : public DynawoInterfaceInterface {
     private:
         double end_time_;
         double period_;
+        double fast_return_delay_;  // [hmi] fast_return_delay: device reaction time before the anticipated position leaves the RTU (s)
+        double fast_return_grace_;  // [hmi] fast_return_grace: how long the simulator may still report the old position before its value corrects the anticipation (s)
         std::atomic<double> current_time_;
         double start_time_ = 0.0;
         unsigned long step_index_ = 0;

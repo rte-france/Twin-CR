@@ -303,7 +303,7 @@ class Configurator:
         ]
 
         keep_keys = ["equipmentId", "kind", "side", "id", "dynawo_id", "topic", "factor",
-                     "source", "destination", "tase2", "publish_on_change", "last_value", "period", "period_offset"]
+                     "source", "destination", "tase2", "publish_on_change", "fast_return", "last_value", "period", "period_offset"]
         filtered_outputs = [
             {**{k: v for k, v in item.items() if k in keep_keys}, "simulator": "dynawo"}
             for item in self._scada_outputs
@@ -676,6 +676,10 @@ class Configurator:
 
         ti_mapper = TiMapper(self._iidm_file, cyber_mapping_file)
         missing_rtus = set()
+        # IIDM switch kind (BREAKER, DISCONNECTOR, LOAD_BREAK_SWITCH) decides which positions the
+        # orchestrator anticipates on command (fast_return): breakers answer within a fraction of a
+        # second in the real grid, disconnectors and tap changers are slow and follow the simulator.
+        switch_kind_by_iidm_id = self._network.get_switches()["kind"].to_dict()
 
         total = {"TS": 0, "TC": 0, "TM": 0, "TVC": 0, "OM": 0}
         rtu_found = {"TS": 0, "TC": 0, "TM": 0, "TVC": 0, "OM": 0}
@@ -746,6 +750,8 @@ class Configurator:
 
             if type_ == "TS":
                 element["publish_on_change"] = True
+                if attribute == "state" and physical_type == "switch":
+                    element["fast_return"] = switch_kind_by_iidm_id.get(iidm_id) == "BREAKER"
             if type_ == "TM":
                 element["period"] = 5
 

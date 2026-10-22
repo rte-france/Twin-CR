@@ -42,6 +42,10 @@
         "type": "boolean",
         "description": "Only publish when value changes"
       },
+      "fast_return": {
+        "type": "boolean",
+        "description": "Anticipate this position when a command with the same id reaches its RTU, without waiting for the simulator (fast devices such as breakers requires publish_on_change)"
+      },
       "tase2": {
         "type": "string",
         "description": "TASE2 protocol identifier"
