@@ -1,0 +1,80 @@
+#
+# Copyright (c) 2025-2026, RTE (https://www.rte-france.com)
+# See AUTHORS.md
+# SPDX-License-Identifier: MPL-2.0
+# This file is part of Twin-CR, a platform for real-time cyber-physical
+# co-simulation of power systems.
+#
+
+# Common apt upgrade -y call for the two builder stages
+FROM --platform=linux/amd64 ubuntu:22.04 AS apt-base
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+RUN apt-get update && apt-get upgrade -y \
+    && rm -rf /var/lib/apt/lists/*
+
+# ANTLR4 code generation, only depends on PowerEventDSL.g4
+FROM apt-base AS antlr-codegen
+
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends default-jre-headless curl ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+
+# Version to keep in sync with Orchestrator/DSL/CMakeLists.txt's ANTLR4_TAG
+ARG ANTLR4_VERSION=4.13.2
+RUN curl -fsSL -o /opt/antlr4-complete.jar \
+       "https://www.antlr.org/download/antlr-${ANTLR4_VERSION}-complete.jar"
+
+COPY Orchestrator/DSL/PowerEventDSL.g4 /opt/antlr/PowerEventDSL.g4
+RUN java -jar /opt/antlr4-complete.jar -Dlanguage=Cpp -visitor \
+       -o /opt/antlr/generated /opt/antlr/PowerEventDSL.g4
+
+# Force amd64 architecture for Dynawo
+FROM apt-base AS builder
+
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+       build-essential cmake git ca-certificates libssl-dev libcurl4-openssl-dev libzmq3-dev unzip \
+    && rm -rf /var/lib/apt/lists/*
+
+# Compile all FetchContent dependencies in a first layer
+COPY Orchestrator/deps /opt/orchestrator/deps
+RUN mkdir -p /opt/orchestrator/build-deps && \
+    cd /opt/orchestrator/build-deps && \
+    cmake /opt/orchestrator/deps && \
+    make -j$(nproc)
+
+ARG WITH_TESTS=OFF
+
+# Compile the project with cached dependencies using DFETCHCONTENT_BASE_DIR
+COPY Orchestrator /opt/orchestrator/
+COPY --from=antlr-codegen /opt/antlr/generated /opt/orchestrator/dsl-generated-prebuilt
+RUN mkdir -p /opt/orchestrator/build-orchestrator-container && \
+    cd /opt/orchestrator/build-orchestrator-container && \
+    cmake -DORCHESTRATOR_BUILD_TESTS=${WITH_TESTS} \
+          -DFETCHCONTENT_BASE_DIR=/opt/orchestrator/build-deps/_deps .. && \
+    make -j $(nproc) && \
+    if [ "${WITH_TESTS}" = "ON" ]; then make dsl-tests; fi && \
+    make install
+
+# Runtime image: only the installed binary/libs and the packages needed to run it
+FROM --platform=linux/amd64 ubuntu:22.04
+LABEL org.opencontainers.image.licenses="MPL-2.0"
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+# python3/pip: required by Dynawo at runtime
+# curl/jq/unzip: used by envs/fetch_simulators.sh
+# libzmq5/libcurl4/libssl3: shared libs linked by orchestrator_exec/Dynawo
+# libicu70/libgomp1: shared libs linked by the Dynawo simulator binaries
+RUN apt-get update && apt-get upgrade -y \
+    && apt-get install -y --no-install-recommends \
+       libzmq5 libcurl4 libssl3 python3 python3-pip curl jq unzip ca-certificates libicu70 libgomp1 \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY --from=builder /usr/local /usr/local
+RUN ldconfig
+
+# Set the working directory
+WORKDIR /home/orchestrator/

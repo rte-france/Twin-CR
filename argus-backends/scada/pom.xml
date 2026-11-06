@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+Copyright (c) 2025-2026, RTE (https://www.rte-france.com)
+See AUTHORS.md
+SPDX-License-Identifier: MPL-2.0
+This file is part of Twin-CR, a platform for real-time cyber-physical
+co-simulation of power systems.
+-->
+
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>org.TwinCR</groupId>
+        <artifactId>argus-backends</artifactId>
+        <version>5.5.0</version>
+        <relativePath>../pom.xml</relativePath>
+    </parent>
+
+    <packaging>pom</packaging>
+    <artifactId>scada</artifactId>
+    <name>SCADA</name>
+
+    <modules>
+        <module>alarms-scada</module>
+        <module>api-scada</module>
+        <module>commands-scada</module>
+        <module>core-scada</module>
+        <module>telemetry-scada</module>
+        <module>model-scada</module>
+        <module>bootstrap-scada</module>
+    </modules>
+
+    <!--
+      estim-rte wraps the RTE-private powsybl-rte jars / estim binary. It is only buildable when those
+      private jars have been installed locally, so it is excluded from the reactor for public builds
+      (pass -Dpublic.build=true, or docker build with build arg BUILD_VARIANT=public).
+    -->
+    <profiles>
+        <profile>
+            <id>private-rte</id>
+            <activation>
+                <property>
+                    <name>!public.build</name>
+                </property>
+            </activation>
+            <modules>
+                <module>estim-rte</module>
+            </modules>
+        </profile>
+    </profiles>
+</project>

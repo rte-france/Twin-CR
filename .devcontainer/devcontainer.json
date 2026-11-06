@@ -1,0 +1,51 @@
+// For format details, see https://aka.ms/devcontainer.json. For config options, see the
+// README at: https://github.com/devcontainers/templates/tree/main/src/docker-existing-dockerfile
+// Docker environment used to build Dynawo, no longer necessary as a binary distribution can be used instead
+{
+	"name": "TwinCR",
+	"build": {
+		// Sets the run context to one level up instead of the .devcontainer folder.
+		"context": "..",
+		// Update the 'dockerFile' property if you aren't using the standard 'Dockerfile' filename.
+		"dockerfile": "Dockerfile"
+	},
+	"workspaceFolder": "/home/orchestrator/",
+	"workspaceMount": "source=${localWorkspaceFolder},target=/home/orchestrator,type=bind,consistency=cached",
+	// Features to add to the dev container. More info: https://containers.dev/features.
+	"features": {
+		"ghcr.io/devcontainers/features/docker-outside-of-docker:1": {
+			"version": "latest"
+		}
+	},
+	"runArgs": [
+		"--privileged",
+		"--cap-add=SYS_PTRACE",
+		"--cap-add=SYS_ADMIN",
+		"--cap-add=NET_ADMIN",
+		"--cap-add=NET_RAW",
+		"--network=host",
+		"--security-opt=seccomp=unconfined",
+		"-e",
+		"DISPLAY=:0",
+		"-e",
+		"XAUTHORITY=/tmp/.Xauthority",
+		"-v",
+		"${localEnv:HOME}/.Xauthority:/tmp/.Xauthority"
+	],
+	"customizations": {
+		"vscode": {
+			"extensions": [
+				"ms-vscode.cpptools-extension-pack",
+				"ms-vscode.makefile-tools"
+			]
+		}
+	}
+	// Use 'forwardPorts' to make a list of ports inside the container available locally.
+	// "forwardPorts": [],d
+	// Uncomment the next line to run commands after the container is created.
+	// "postCreateCommand": "cat /etc/os-release",
+	// Configure tool-specific properties.
+	// "customizations": {},
+	// Uncomment to connect as an existing user other than the container default. More info: https://aka.ms/dev-containers-non-root.
+	// "remoteUser": "devcontainer"
+}

@@ -1,0 +1,4 @@
+{
+  "applied": [],
+  "load_error": "isolate has no parameter named feder (line 8: \"after 2 seconds, isolate(\"01_1_breaker\", \"01_1\", feder: \"02_1\");\")"
+}

@@ -1,0 +1,30 @@
+[
+    {
+        "id": "PL1_state",
+        "equipmentId": "PL1",
+        "kind": "state",
+        "factor": 1,
+        "simulator": "dynawo"
+    },
+    {
+        "id": "G2_state",
+        "equipmentId": "G2",
+        "kind": "state",
+        "factor": 1,
+        "simulator": "dynawo"
+    },
+    {
+        "id": "L2_state",
+        "equipmentId": "L2",
+        "kind": "state",
+        "factor": 1,
+        "simulator": "dynawo"
+    },
+    {
+        "id": "LoadReduction",
+        "equipmentId": "L2",
+        "kind": "deltaP",
+        "factor": 1,
+        "simulator": "dynawo"
+    }
+]

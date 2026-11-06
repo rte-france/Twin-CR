@@ -1,0 +1,42 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "GetLinkCharacteristicsCommandResponse",
+  "type": "object",
+  "oneOf": [
+    {
+      "$ref": "error_response.json"
+    },
+    {
+      "type": "object",
+      "properties": {
+        "status": {
+          "type": "string",
+          "const": "OK"
+        },
+        "reply": {
+          "type": "object",
+          "properties": {
+            "delay_function": {
+              "$ref": "delay_function.json"
+            },
+            "drop_function": {
+              "$ref": "drop_function.json"
+            },
+            "corruption_functions": {
+              "type": "array",
+              "items": {
+                "$ref": "corruption_function.json"
+              }
+            }
+          },
+          "required": [
+            "delay_function",
+            "drop_function",
+            "corruption_functions"
+          ]
+        }
+      },
+      "required": ["status", "reply"]
+    }
+  ]
+}

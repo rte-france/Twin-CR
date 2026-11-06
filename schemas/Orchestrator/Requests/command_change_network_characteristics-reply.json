@@ -1,0 +1,9 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "ChangeNetworkCharacteristicsCommandResponse",
+  "type": "object",
+  "oneOf": [
+    {"$ref": "error_response.json"},
+    {"$ref": "ok_response.json"}
+  ]
+}

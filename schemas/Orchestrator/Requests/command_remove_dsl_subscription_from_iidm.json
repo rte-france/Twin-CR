@@ -1,0 +1,19 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "RemoveDslSubscriptionFromIidmCommandRequest",
+  "type": "object",
+  "properties": {
+    "command": {
+      "type": "string",
+      "const": "remove_dsl_subscription_from_iidm"
+    },
+    "iidm_id": {
+      "type": "string",
+      "description": "IIDM ID of the element"
+    },
+    "attribute": {
+      "$ref": "iidm_attribute.json"
+    }
+  },
+  "required": ["command", "iidm_id", "attribute"]
+}

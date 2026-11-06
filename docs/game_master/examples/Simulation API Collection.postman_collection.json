@@ -1,0 +1,373 @@
+{
+  "info": {
+    "_postman_id": "7c8a8702-7f2f-4ea4-bdd9-6aa3b9a9c111",
+    "name": "GameMaster API (Trainer/Sim/IIDM/User)",
+    "description": "Collection aligned with the current DTwin GameMaster routers. Covers Trainer, Simulator Control, IIDM, User Control, Queue, and Atomic DSL endpoints as showcased in docs/game_master/README.md.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Trainer",
+      "description": "Upload IIDM/DSL artefacts, inject overrides, and manage stored scripts.",
+      "item": [
+        {
+          "name": "Init Simulation",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "iidm_file",
+                  "type": "file",
+                  "src": "data/network.iidm"
+                },
+                {
+                  "key": "dsl_file",
+                  "type": "file",
+                  "src": "docs/orchestrator/examples/Nordic/Nordic.dsl"
+                },
+                {
+                  "key": "simulationName",
+                  "value": "{{simulationName}}",
+                  "type": "text"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/trainer/init",
+              "host": ["{{baseUrl}}"],
+              "path": ["trainer", "init"]
+            }
+          }
+        },
+        {
+          "name": "Inject DSL Command",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "text/plain"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "event load increase id=LOAD1 percentage=10 at=5"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/trainer/dsl_command",
+              "host": ["{{baseUrl}}"],
+              "path": ["trainer", "dsl_command"]
+            }
+          }
+        },
+        {
+          "name": "List DSL Simulations",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/trainer/dsl/simulations",
+              "host": ["{{baseUrl}}"],
+              "path": ["trainer", "dsl", "simulations"]
+            }
+          }
+        },
+        {
+          "name": "Download DSL by Name",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/trainer/dsl/{{simulationName}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["trainer", "dsl", "{{simulationName}}"]
+            }
+          }
+        },
+        {
+          "name": "Update DSL Script",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "text/plain"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "set simulation duration to 1800 seconds;\nset time step to 1 seconds;"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/trainer/dsl/{{simulationName}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["trainer", "dsl", "{{simulationName}}"]
+            }
+          }
+        },
+        {
+          "name": "Delete DSL Script",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/trainer/dsl/{{simulationName}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["trainer", "dsl", "{{simulationName}}"]
+            }
+          }
+        },
+        {
+          "name": "List IIDM Artefacts",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/trainer/iidm",
+              "host": ["{{baseUrl}}"],
+              "path": ["trainer", "iidm"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Simulator Control",
+      "description": "Aggregate DSL/train/user actions or request IIDM-level commands.",
+      "item": [
+        {
+          "name": "Aggregate Actions",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"current_time\": 300\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/sim/simulatorcontrol",
+              "host": ["{{baseUrl}}"],
+              "path": ["sim", "simulatorcontrol"]
+            }
+          }
+        },
+        {
+          "name": "Emit IIDM Commands (v2)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"current_time\": 300\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/sim/simulatorcontrol_v2",
+              "host": ["{{baseUrl}}"],
+              "path": ["sim", "simulatorcontrol_v2"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "IIDM Artefacts",
+      "description": "Upload IIDM files and inspect cached properties.",
+      "item": [
+        {
+          "name": "Upload IIDM",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "iidm_file",
+                  "type": "file",
+                  "src": "data/network.iidm"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/iidm/upload",
+              "host": ["{{baseUrl}}"],
+              "path": ["iidm", "upload"]
+            }
+          }
+        },
+        {
+          "name": "Get IIDM Properties",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/iidm/properties/{{iidmFileId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["iidm", "properties", "{{iidmFileId}}"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "User Control",
+      "description": "Submit direct or cluster controls and inspect pending actions/status.",
+      "item": [
+        {
+          "name": "Direct Control",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"control_type\": \"switch\",\n  \"action\": \"open\",\n  \"id\": \"CB1\",\n  \"timestamp\": 305.0\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/user/control",
+              "host": ["{{baseUrl}}"],
+              "path": ["user", "control"]
+            }
+          }
+        },
+        {
+          "name": "Cluster Control",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"control_type\": \"load\",\n  \"action\": \"decrease\",\n  \"target\": [\"LOAD1\", \"LOAD2\", \"LOAD3\"],\n  \"timestamp\": 305.0,\n  \"value\": 10.0\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/user/cluster_control",
+              "host": ["{{baseUrl}}"],
+              "path": ["user", "cluster_control"]
+            }
+          }
+        },
+        {
+          "name": "Pending Controls",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/user/controls",
+              "host": ["{{baseUrl}}"],
+              "path": ["user", "controls"]
+            }
+          }
+        },
+        {
+          "name": "Service Status",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/user/status",
+              "host": ["{{baseUrl}}"],
+              "path": ["user", "status"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Queue",
+      "description": "Inspect queued DSL/user events.",
+      "item": [
+        {
+          "name": "List Events",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/queue/list?status=pending&limit=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["queue", "list"],
+              "query": [
+                {"key": "status", "value": "pending"},
+                {"key": "limit", "value": "20"}
+              ]
+            }
+          }
+        },
+        {
+          "name": "Summary",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/queue/summary",
+              "host": ["{{baseUrl}}"],
+              "path": ["queue", "summary"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Atomic DSL",
+      "description": "Schedule just-in-time DSL snippets for the next simulator step.",
+      "item": [
+        {
+          "name": "Runtime DSL Snippet",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "text/plain"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "at 8 seconds, change network characteristics link from \"CC\" to \"substation_2\", node \"substation_2\", drop random 0.2;"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/atomic/rt-user_control_dsl",
+              "host": ["{{baseUrl}}"],
+              "path": ["atomic", "rt-user_control_dsl"]
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8000"
+    },
+    {
+      "key": "simulationName",
+      "value": "nordic-demo"
+    },
+    {
+      "key": "iidmFileId",
+      "value": "network-sample"
+    }
+  ]
+}

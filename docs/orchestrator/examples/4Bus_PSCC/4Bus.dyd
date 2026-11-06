@@ -1,0 +1,39 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<dyn:dynamicModelsArchitecture xmlns:dyn="http://www.rte-france.com/dynawo">
+  <dyn:blackBoxModel id="L1" lib="LoadTwoTransformersTapChangers" parFile="4Bus.par" parId="GenericLoadTwoTransfos" staticId="L1"/>
+  <dyn:blackBoxModel id="L2" lib="LoadTwoTransformersTapChangers" parFile="4Bus.par" parId="GenericLoadTwoTransfos" staticId="L2"/>
+  <dyn:blackBoxModel id="L3" lib="LoadTwoTransformersTapChangers" parFile="4Bus.par" parId="GenericLoadTwoTransfos" staticId="L3"/>
+  <dyn:blackBoxModel id="G1" lib="GeneratorSynchronousThreeWindingsProportionalRegulations" parFile="4Bus.par" parId="G1" staticId="G1"/>
+  <dyn:blackBoxModel id="G2" lib="GeneratorSynchronousFourWindingsProportionalRegulations" parFile="4Bus.par" parId="G2" staticId="G2"/>
+  <dyn:blackBoxModel id="OMEGA_REF" lib="DYNModelOmegaRef" parFile="4Bus.par" parId="OmegaRef"/>
+  <dyn:connect id1="OMEGA_REF" var1="omega_grp_0_value" id2="G1" var2="generator_omegaPu"/>
+  <dyn:connect id1="OMEGA_REF" var1="omegaRef_grp_0_value" id2="G1" var2="generator_omegaRefPu"/>
+  <dyn:connect id1="OMEGA_REF" var1="numcc_node_0" id2="NETWORK" var2="B1_numcc"/>
+  <dyn:connect id1="OMEGA_REF" var1="running_grp_0_value" id2="G1" var2="generator_running"/>
+  <dyn:connect id1="OMEGA_REF" var1="omega_grp_1_value" id2="G2" var2="generator_omegaPu"/>
+  <dyn:connect id1="OMEGA_REF" var1="omegaRef_grp_1_value" id2="G2" var2="generator_omegaRefPu"/>
+  <dyn:connect id1="OMEGA_REF" var1="numcc_node_1" id2="NETWORK" var2="B2_numcc"/>
+  <dyn:connect id1="OMEGA_REF" var1="running_grp_1_value" id2="G2" var2="generator_running"/>
+  <dyn:connect id1="L1" var1="transformerT_terminal1" id2="NETWORK" var2="B1_ACPIN"/>
+  <dyn:connect id1="L1" var1="transformerT_switchOffSignal1" id2="NETWORK" var2="B1_switchOff_value"/>
+  <dyn:connect id1="L1" var1="transformerD_switchOffSignal1" id2="NETWORK" var2="B1_switchOff_value"/>
+  <dyn:connect id1="L1" var1="transformerT_tapChanger_switchOffSignal1" id2="NETWORK" var2="B1_switchOff_value"/>
+  <dyn:connect id1="L1" var1="transformerD_tapChanger_switchOffSignal1" id2="NETWORK" var2="B1_switchOff_value"/>
+  <dyn:connect id1="L1" var1="load_switchOffSignal1" id2="NETWORK" var2="B1_switchOff_value"/>
+  <dyn:connect id1="L2" var1="transformerT_terminal1" id2="NETWORK" var2="B2_ACPIN"/>
+  <dyn:connect id1="L2" var1="transformerT_switchOffSignal1" id2="NETWORK" var2="B2_switchOff_value"/>
+  <dyn:connect id1="L2" var1="transformerD_switchOffSignal1" id2="NETWORK" var2="B2_switchOff_value"/>
+  <dyn:connect id1="L2" var1="transformerT_tapChanger_switchOffSignal1" id2="NETWORK" var2="B2_switchOff_value"/>
+  <dyn:connect id1="L2" var1="transformerD_tapChanger_switchOffSignal1" id2="NETWORK" var2="B2_switchOff_value"/>
+  <dyn:connect id1="L2" var1="load_switchOffSignal1" id2="NETWORK" var2="B2_switchOff_value"/>
+  <dyn:connect id1="L3" var1="transformerT_terminal1" id2="NETWORK" var2="B3_ACPIN"/>
+  <dyn:connect id1="L3" var1="transformerT_switchOffSignal1" id2="NETWORK" var2="B3_switchOff_value"/>
+  <dyn:connect id1="L3" var1="transformerD_switchOffSignal1" id2="NETWORK" var2="B3_switchOff_value"/>
+  <dyn:connect id1="L3" var1="transformerT_tapChanger_switchOffSignal1" id2="NETWORK" var2="B3_switchOff_value"/>
+  <dyn:connect id1="L3" var1="transformerD_tapChanger_switchOffSignal1" id2="NETWORK" var2="B3_switchOff_value"/>
+  <dyn:connect id1="L3" var1="load_switchOffSignal1" id2="NETWORK" var2="B3_switchOff_value"/>
+  <dyn:connect id1="G1" var1="generator_terminal" id2="NETWORK" var2="B1_ACPIN"/>
+  <dyn:connect id1="G1" var1="generator_switchOffSignal1" id2="NETWORK" var2="B1_switchOff_value"/>
+  <dyn:connect id1="G2" var1="generator_terminal" id2="NETWORK" var2="B2_ACPIN"/>
+  <dyn:connect id1="G2" var1="generator_switchOffSignal1" id2="NETWORK" var2="B2_switchOff_value"/>
+</dyn:dynamicModelsArchitecture>

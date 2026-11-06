@@ -1,0 +1,60 @@
+#
+# Copyright (c) 2025-2026, RTE (https://www.rte-france.com)
+# See AUTHORS.md
+# SPDX-License-Identifier: MPL-2.0
+# This file is part of Twin-CR, a platform for real-time cyber-physical
+# co-simulation of power systems.
+#
+
+services:
+  garage:
+    image: dxflrs/garage:v2.2.0
+    container_name: garage-twincr
+    ports:  # bind port for upload script to be used from host
+      - "3900:3900"
+    expose: # expose remaining ports defined in garage-dev.toml for information (used in docker context)
+      - "3901"
+      - "3902"
+      - "3903"
+    restart: unless-stopped
+    environment:
+      # Secrets of garage-dev.toml, required (compose stops if one is missing): set them in .env,
+      # see .env-example. The garage CLI run with "docker exec" (init_garage.sh) reads the RPC
+      # secret from the same variable.
+      GARAGE_RPC_SECRET: ${GARAGE_RPC_SECRET:?}
+      GARAGE_ADMIN_TOKEN: ${GARAGE_ADMIN_TOKEN:?}
+      GARAGE_METRICS_TOKEN: ${GARAGE_METRICS_TOKEN:?}
+    volumes:
+      - type: bind
+        source: ./garage-dev.toml
+        target: /etc/garage.toml
+      - type: bind
+        source: ./garage-data/meta
+        target: /var/lib/garage/meta
+        bind:
+          create_host_path: true
+      - type: bind
+        source: ./garage-data/data
+        target: /var/lib/garage/data
+        bind:
+          create_host_path: true
+
+  garage-webui:
+    image: khairul169/garage-webui:latest
+    container_name: garage-webui
+    restart: unless-stopped
+    volumes:
+      - type: bind
+        source: ./garage-dev.toml
+        target: /etc/garage.toml
+        read_only: true
+    ports:
+      - "3909:3909"
+    environment:
+      API_BASE_URL: "http://garage:3903"
+      API_ADMIN_KEY: ${GARAGE_ADMIN_TOKEN:?}  # garage-dev.toml no longer holds admin_token
+      S3_ENDPOINT_URL: "http://garage:3900"
+      NO_PROXY: "garage"
+      no_proxy: "garage"
+    depends_on:
+      - garage

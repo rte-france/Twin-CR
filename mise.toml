@@ -1,0 +1,18 @@
+#
+# Copyright (c) 2025-2026, RTE (https://www.rte-france.com)
+# See AUTHORS.md
+# SPDX-License-Identifier: MPL-2.0
+# This file is part of Twin-CR, a platform for real-time cyber-physical
+# co-simulation of power systems.
+#
+
+# Tools used by setup.sh and the native runs, installed by setup.sh with mise (https://mise.jdx.dev, required).
+# Docker (Docker Desktop on Mac) is not handled by mise and must be installed separately.
+[tools]
+python = "3.11"              # setup.sh, examples config.sh (dynawo_toolbox venv), NRT tests (same as the CI)
+uv = "latest"                # configurator_client, session-manager (they get their own Python 3.14 from uv)
+node = "24"                  # Argus native run (same as envs/Dockerfile.argus.AppImage)
+pnpm = "10.18.3"
+jq = "latest"                # envs/fetch_simulators.sh
+go = "1.23.6"                # pre-commit gitleaks hook
+"pipx:pre-commit" = "4.7.0"   # Pinned: the git hook stores the path of this install, which contains the version

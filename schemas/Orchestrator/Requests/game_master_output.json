@@ -1,0 +1,20 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "GameMasterPublication",
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "Identifier of the published signal"
+    },
+    "value": {
+      "type": ["boolean", "integer", "number"],
+      "description": "Value of the signal"
+    },
+    "time": {
+      "type": "number",
+      "description": "Timestamp of the signal"
+    }
+  },
+  "required": ["id", "value", "time"]
+}

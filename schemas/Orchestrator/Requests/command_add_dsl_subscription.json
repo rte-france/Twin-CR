@@ -1,0 +1,16 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "AddDslSubscriptionCommandRequest",
+  "type": "object",
+  "properties": {
+    "command": {
+      "type": "string",
+      "const": "add_dsl_subscription"
+    },
+    "id": {
+      "type": "string",
+      "description": "ID of the information to add"
+    }
+  },
+  "required": ["command", "id"]
+}

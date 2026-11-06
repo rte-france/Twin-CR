@@ -1,0 +1,13 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "TimePublication",
+  "description": "Publication of the current simulation time on topic 'time'",
+  "type": "object",
+  "properties": {
+    "current_time": {
+      "type": "number",
+      "description": "Current simulation time"
+    }
+  },
+  "required": ["current_time"]
+}

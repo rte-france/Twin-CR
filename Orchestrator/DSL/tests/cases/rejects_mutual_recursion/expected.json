@@ -1,0 +1,4 @@
+{
+  "applied": [],
+  "load_error": "Recursive function call: ping -> pong -> ping (line 3: \"after 1 seconds, ping($breaker);\") (line 3: \"after 1 seconds, pong($breaker);\") (line 11: \"after 2 seconds, ping(\"01_1_breaker\");\")"
+}

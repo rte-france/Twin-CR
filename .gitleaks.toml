@@ -1,0 +1,73 @@
+#
+# Copyright (c) 2025-2026, RTE (https://www.rte-france.com)
+# See AUTHORS.md
+# SPDX-License-Identifier: MPL-2.0
+# This file is part of Twin-CR, a platform for real-time cyber-physical
+# co-simulation of power systems.
+#
+
+# gitleaks configuration, read by the pre-commit hook and by
+# .github/workflows/secret-scan.yml.
+#
+# The default gitleaks rules detect tokens and keys with a known format.
+# They do not detect a plain password written in a file, such as
+# `password: s3cret`. The three rules below cover that case.
+
+title = "Twin-CR secret scanning"
+
+[extend]
+useDefault = true
+
+# password = "value", "password": "value", PASSWORD: 'value', in any file.
+[[rules]]
+id = "password-literal-quoted"
+description = "Literal password between quotes"
+regex = '''(?i)(?:^|[^a-z0-9])[a-z0-9_-]*(?:password|passwd|_pwd)["']?[ \t]*(?:=|:|=>)[ \t]*["']([^"'\r\n]{3,64})["']'''
+secretGroup = 1
+keywords = ["password", "passwd", "_pwd"]
+
+# PASSWORD=value, password: value, without quotes. Limited to configuration,
+# environment and script files: in source code an unquoted value is an
+# expression (settings.password, a variable name...).
+[[rules]]
+id = "password-literal-unquoted"
+description = "Literal password without quotes in a configuration, environment or script file"
+regex = '''(?i)(?:^|[^a-z0-9])[a-z0-9_-]*(?:password|passwd|_pwd)["']?[ \t]*(?:=|:|=>)[ \t]*([^\s"',;<>()\[\]`&|]{3,64})'''
+path = '''(?i)(^|/)(\.env[^/]*|[^/]*\.(ya?ml|sh|bash|j2|hcl|conf|cfg|ini|properties|toml|env)|Dockerfile[^/]*|docker-compose[^/]*)$'''
+secretGroup = 1
+keywords = ["password", "passwd", "_pwd"]
+
+# scheme://user:value@host, for example a database connection string.
+[[rules]]
+id = "password-in-url"
+description = "Literal password in a URL (scheme://user:password@host)"
+regex = '''[a-zA-Z][a-zA-Z0-9+.-]{1,20}://[^:/@\s"'<>]{1,64}:([^@\s"'<>/]{3,64})@'''
+secretGroup = 1
+keywords = ["://"]
+
+# Values that are not secrets. Matched against the captured value only, and
+# applied to the three rules above only (the default rules keep their own
+# allowlists). Empty values never match: the rules require 3 characters.
+[[allowlists]]
+description = "Templates, variables, command substitutions and null values"
+targetRules = ["password-literal-quoted", "password-literal-unquoted", "password-in-url"]
+regexTarget = "secret"
+regexes = [
+  # Jinja template: {{ db_password }}, {% ... %}
+  '''\{\{|\{%''',
+  # Shell or Compose variable: ${DB_PASSWORD}, ${DB_PASSWORD:-}, $DB_PASSWORD
+  '''\$\{[^}]*\}|^\$[A-Za-z_][A-Za-z0-9_]*$''',
+  # Shell command substitution: password="$(openssl rand -hex 16)", `...`
+  '''^\$\(|^`''',
+  # Null value: password: null, password = None
+  '''(?i)^(null|none|nil)$''',
+]
+
+# The default generic-api-key rule reads "from config import A_KEY, B_KEY" as
+# a key (A_KEY) followed by its value (B_KEY). An import line never holds a
+# secret.
+[[allowlists]]
+description = "Python import lines"
+targetRules = ["generic-api-key"]
+regexTarget = "line"
+regexes = ['''^\s*(from\s+[\w.]+\s+)?import\s''']

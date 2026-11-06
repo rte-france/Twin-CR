@@ -1,0 +1,62 @@
+/*
+Copyright (c) 2026, RTE (https://www.rte-france.com)
+See AUTHORS.md
+SPDX-License-Identifier: MPL-2.0
+This file is part of Twin-CR, a platform for real-time cyber-physical
+co-simulation of power systems.
+*/
+
+@layer components {
+    .ag-theme-quartz {
+        /* Couleurs principales */
+        --ag-background-color: var(--bg);
+        --ag-foreground-color: var(--fg);
+        --ag-data-color: var(--fg);
+
+        /* Bordures */
+        --ag-border-color: var(--table-border-color);
+        --ag-wrapper-border-color: var(--border);
+        --ag-secondary-border-color: var(--border-light);
+
+        /* En-têtes et lignes */
+        --ag-header-background-color: var(--table-header-bg);
+        --ag-header-foreground-color: var(--title-color);
+        --ag-odd-row-background-color: var(--table-alternate-bg);
+        --ag-row-hover-color: var(--theme-hover);
+
+        /* Couleurs d'accentuation (sélection, focus, checkbox) */
+        --ag-active-color: var(--links);
+        --ag-selected-row-background-color: var(--sidebar-active-bg);
+        --ag-checkbox-checked-color: var(--links);
+        --ag-input-focus-border-color: var(--links);
+
+        /* Menus, Popovers et Filtres */
+        --ag-menu-background-color: var(--popover-bg);
+        --ag-control-panel-background-color: var(--popover-bg);
+        --ag-popup-shadow: var(--popover-shadow);
+
+        /* Typographie */
+        --ag-font-family: var(--font);
+        --ag-font-size: 14px; /* Ou var(--code-font-size) si vous préférez */
+
+        /* Boutons standards dans la grille */
+        --ag-advanced-filter-builder-button-color: var(--download-btn-color);
+        --ag-advanced-filter-builder-button-background-color: var(
+            --download-btn-bg
+        );
+    }
+
+    .dark .ag-theme-quartz {
+        --ag-border-color: var(--border-light);
+        --ag-icon-font-color: var(--icons);
+    }
+
+    .no-spinners::-webkit-outer-spin-button,
+    .no-spinners::-webkit-inner-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+    }
+    .no-spinners {
+        -moz-appearance: textfield;
+    }
+}

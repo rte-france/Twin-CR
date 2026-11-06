@@ -1,0 +1,14 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<parametersSet xmlns="http://www.rte-france.com/dynawo">
+  <set id="Fault">
+    <par type="DOUBLE" name="fault_RPu" value="0.025"/>
+    <par type="DOUBLE" name="fault_XPu" value="0.025"/>
+    <par type="DOUBLE" name="fault_tBegin" value="5"/>
+    <par type="DOUBLE" name="fault_tEnd" value="5.1"/>
+  </set>
+  <set id="L4032-4044_state">
+    <par type="DOUBLE" name="event_tEvent" value="5.1"/>
+    <par type="BOOL" name="event_connectOrigin" value="false"/>
+    <par type="BOOL" name="event_connectExtremity" value="false"/>
+  </set>
+</parametersSet>

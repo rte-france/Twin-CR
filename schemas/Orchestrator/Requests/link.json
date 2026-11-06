@@ -1,0 +1,17 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Link",
+  "type": "object",
+  "description": "A communication link between two nodes",
+  "properties": {
+    "from": {
+      "type": "string",
+      "description": "Source node of the link"
+    },
+    "to": {
+      "type": "string",
+      "description": "Destination node of the link"
+    }
+  },
+  "required": ["from", "to"]
+}

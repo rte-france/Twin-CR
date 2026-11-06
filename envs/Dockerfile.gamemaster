@@ -1,0 +1,42 @@
+#
+# Copyright (c) 2025-2026, RTE (https://www.rte-france.com)
+# See AUTHORS.md
+# SPDX-License-Identifier: MPL-2.0
+# This file is part of Twin-CR, a platform for real-time cyber-physical
+# co-simulation of power systems.
+#
+
+# Use an official lightweight Python image. Force amd64 architecture as no other pypowsybl wheels are available
+FROM --platform=linux/amd64 python:3.10-slim AS builder
+
+WORKDIR /app
+
+# Keep pip leaner and avoid version checks on each install
+ENV PIP_DISABLE_PIP_VERSION_CHECK=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PIP_ROOT_USER_ACTION=ignore
+
+# Copy dependency definitions first to maximise Docker layer caching
+COPY envs/requirements-rwth.txt .
+
+# Install dependencies while caching wheels between builds
+RUN --mount=type=cache,target=/root/.cache/pip \
+    pip install -r requirements-rwth.txt
+
+# Copy only the Game Master application code into the build context
+COPY gamemaster/ ./gamemaster/
+
+FROM --platform=linux/amd64 python:3.10-slim
+LABEL org.opencontainers.image.licenses="MPL-2.0"
+
+WORKDIR /app
+
+# Reuse the packages and app code prepared in the builder stage
+COPY --from=builder /usr/local /usr/local
+COPY --from=builder /app/gamemaster ./gamemaster
+
+# Expose port 8000.
+EXPOSE 8000
+
+# Start the FastAPI application with uvicorn and multiple workers.
+CMD ["uvicorn", "gamemaster.app.main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "4"]

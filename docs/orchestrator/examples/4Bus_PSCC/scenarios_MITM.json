@@ -1,0 +1,23 @@
+[
+    {
+        "t_start": 0,
+        "command": "change_network_characteristics",
+        "links": [],
+        "nodes": ["substation_2"],
+        "characteristics": {
+            "corruption_functions": [
+                {
+                    "type": "ZeroOutMeasurementCorruption",
+                    "likelihood": 1,
+                    "zero_value": 1
+                }
+            ]
+        }
+    },
+    {
+        "t_start": 5,
+        "command": "command_injection_game_master",
+        "command_id": "G2_state",
+        "value": 1
+    }
+]

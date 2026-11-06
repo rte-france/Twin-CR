@@ -1,0 +1,46 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "IIDM Command Schema For orchestrator",
+    "type": "object",
+    "properties": {
+        "command": {
+            "type": "string",
+            "enum": ["iidm_command"]
+        },
+        "t_start": {
+            "type": "number",
+            "minimum": 0
+        },
+        "iidm_id": {
+            "type": "string"
+        },
+        "attribute": {
+            "type": "string",
+            "enum": ["P", "Q", "state"]
+        },
+        "value": {
+            "type": "number"
+        }
+    },
+    "oneOf": [
+        {
+            "required": [
+                "command",
+                "t_start",
+                "iidm_id",
+                "attribute",
+                "value"
+            ]
+        },
+        {
+            "required": [
+                "command",
+                "t_start_from_now",
+                "iidm_id",
+                "attribute",
+                "value"
+            ]
+        }
+    ],
+    "additionalProperties": false
+}

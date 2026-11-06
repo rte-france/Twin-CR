@@ -1,0 +1,14 @@
+[
+    {
+        "id": "VoltageCollapse",
+        "type": "VoltageCollapseAutomaton",
+        "location": "CC",
+        "t_0": 10,
+        "inputs": ["U_B1", "U_B2", "U_B3", "U_B4"],
+        "outputs": ["L2_deltaP"],
+        "outputs_routing": {
+            "L2_deltaP": ["CC", "Load_2"]
+        },
+        "sampling_period_ms": 100
+    }
+]

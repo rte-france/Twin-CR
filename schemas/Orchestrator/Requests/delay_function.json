@@ -1,0 +1,44 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "DelayFunction",
+  "type": "object",
+  "description": "Delay function applied to links or nodes",
+  "oneOf": [
+    {
+      "title": "FixedDelayFunction",
+      "type": "object",
+      "description": "Apply a constant delay",
+      "properties": {
+        "type": {
+          "type": "string",
+          "const": "fixed"
+        },
+        "delay": {
+          "type": "number",
+          "description": "Fixed delay in seconds"
+        }
+      },
+      "required": ["type", "delay"]
+    },
+    {
+      "title": "GaussianDelayFunction",
+      "type": "object",
+      "description": "Apply a delay following a gaussian distribution",
+      "properties": {
+        "type": {
+          "type": "string",
+          "const": "gauss"
+        },
+        "mean": {
+          "type": "number",
+          "description": "Mean of the Gaussian distribution"
+        },
+        "stddev": {
+          "type": "number",
+          "description": "Standard deviation of the Gaussian distribution"
+        }
+      },
+      "required": ["type", "mean", "stddev"]
+    }
+  ]
+}

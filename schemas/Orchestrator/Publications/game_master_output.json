@@ -1,0 +1,21 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "GameMasterPublication",
+  "description": "Publication on topic 'GameMaster.<subtopic>' containing a single dynamic key mapped to a numeric or boolean value, the subtopic is generally the substation of the associated element (for elements which are in a substation, else it is generally the name of the element itself)",
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "Identifier of the published signal"
+    },
+    "value": {
+      "type": ["boolean", "integer", "number"],
+      "description": "Value of the signal"
+    },
+    "time": {
+      "type": "number",
+      "description": "Timestamp of the message"
+    }
+  },
+  "required": ["id", "value", "time"]
+}

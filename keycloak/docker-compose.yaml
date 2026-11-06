@@ -1,0 +1,32 @@
+#
+# Copyright (c) 2025-2026, RTE (https://www.rte-france.com)
+# See AUTHORS.md
+# SPDX-License-Identifier: MPL-2.0
+# This file is part of Twin-CR, a platform for real-time cyber-physical
+# co-simulation of power systems.
+#
+
+services:
+  keycloak:
+    build: .
+    command:
+      - start-dev
+      - --import-realm
+      - --https-key-store-file=/opt/keycloak/conf/tls/server.p12  # Its password is generated with it, see Dockerfile
+    environment:
+      # The admin password is required (compose stops if it is missing): set it in .env, see .env-example
+      KEYCLOAK_ADMIN: ${KEYCLOAK_ADMIN:-admin}
+      KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:?}
+    volumes:
+      - ./imports_keycloak/realm-export.json:/opt/keycloak/data/import/realm.json:ro
+      - ./themes:/opt/keycloak/themes
+    ports:
+      - "${KEYCLOAK_PORT}:8443"  # Interpolated from the root .env (or keycloak/.env when run standalone)
+
+  keycloak-seed:
+    build: ./keycloak-seed
+    environment:
+      KEYCLOAK_ADMIN: ${KEYCLOAK_ADMIN:-admin}
+      KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:?}
+    depends_on:
+      - keycloak

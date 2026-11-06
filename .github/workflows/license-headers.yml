@@ -1,0 +1,33 @@
+#
+# Copyright (c) 2026, RTE (https://www.rte-france.com)
+# See AUTHORS.md
+# SPDX-License-Identifier: MPL-2.0
+# This file is part of Twin-CR, a platform for real-time cyber-physical
+# co-simulation of power systems.
+#
+
+name: License headers
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  license-headers:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          # licensing.py reads the git history for the copyright years
+          fetch-depth: 0
+
+      - name: Add or update the license headers
+        run: python3 licensing.py
+
+      - name: Fail if a header is missing or outdated
+        run: git diff --exit-code

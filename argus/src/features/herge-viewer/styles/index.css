@@ -1,0 +1,43 @@
+/*
+Copyright (c) 2026, RTE (https://www.rte-france.com)
+See AUTHORS.md
+SPDX-License-Identifier: MPL-2.0
+This file is part of Twin-CR, a platform for real-time cyber-physical
+co-simulation of power systems.
+*/
+
+@layer base {
+    :root {
+        --srv-schemas: #bdc3c7;
+        --srv-cad: #7f8c8d;
+        --srv-search: #f1c40f;
+        --srv-barres: #e67e22;
+        --srv-liaisons: #3498db;
+        --srv-transfo: #f39c12;
+        --srv-automates: #1abc9c;
+        --srv-postes: #2ecc71;
+        --srv-compensation: #9b59b6;
+        --srv-production: #8e44ad;
+        --srv-coupure: #e74c3c;
+        --srv-sdq: #c0392b;
+        --srv-annotations: #d35400;
+        --srv-sport: #e91e63;
+    }
+
+    .dark {
+        --srv-schemas: #8e9599;
+        --srv-cad: #95a5a6;
+        --srv-search: #fcd955;
+        --srv-barres: #f89e52;
+        --srv-liaisons: #5faee3;
+        --srv-transfo: #f5b041;
+        --srv-automates: #48c9b0;
+        --srv-postes: #58d68d;
+        --srv-compensation: #af7ac5;
+        --srv-production: #a569bd;
+        --srv-coupure: #ec7063;
+        --srv-sdq: #cd6155;
+        --srv-annotations: #e57339;
+        --srv-sport: #f06292;
+    }
+}

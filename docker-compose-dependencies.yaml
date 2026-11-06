@@ -1,0 +1,44 @@
+#
+# Copyright (c) 2025-2026, RTE (https://www.rte-france.com)
+# See AUTHORS.md
+# SPDX-License-Identifier: MPL-2.0
+# This file is part of Twin-CR, a platform for real-time cyber-physical
+# co-simulation of power systems.
+#
+
+services:
+  clickhouse:
+    container_name: clickhouse
+    image: clickhouse/clickhouse-server:latest
+    ports:
+      - "${CLICKHOUSE_EXPOSED_PORT}:${CLICKHOUSE_PORT}"
+    environment:
+      - CLICKHOUSE_SKIP_USER_SETUP=1
+      - TZ=Europe/Paris
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:${CLICKHOUSE_PORT}/ping"]
+      interval: 1s
+      timeout: 0.5s
+      start_period: 20s
+    env_file:
+      - .env
+    volumes:
+      - ./clickhouse/clickhouse_config.xml:/etc/clickhouse-server/config.d/config.xml
+      - clickhouse-data:/var/lib/clickhouse  # session hot storage: kept by `docker compose down`, dropped by `down -v`
+
+  nats:
+    container_name: nats
+    image: nats:latest
+    volumes:
+      - ./envs:/envs
+    command: ["-c", "envs/nats.conf"]
+    ports:
+      - "${NATS_EXPOSED_PORT}:${NATS_PORT}" # = 4222
+    expose:
+      - "8222"
+      - "9222"
+    env_file:
+      - .env
+
+volumes:
+  clickhouse-data:

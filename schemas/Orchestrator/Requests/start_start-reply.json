@@ -1,0 +1,26 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "StartCommandResponse",
+  "type": "object",
+  "oneOf": [
+    {
+      "title": "StartSuccess",
+      "properties": {
+        "status": {
+          "type": "string",
+          "const": "STARTED",
+          "description": "Indicates the simulation was successfully started"
+        },
+        "simulation_id": {
+          "type": "string",
+          "description": "Unique identifier for the started simulation",
+          "examples": ["sim_2025_12_15_15_54_14"]
+        }
+      },
+      "required": ["status", "simulation_id"]
+    },
+    {
+      "$ref": "error_response.json"
+    }
+  ]
+}

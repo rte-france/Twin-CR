@@ -1,0 +1,7 @@
+[
+    {
+        "id": "PL1_state",
+        "destination": "substation_1",
+        "simulator": "dynawo"
+    }
+]

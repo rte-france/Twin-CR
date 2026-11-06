@@ -1,0 +1,89 @@
+#
+# Copyright (c) 2025-2026, RTE (https://www.rte-france.com)
+# See AUTHORS.md
+# SPDX-License-Identifier: MPL-2.0
+# This file is part of Twin-CR, a platform for real-time cyber-physical
+# co-simulation of power systems.
+#
+
+include:
+  - docker-compose-dependencies.yaml
+
+services:
+  argus-backend-scada:
+    container_name: argus-backend-scada
+    image: argus-backend-scada:${ARGUS_BACKENDS_BUILD_VARIANT:-private}
+    build:
+      context: argus-backends
+      dockerfile: Dockerfile.argus-backends
+      target: scada
+      args:
+        BUILD_VARIANT: ${ARGUS_BACKENDS_BUILD_VARIANT:-private}
+    depends_on:
+      nats:
+        condition: service_started
+      clickhouse:
+        condition: service_healthy
+      configurator-client:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://localhost:${SCADA_BACKEND_PORT}/health"]
+      interval: 5s
+      timeout: 10s
+      start_period: 30s
+    entrypoint: ["java", "-Xmx2g", "-XX:+ExitOnOutOfMemoryError", "-jar", "/app/app_scada.jar",
+                 "--http-port", "${SCADA_BACKEND_PORT}",
+                 "--nats-url", "nats://${NATS_HOST}:${NATS_PORT}",
+                 "--config-path", "${CONFIG_PATH}",
+                 "--clickhouse-host", "${CLICKHOUSE_HOST}",
+                 "--clickhouse-port", "${CLICKHOUSE_PORT}",
+                 "--configurator-host", "${CONFIGURATOR_HOST}",
+                 "--configurator-port", "${CONFIGURATOR_PORT}",
+                 "--mode", "${MODE}", "--estim-period", "60"]
+    environment:
+      - NATS_URL=nats://${NATS_HOST}:${NATS_PORT}
+    env_file:
+      - .env
+    volumes:
+      - ./:/home/orchestrator/
+    ports:
+      - "${SCADA_BACKEND_EXPOSED_PORT}:${SCADA_BACKEND_PORT}"
+
+  argus-backend-gm:
+    container_name: argus-backend-gm
+    image: argus-backend-gm:${ARGUS_BACKENDS_BUILD_VARIANT:-private}
+    build:
+      context: argus-backends
+      dockerfile: Dockerfile.argus-backends
+      target: gm
+      args:
+        BUILD_VARIANT: ${ARGUS_BACKENDS_BUILD_VARIANT:-private}
+    depends_on:
+      nats:
+        condition: service_started
+      clickhouse:
+        condition: service_healthy
+      configurator-client:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://localhost:${GAMEMASTER_BACKEND_PORT}/health"]
+      interval: 5s
+      timeout: 10s
+      start_period: 30s
+    entrypoint: ["java", "-Xmx1536m", "-XX:+ExitOnOutOfMemoryError", "-jar", "/app/app_gm.jar",
+                 "--http-port", "${GAMEMASTER_BACKEND_PORT}",
+                 "--nats-url", "nats://${NATS_HOST}:${NATS_PORT}",
+                 "--config-path", "${CONFIG_PATH}",
+                 "--clickhouse-host", "${CLICKHOUSE_HOST}",
+                 "--clickhouse-port", "${CLICKHOUSE_PORT}",
+                 "--configurator-host", "${CONFIGURATOR_HOST}",
+                 "--configurator-port", "${CONFIGURATOR_PORT}",
+                 "--mode", "${MODE}"]
+    environment:
+      - NATS_URL=nats://${NATS_HOST}:${NATS_PORT}
+    env_file:
+      - .env
+    volumes:
+      - ./:/home/orchestrator/
+    ports:
+      - "${GAMEMASTER_BACKEND_EXPOSED_PORT}:${GAMEMASTER_BACKEND_PORT}"

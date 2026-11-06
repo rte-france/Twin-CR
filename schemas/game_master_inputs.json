@@ -1,0 +1,56 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Game Master Inputs Configuration",
+  "description": "List of the commands that can be sent through the game master, to Dynawo or to the asset simulator",
+  "type": "array",
+  "items": {
+    "type": "object",
+    "properties": {
+      "equipmentId": {
+        "type": ["string", "null"],
+        "description": "IIDM equipment identifier, null for a purely dynamic model, which is identified by 'model' instead"
+      },
+      "kind": {
+        "type": "string",
+        "description": "Type of setpoint (typical values include ('P', 'deltaP', 'U', 'deltaU', 'Q', 'state'))"
+      },
+      "id": {
+        "type": "string",
+        "description": "Unique identifier"
+      },
+      "factor": {
+        "type": "number",
+        "description": "Scaling factor from raw units (MW, kV, Hz) to Dynawo units (controls to be sent in raw units). Defaults to 1"
+      },
+      "simulator": {
+        "type": "string",
+        "enum": ["dynawo", "asset_simulator"],
+        "description": "Simulator this entry belongs to; the orchestrator only drives the dynawo ones"
+      },
+      "model": {
+        "type": "string",
+        "description": "Name of the Dynawo model this input belongs to. Always paired with 'variable', and present whenever the input is driven as a parameter rather than through the dyd, whether or not the equipment also has an 'equipmentId'. Required when 'equipmentId' is null, since the model is then the only thing the input can be addressed by"
+      },
+      "model_lib": {
+        "type": "string",
+        "description": "Which kind of Dynawo model it is (e.g. DYNModelRST). For an input with no 'equipmentId' it is what the pypowsybl element type is for IIDM equipment, and is what the DSL names the model by"
+      },
+      "variable": {
+        "type": "string",
+        "description": "Name of the model parameter this input writes. Required alongside 'model' for an input driven as a parameter rather than through the dyd"
+      }
+    },
+    "required": ["equipmentId", "kind", "id", "simulator"],
+    "if": {
+      "properties": {"simulator": {"const": "dynawo"}},
+      "required": ["simulator"]
+    },
+    "then": {
+      "description": "A Dynawo entry is either IIDM equipment (string 'equipmentId') or a purely dynamic model ('model' and 'model_lib')",
+      "anyOf": [
+        {"properties": {"equipmentId": {"type": "string"}}, "required": ["equipmentId"]},
+        {"required": ["model", "model_lib"]}
+      ]
+    }
+  }
+}

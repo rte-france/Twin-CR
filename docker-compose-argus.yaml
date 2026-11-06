@@ -1,0 +1,42 @@
+#
+# Copyright (c) 2025-2026, RTE (https://www.rte-france.com)
+# See AUTHORS.md
+# SPDX-License-Identifier: MPL-2.0
+# This file is part of Twin-CR, a platform for real-time cyber-physical
+# co-simulation of power systems.
+#
+
+include:
+  - docker-compose-core.yaml
+
+services:
+  argus:
+    profiles: ["argus"]
+    container_name: argus
+    environment:
+      - DISPLAY=${DISPLAY}
+      - TZ=Europe/Paris
+      - RUST_BACKTRACE=full
+    image: argus_ai
+    build:
+      context: .
+      dockerfile: envs/Dockerfile.argus.AppImage
+    depends_on:
+      nats:
+        condition: service_started
+      clickhouse:
+        condition: service_healthy
+      argus-backend-gm:
+        condition: service_started  # Initialisation handled in argus
+      argus-backend-scada:
+        condition: service_started
+    volumes:
+      - /tmp/.X11-unix:/tmp/.X11-unix
+      - ${HOME}/.Xauthority:/root/.Xauthority
+      - ./:/home/orchestrator/
+      - ./com.argus.app/:/root/.local/share/com.argus.app/
+      - ./docs:/project_docs
+    env_file:
+      - .env
+    privileged: true
+    command: ["/bin/bash", "-c", "unset http_proxy https_proxy ftp_proxy no_proxy HTTP_PROXY HTTPS_PROXY FTP_PROXY NO_PROXY; /app/argus-release.AppImage"]

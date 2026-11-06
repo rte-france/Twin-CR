@@ -1,0 +1,49 @@
+{
+    "links_characteristics_by_link_type": [
+        {
+            "fromtype": "RTU",
+            "totype": "ARP",
+            "drop_function": {
+                "type": "fixed",
+                "value": false
+            },
+            "corruption_functions": [
+                {
+                    "type": "RandomNoiseMeasurementCorruption",
+                    "likelihood": 0.01,
+                    "noise_min": -0.01,
+                    "noise_max": 0.01
+                }
+            ]
+        },
+        {
+            "fromtype": "ARP",
+            "totype": "SCADA",
+            "delay_function": {
+                "type": "fixed",
+                "delay": 0.1
+            }
+        }
+    ],
+    "links_characteristics": [
+        {
+            "from": "substation_1",
+            "fromtype": "RTU",
+            "to": "ARP_1",
+            "totype": "ARP",
+            "delay_function": {
+                "type": "fixed",
+                "delay": 0.1
+            }
+        }
+    ],
+    "links": [
+        {"from": "substation_1", "fromtype": "RTU", "to": "ARP_1", "totype": "ARP"},
+        {"from": "substation_2", "fromtype": "RTU", "to": "ARP_1", "totype": "ARP"},
+        {"from": "substation_3", "fromtype": "RTU", "to": "ARP_2", "totype": "ARP"},
+        {"from": "substation_4", "fromtype": "RTU", "to": "ARP_2", "totype": "ARP"},
+        {"from": "ARP_1", "fromtype": "ARP", "to": "SCADA", "totype": "SCADA"},
+        {"from": "ARP_2", "fromtype": "ARP", "to": "SCADA", "totype": "SCADA"},
+        {"from": "SCADA", "fromtype": "SCADA", "to": "Load_2", "totype": "LOAD"}
+    ]
+}

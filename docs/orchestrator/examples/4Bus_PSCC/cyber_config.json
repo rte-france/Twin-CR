@@ -1,0 +1,20 @@
+{
+    "links_characteristics_by_link_type": [
+        {"fromtype": "RTU", "totype": "ARP", "delay_function": {"type": "fixed", "delay": 0.01}},
+        {"fromtype": "ARP", "totype": "CC", "delay_function": {"type": "fixed", "delay": 0.1}},
+        {"fromtype": "RTU", "totype": "LOAD", "delay_function": {"type": "fixed", "delay": 0.01}},
+        {"fromtype": "LOAD", "totype": "RTU", "delay_function": {"type": "fixed", "delay": 0.01}}
+    ],
+    "links_characteristics": [
+        {"from": "substation_1", "fromtype": "RTU", "to": "ARP_1", "totype": "ARP", "delay_function": {"type": "fixed", "delay": 0.1}}
+    ],
+    "links": [
+        {"from": "substation_1", "fromtype": "RTU", "to": "ARP_1", "totype": "ARP"},
+        {"from": "substation_2", "fromtype": "RTU", "to": "ARP_1", "totype": "ARP"},
+        {"from": "substation_3", "fromtype": "RTU", "to": "ARP_2", "totype": "ARP"},
+        {"from": "substation_4", "fromtype": "RTU", "to": "ARP_2", "totype": "ARP"},
+        {"from": "ARP_1", "fromtype": "ARP", "to": "CC", "totype": "CC"},
+        {"from": "ARP_2", "fromtype": "ARP", "to": "CC", "totype": "CC"},
+        {"from": "substation_2", "fromtype": "RTU", "to": "Load_2", "totype": "LOAD"}
+    ]
+}

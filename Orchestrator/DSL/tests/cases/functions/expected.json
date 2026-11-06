@@ -1,0 +1,94 @@
+{
+  "applied": [
+    {
+      "command": {
+        "attribute": "state",
+        "command": "iidm_command",
+        "iidm_id": "01_1_breaker",
+        "value": 1.0
+      },
+      "t": 5.0
+    },
+    {
+      "command": {
+        "attribute": "P",
+        "command": "iidm_command",
+        "iidm_id": "01_1",
+        "value": 80.0
+      },
+      "t": 5.0
+    },
+    {
+      "command": {
+        "attribute": "P",
+        "command": "scale_multiplier",
+        "iidm_id": "01_1",
+        "multiplier_increase": -0.15
+      },
+      "t": 8.0
+    },
+    {
+      "command": {
+        "attribute": "state",
+        "command": "iidm_command",
+        "iidm_id": "02_1_breaker",
+        "value": 1.0
+      },
+      "t": 20.0
+    },
+    {
+      "command": {
+        "attribute": "P",
+        "command": "iidm_command",
+        "iidm_id": "02_1",
+        "value": 80.0
+      },
+      "t": 20.0
+    },
+    {
+      "command": {
+        "attribute": "P",
+        "command": "scale_multiplier",
+        "iidm_id": "02_1",
+        "multiplier_increase": -0.15
+      },
+      "t": 23.0
+    },
+    {
+      "command": {
+        "attribute": "P",
+        "command": "scale_multiplier",
+        "iidm_id": "03_1",
+        "multiplier_increase": -0.030000000000000027
+      },
+      "t": 31.0
+    },
+    {
+      "command": {
+        "attribute": "P",
+        "command": "scale_multiplier",
+        "iidm_id": "03_1",
+        "multiplier_increase": -0.030927835051546393
+      },
+      "t": 32.0
+    },
+    {
+      "command": {
+        "attribute": "P",
+        "command": "scale_multiplier",
+        "iidm_id": "03_1",
+        "multiplier_increase": -0.031914893617021156
+      },
+      "t": 33.0
+    },
+    {
+      "command": {
+        "attribute": "P",
+        "command": "scale_multiplier",
+        "iidm_id": "03_1",
+        "multiplier_increase": -0.03296703296703296
+      },
+      "t": 34.0
+    }
+  ]
+}

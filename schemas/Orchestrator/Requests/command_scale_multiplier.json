@@ -1,0 +1,29 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "ScaleMultiplierRequest",
+  "description": "Scale the multiplier of a Dynawo Updatable (UpdatableDiscrete/UpdatableContinuous) associated with an IIDM element, directly in Dynawo, without needing to know the element's current value",
+  "allOf": [
+    { "$ref": "start_time.json" },
+    {
+      "type": "object",
+      "properties": {
+        "command": {
+          "type": "string",
+          "const": "scale_multiplier"
+        },
+        "iidm_id": {
+          "type": "string",
+          "description": "IIDM ID of the element"
+        },
+        "attribute": {
+          "$ref": "iidm_attribute.json"
+        },
+        "multiplier_increase": {
+          "type": "number",
+          "description": "Signed relative change applied to the element's current multiplier (e.g. -0.05 to decrease it by 5% of its current value)"
+        }
+      },
+      "required": ["command", "iidm_id", "attribute", "multiplier_increase"]
+    }
+  ]
+}

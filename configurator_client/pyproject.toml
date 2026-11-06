@@ -1,0 +1,33 @@
+#
+# Copyright (c) 2025-2026, RTE (https://www.rte-france.com)
+# See AUTHORS.md
+# SPDX-License-Identifier: MPL-2.0
+# This file is part of Twin-CR, a platform for real-time cyber-physical
+# co-simulation of power systems.
+#
+
+[project]
+name = "configurator-client"
+version = "0.1.0"
+license = "MPL-2.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.14"
+dependencies = [
+    "boto3==1.35.0",
+    "clickhouse-connect>=0.7",
+    "dotenv>=0.9.9",
+    "fastapi[standard]",
+    "lxml>=6.0.2",
+    "nats-py>=2.13.1",
+    "requests==2.31.0",
+    "toml>=0.10.2",
+    "uvicorn[standard]>=0.22.0",
+]
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+[tool.setuptools.packages.find]
+where = ["."]
+[project.scripts]
+upload_context="src.scripts.upload_context:main"

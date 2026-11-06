@@ -1,0 +1,44 @@
+[
+    {
+        "t_start": 30,
+        "command": "change_network_characteristics",
+        "links": [],
+        "nodes": ["substation_1", "substation_2", "substation_3", "substation_4"],
+        "characteristics": {
+            "drop_function": {
+                "type": "random",
+                "value": 0.5
+            },
+            "corruption_functions": [
+                {
+                    "type": "RandomNoiseMeasurementCorruption",
+                    "likelihood": 0.1,
+                    "noise_min": -0.001,
+                    "noise_max": 0.001
+                }
+            ]
+        }
+    },
+    {
+        "t_start": 20,
+        "command": "command_injection",
+        "command_id": "NETWORK_PL1_breaker1_state_value",
+        "value": 1,
+        "source": "SCADA",
+        "destination": "substation_1"
+    },
+    {
+        "t_start": 20,
+        "command": "command_injection",
+        "command_id": "NETWORK_PL1_breaker2_state_value",
+        "value": 1,
+        "source": "SCADA",
+        "destination": "substation_2"
+    },
+    {
+        "t_start": 50,
+        "command": "command_injection_game_master",
+        "command_id": "NETWORK_G2_breaker_state_value",
+        "value": 1
+    }
+]

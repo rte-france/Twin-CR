@@ -1,0 +1,5 @@
+jars-powsybl-rte-*.tar
+estim-V*-linux.tar.gz
+# Optional user proxy scripts
+set_mvn_opts.sh
+unset_mvn_opts.sh

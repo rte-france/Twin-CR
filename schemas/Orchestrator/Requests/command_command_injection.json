@@ -1,0 +1,38 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "CommandInjectionCommandRequest",
+  "description": "Inject a ControlSent command in the simulation",
+  "allOf": [
+    { "$ref": "start_time.json" },
+    {
+      "type": "object",
+      "properties": {
+        "command": {
+          "type": "string",
+          "const": "command_injection"
+        },
+        "command_id": {
+          "type": "string",
+          "description": "ID of the command to send"
+        },
+        "value": {
+          "type": "number",
+          "description": "Value of the command to send"
+        },
+        "source": {
+          "$ref": "node.json"
+        },
+        "destination": {
+          "$ref": "node.json"
+        }
+      },
+      "required": [
+        "command",
+        "command_id",
+        "value",
+        "source",
+        "destination"
+      ]
+    }
+  ]
+}

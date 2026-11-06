@@ -1,0 +1,20 @@
+{
+  "applied": [
+    {
+      "command": {
+        "attribute": "state",
+        "command": "iidm_command",
+        "iidm_id": "01_1_breaker",
+        "value": 1.0
+      },
+      "t": 6.0
+    }
+  ],
+  "cancellation": {
+    "cancelled": true,
+    "kind": "action",
+    "match": "02_1_breaker",
+    "status_before": "ready"
+  },
+  "reloaded_at": 12.0
+}

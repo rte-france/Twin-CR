@@ -1,0 +1,35 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "ChangeNetworkCharacteristicsCommandRequest",
+  "description": "Command to change network characteristics, must be published on topic 'GameMasterControl.<source>' or 'HMIControl.<source>'",
+  "allOf": [
+    { "$ref": "start_time.json" },
+    {
+      "type": "object",
+      "properties": {
+        "command": {
+          "type": "string",
+          "const": "change_network_characteristics"
+        },
+        "links": {
+          "type": "array",
+          "description": "List of communication links",
+          "items": {"$ref": "link.json"}
+        },
+        "nodes": {
+          "type": "array",
+          "description": "List of communication nodes",
+          "items": {"$ref": "node.json"}
+        },
+        "delay_function": {"$ref": "delay_function.json"},
+        "drop_function": {"$ref": "drop_function.json"},
+        "corruption_functions": {
+          "type": "array",
+          "description": "List of corruption functions",
+          "items": {"$ref": "corruption_function.json"}
+        }
+      },
+      "required": ["command"]
+    }
+  ]
+}

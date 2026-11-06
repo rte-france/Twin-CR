@@ -1,0 +1,64 @@
+#
+# Copyright (c) 2025-2026, RTE (https://www.rte-france.com)
+# See AUTHORS.md
+# SPDX-License-Identifier: MPL-2.0
+# This file is part of Twin-CR, a platform for real-time cyber-physical
+# co-simulation of power systems.
+#
+
+# Developer Certificate of Origin (https://developercertificate.org/): every
+# commit of a pull request must carry a "Signed-off-by: Name <email>" line
+# matching its author (git commit -s adds it).
+#
+# Merge commits are not checked. The squash commit created when a pull request
+# is merged is not part of the pull request, so it is not checked either.
+
+name: DCO
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  signoff:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Check Signed-off-by on every commit
+        env:
+          BASE_REF: ${{ github.event.pull_request.base.ref }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -euo pipefail
+          status=0
+          checked=0
+          merges=$(git rev-list --merges --count "${BASE_SHA}..${HEAD_SHA}")
+          for sha in $(git rev-list --no-merges --reverse "${BASE_SHA}..${HEAD_SHA}"); do
+            checked=$((checked + 1))
+            author="$(git show -s --format='%an <%ae>' "$sha")"
+            # The whole "Name <email>" value must match the author, ignoring case.
+            found=0
+            while IFS= read -r signoff; do
+              signoff="$(printf '%s' "$signoff" | sed -E 's/^[Ss][Ii][Gg][Nn][Ee][Dd]-[Oo][Ff][Ff]-[Bb][Yy]:[[:space:]]*//; s/[[:space:]]+$//')"
+              if [ "${signoff,,}" = "${author,,}" ]; then
+                found=1
+                break
+              fi
+            done < <(git show -s --format='%B' "$sha" | grep -iE '^signed-off-by:' || true)
+            if [ "$found" -eq 1 ]; then
+              echo "ok       ${sha:0:12} $(git show -s --format='%s' "$sha")"
+            else
+              echo "::error::Commit ${sha:0:12} has no \"Signed-off-by: ${author}\" line. Amend it with git commit --amend -s, or sign off the whole branch with git rebase --signoff origin/${BASE_REF}."
+              status=1
+            fi
+          done
+          echo "${checked} commit(s) checked, ${merges} merge commit(s) skipped."
+          exit "$status"

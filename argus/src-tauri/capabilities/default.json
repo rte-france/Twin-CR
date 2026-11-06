@@ -1,0 +1,57 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "default",
+  "description": "Capability for the main window and dynamic instances",
+  "windows": ["*"],
+  "permissions": [
+    {
+      "identifier": "http:default",
+      "allow": [
+        { "url": "http://localhost:46728/*" },
+        { "url": "http://localhost:8000/*" },
+        { "url": "http://twincr-server:8086/*" },
+        { "url": "http://twincr-server:8090/*" },
+        { "url": "http://localhost:8090/*" }
+      ]
+    },
+    {
+      "identifier": "fs:scope",
+      "allow": [
+        { "path": "$HOME/**" },
+        { "path": "$APPDATA/**" },
+        { "path": "$DOCUMENT/**" },
+        { "path": "$DOWNLOAD/**" },
+        { "path": "$DESKTOP/**" }
+      ]
+    },
+    "core:default",
+    "opener:default",
+    "log:default",
+    "core:window:default",
+    "core:window:allow-start-dragging",
+    "core:window:allow-minimize",
+    "core:window:allow-toggle-maximize",
+    "core:window:allow-close",
+    "core:window:allow-set-title",
+    "core:window:allow-title",
+    "core:window:allow-create",
+    "core:window:allow-show",
+    "core:window:allow-set-focus",
+    "core:window:allow-center",
+    "core:webview:default",
+    "core:webview:allow-create-webview-window",
+    "core:webview:allow-create-webview",
+    "core:event:allow-emit",
+    "core:event:allow-listen",
+    "core:event:allow-emit-to",
+    "core:window:allow-get-all-windows",
+    "shell:allow-execute",
+    "shell:allow-open",
+    "shell:allow-kill",
+    "shell:allow-spawn",
+    "dialog:default",
+    "deep-link:default",
+    "fs:default",
+    "fs:allow-write-file"
+  ]
+}

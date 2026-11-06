@@ -1,0 +1,16 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "GetSimulationNameCommandResponse",
+  "type": "object",
+  "properties": {
+    "status": {
+      "type": "string",
+      "const": "OK"
+    },
+    "reply": {
+      "type": "string",
+      "description": "Unique identifier for the started simulation",
+      "examples": ["sim_2025_12_17_12_57_31"]
+    }
+  }
+}

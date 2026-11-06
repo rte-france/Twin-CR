@@ -1,0 +1,88 @@
+{
+  "applied": [
+    {
+      "command": {
+        "command": "change_network_characteristics",
+        "delay_function": {
+          "delay": 0.15,
+          "type": "fixed"
+        },
+        "drop_function": {
+          "type": "random",
+          "value": 0.25
+        },
+        "links": [],
+        "nodes": [
+          "substation_1"
+        ]
+      },
+      "t": 2.0
+    },
+    {
+      "command": {
+        "command": "change_network_characteristics",
+        "corruption_functions": [
+          {
+            "likelihood": 0.2,
+            "shift_value": 0.02,
+            "type": "ShiftMeasurementCorruption"
+          }
+        ],
+        "links": [
+          {
+            "from": "substation_1",
+            "to": "CC"
+          },
+          {
+            "from": "substation_2",
+            "to": "CC"
+          }
+        ],
+        "nodes": [
+          "CC"
+        ]
+      },
+      "t": 4.0
+    }
+  ],
+  "completions": {
+    "after 2 seconds, change network characteristics link from \"": {
+      "replace_from": 58,
+      "suggestions": [
+        "\"CC\"",
+        "\"SCADA\"",
+        "\"substation_1\"",
+        "\"substation_2\""
+      ]
+    },
+    "after 2 seconds, change network characteristics link from \"CC\" to \"": {
+      "replace_from": 66,
+      "suggestions": [
+        "\"SCADA\"",
+        "\"substation_1\"",
+        "\"substation_2\""
+      ]
+    },
+    "after 2 seconds, change network characteristics link from \"CC\" to \"SCADA\", link from \"substation_2\" to \"": {
+      "replace_from": 103,
+      "suggestions": [
+        "\"CC\""
+      ]
+    },
+    "after 2 seconds, change network characteristics link from \"substation_1\" to \"": {
+      "replace_from": 76,
+      "suggestions": [
+        "\"CC\""
+      ]
+    },
+    "after 2 seconds, change network characteristics node \"": {
+      "replace_from": 53,
+      "suggestions": [
+        "\"CC\"",
+        "\"SCADA\"",
+        "\"substation_1\"",
+        "\"substation_2\""
+      ]
+    }
+  }
+}

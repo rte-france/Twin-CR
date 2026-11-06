@@ -1,0 +1,27 @@
+#
+# Copyright (c) 2025-2026, RTE (https://www.rte-france.com)
+# See AUTHORS.md
+# SPDX-License-Identifier: MPL-2.0
+# This file is part of Twin-CR, a platform for real-time cyber-physical
+# co-simulation of power systems.
+#
+
+version: "3"
+services:
+  configurator-client:
+    container_name: configurator-client
+    build:
+      context: .
+      dockerfile: Dockerfile-no-uv
+    volumes:
+      - ./:/home/orchestrator/configurator_client
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:${CONFIGURATOR_PORT}/status" ]
+      interval: 1s
+      timeout: 0.5s
+    ports:
+      - "${CONFIGURATOR_EXPOSED_PORT}:${CONFIGURATOR_PORT}"
+    environment:
+      - NATS_URL=nats://${NATS_HOST}:${NATS_PORT}
+    env_file:
+      - .env

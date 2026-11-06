@@ -1,0 +1,4 @@
+{
+  "applied": [],
+  "load_error": "No game master input with iidm this_breaker_does_not_exist and attribute state (line 5: \"after 4 seconds, open switch \"this_breaker_does_not_exist\";\")"
+}

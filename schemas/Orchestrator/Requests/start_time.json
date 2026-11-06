@@ -1,0 +1,37 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "StartTime",
+  "description": "Optional scheduling of command execution",
+  "oneOf": [
+    {
+      "title": "Immediate",
+      "description": "Execute the command immediately",
+      "type": "object"
+    },
+    {
+      "title": "AbsoluteTime",
+      "description": "Execute the command at an absolute simulation time",
+      "type": "object",
+      "properties": {
+        "t_start": {
+          "type": "number",
+          "description": "Absolute time at which to launch the command (in seconds)"
+        }
+      },
+      "required": ["t_start"]
+    },
+    {
+      "title": "Delay",
+      "description": "Execute the command after a delay",
+      "type": "object",
+      "properties": {
+        "t_start_from_now": {
+          "type": "number",
+          "description": "Delay before launching the command (in seconds)",
+          "default": 0
+        }
+      },
+      "required": ["t_start_from_now"]
+    }
+  ]
+}

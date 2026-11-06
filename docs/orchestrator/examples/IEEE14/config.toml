@@ -1,0 +1,78 @@
+#
+# Copyright (c) 2025-2026, RTE (https://www.rte-france.com)
+# See AUTHORS.md
+# SPDX-License-Identifier: MPL-2.0
+# This file is part of Twin-CR, a platform for real-time cyber-physical
+# co-simulation of power systems.
+#
+
+
+##################################################################################
+####                     Configuration template to fill in                    ####
+##################################################################################
+
+
+# Level of information to log, use standard Python level DEBUG, INFO, WARNING...
+log_level = "INFO"
+automata_commands = []
+
+[master]
+period = 10
+speedup = 5
+myEnvDynawo_path = "/home/orchestrator/simulators/dynawo/dynawo.sh"
+
+[input_files]
+dsl_file = "IEEE14.dsl"
+job_file = "IEEE14.jobs"
+dyd_file = "RTConnectors.dyd"  # dyd must be included in the .jobs file
+iidm_file = "IEEE14.iidm"
+game_master_inputs_file = "game_master_inputs.json"
+game_master_outputs_file = "game_master_outputs.json"
+scada_inputs_file = "scada_inputs_no_map.json"
+scada_outputs_file = "scada_outputs_no_map.json"
+cyber_config_file = "cyber_config_fake.json"
+other_files = []
+other_dirs = []
+
+[hmi]
+location = "SCADA"
+state_button_ids = []
+bool_button_ids = []
+#
+# slider_config:
+#   . id : slider identifier
+#   . min : min value to be displayed
+#   . tmin : min value to be sent
+#   . max : max value to be displayed
+#   . tmax : max value to be sent
+#   . val : initial value
+#   . label : text to be shown before the slider
+#   . unit : text to be shown after the slider current value
+#
+sliders = []
+
+subscribed_substations = [">"]
+
+[hmi.plot_data]
+Voltages = ["NETWORK__BUS____1_TN_U_value"]
+
+[game_master]
+state_button_ids = ["NETWORK__BUS____1-BUS____5-1_AC_breaker1_state_value", "NETWORK__BUS____1-BUS____5-1_AC_breaker2_state_value"]
+bool_button_ids = []
+subscribed_substations = [">"]
+#
+# slider_config:
+#   . id : slider identifier
+#   . min : min value to be displayed
+#   . tmin : min value to be sent
+#   . max : max value to be displayed
+#   . tmax : max value to be sent
+#   . val : initial value
+#   . label : text to be shown before the slider
+#   . unit : text to be shown after the slider current value
+#
+sliders = []
+
+[game_master.plot_data]
+Voltages = ["NETWORK__BUS____1_TN_U_value"]
+Flow = ["NETWORK__BUS____1-BUS____5-1_AC_P1_value"]

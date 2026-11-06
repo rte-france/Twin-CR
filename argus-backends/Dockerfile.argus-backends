@@ -1,0 +1,114 @@
+#
+# Copyright (c) 2025-2026, RTE (https://www.rte-france.com)
+# See AUTHORS.md
+# SPDX-License-Identifier: MPL-2.0
+# This file is part of Twin-CR, a platform for real-time cyber-physical
+# co-simulation of power systems.
+#
+
+# powsybl-rte version
+ARG POWSYBL_RTE_VERSION=5.5.0
+
+# "private" (default) allows the SCADA to run the state estimator (installs the RTE-private powsybl-rte jars and the estim binary)
+# "public" disables the state estimator (GM not affected since it does not use it)
+ARG BUILD_VARIANT=private
+
+# Stage 1: Build with Maven and Java 21
+FROM maven:3.9.6-eclipse-temurin-21 AS build-common
+WORKDIR /app
+
+# Copy pom.xml and dependencies (optimise Docker cache)
+COPY ./pom.xml /app/pom.xml
+COPY ./common/pom.xml /app/common/pom.xml
+COPY ./common/model-common/pom.xml /app/common/model-common/pom.xml
+COPY ./common/core-common/pom.xml /app/common/core-common/pom.xml
+COPY ./common/ifl-common/pom.xml /app/common/ifl-common/pom.xml
+COPY ./common/telemetry-common/pom.xml /app/common/telemetry-common/pom.xml
+COPY ./common/api-common/pom.xml /app/common/api-common/pom.xml
+COPY ./gm/pom.xml /app/gm/pom.xml
+COPY ./gm/model-gm/pom.xml /app/gm/model-gm/pom.xml
+COPY ./gm/core-gm/pom.xml /app/gm/core-gm/pom.xml
+COPY ./gm/telemetry-gm/pom.xml /app/gm/telemetry-gm/pom.xml
+COPY ./gm/api-gm/pom.xml /app/gm/api-gm/pom.xml
+COPY ./gm/bootstrap-gm/pom.xml /app/gm/bootstrap-gm/pom.xml
+COPY ./scada/pom.xml /app/scada/pom.xml
+COPY ./scada/model-scada/pom.xml /app/scada/model-scada/pom.xml
+COPY ./scada/commands-scada/pom.xml /app/scada/commands-scada/pom.xml
+COPY ./scada/core-scada/pom.xml /app/scada/core-scada/pom.xml
+COPY ./scada/telemetry-scada/pom.xml /app/scada/telemetry-scada/pom.xml
+COPY ./scada/alarms-scada/pom.xml /app/scada/alarms-scada/pom.xml
+COPY ./scada/api-scada/pom.xml /app/scada/api-scada/pom.xml
+COPY ./scada/estim-rte/pom.xml /app/scada/estim-rte/pom.xml
+COPY ./scada/bootstrap-scada/pom.xml /app/scada/bootstrap-scada/pom.xml
+COPY ./utils/pom.xml /app/utils/pom.xml
+COPY set_mvn_opts.sh* unset_mvn_opts.sh* /tmp/
+
+# Stage 1a (private only): install the RTE-private jars (scada/estim-rte's dependencies)
+FROM build-common AS build-private
+ARG POWSYBL_RTE_VERSION
+ADD jars-powsybl-rte-${POWSYBL_RTE_VERSION}.tar /tmp/
+RUN if [ -x /tmp/set_mvn_opts.sh ]; then /tmp/set_mvn_opts.sh; fi && for jar in powsybl-adn-api powsybl-adn-xml powsybl-hades2-integration powsybl-estim-integration \
+        powsybl-die-importer powsybl-die powsybl-iidm-cvg-extensions-serde \
+        powsybl-iidm-cvg-extensions-api powsybl-iidm-cvg-extensions-impl \
+        powsybl-rte-commons powsybl-iidm-rte-util; do \
+         mvn install:install-file -Dfile=/tmp/$jar-$POWSYBL_RTE_VERSION.jar -DgroupId=com.rte-france.powsybl -DartifactId=$jar -Dversion=$POWSYBL_RTE_VERSION -Dpackaging=jar; \
+        done && \
+    for pom in powsybl-rte-core powsybl-iidm-cvg-extensions powsybl-adn; do \
+        mvn install:install-file -Dfile=/tmp/$pom-$POWSYBL_RTE_VERSION.pom -DgroupId=com.rte-france.powsybl -DartifactId=$pom -Dversion=$POWSYBL_RTE_VERSION -Dpackaging=pom; \
+    done && \
+    if [ -x /tmp/unset_mvn_opts.sh ]; then /tmp/unset_mvn_opts.sh; fi && \
+    rm /tmp/*.jar /tmp/*.pom
+
+# Stage 1a (public only): no private jars installed, scada/estim-rte is left out of the reactor
+FROM build-common AS build-public
+
+# Stage 1b: select the variant, resolve dependencies and build the dependencies
+FROM build-${BUILD_VARIANT} AS build
+ARG BUILD_VARIANT
+RUN if [ -x /tmp/set_mvn_opts.sh ]; then /tmp/set_mvn_opts.sh; fi && \
+    if [ "$BUILD_VARIANT" = "public" ]; then mvn -Dpublic.build=true dependency:go-offline; else mvn dependency:go-offline; fi && \
+    if [ -x /tmp/unset_mvn_opts.sh ]; then /tmp/unset_mvn_opts.sh; fi
+
+# Copy sources and build
+COPY ./common/ /app/common/
+COPY ./gm/ /app/gm/
+COPY ./scada/ /app/scada/
+COPY ./utils/ /app/utils/
+RUN if [ -x /tmp/set_mvn_opts.sh ]; then /tmp/set_mvn_opts.sh; fi && \
+    if [ "$BUILD_VARIANT" = "public" ]; then mvn -Dpublic.build=true clean package -DskipTests; else mvn clean package -DskipTests; fi && \
+    if [ -x /tmp/unset_mvn_opts.sh ]; then /tmp/unset_mvn_opts.sh; fi && \
+    rm -f /tmp/*.sh
+
+# Stage 2: GM image (native arch)
+FROM eclipse-temurin:21-jre-alpine AS gm
+LABEL org.opencontainers.image.licenses="MPL-2.0"
+
+ARG POWSYBL_RTE_VERSION
+WORKDIR /app
+COPY --from=build /app/gm/bootstrap-gm/target/bootstrap-gm-${POWSYBL_RTE_VERSION}.jar app_gm.jar
+WORKDIR /home/orchestrator/
+EXPOSE 8083
+ENTRYPOINT ["java", "-jar", "/app/app_gm.jar"]
+
+# Stage 3: SCADA image (amd64 for the private build only to use estim)
+FROM --platform=linux/amd64 eclipse-temurin:21-jre AS scada-private
+
+ARG POWSYBL_RTE_VERSION
+WORKDIR /app
+COPY --from=build /app/scada/bootstrap-scada/target/bootstrap-scada-${POWSYBL_RTE_VERSION}.jar app_scada.jar
+COPY itools_config.yml /root/.itools/config.yml
+ADD estim-V6.9.2.6-linux.tar.gz /app/
+
+FROM eclipse-temurin:21-jre AS scada-public
+
+ARG POWSYBL_RTE_VERSION
+WORKDIR /app
+COPY --from=build /app/scada/bootstrap-scada/target/bootstrap-scada-${POWSYBL_RTE_VERSION}.jar app_scada.jar
+COPY itools_config.yml /root/.itools/config.yml
+
+# Stage 3b: select the variant
+FROM scada-${BUILD_VARIANT} AS scada
+LABEL org.opencontainers.image.licenses="MPL-2.0"
+WORKDIR /home/orchestrator/
+EXPOSE 8082
+ENTRYPOINT ["java", "-jar", "/app/app_scada.jar"]

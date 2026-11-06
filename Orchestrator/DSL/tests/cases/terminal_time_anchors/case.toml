@@ -1,0 +1,19 @@
+#
+# Copyright (c) 2025-2026, RTE (https://www.rte-france.com)
+# See AUTHORS.md
+# SPDX-License-Identifier: MPL-2.0
+# This file is part of Twin-CR, a platform for real-time cyber-physical
+# co-simulation of power systems.
+#
+
+duration = 30
+period = 1.0
+
+# Submitted at t=10, the way the terminal does. 'after 5 seconds' lands at 15, 'at 20 seconds' at 20, and
+# 'at 4 seconds' has already gone by.
+command_at = 10.0
+command = """
+after 5 seconds, open switch "01_1_breaker";
+at 20 seconds, close switch "01_1_breaker";
+at 4 seconds, open switch "02_1_breaker";
+"""

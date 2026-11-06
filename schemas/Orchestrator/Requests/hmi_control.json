@@ -1,0 +1,62 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Command",
+  "description": "List of valid commands that can be sent to the topic 'HMIControl.<source>'",
+  "oneOf": [
+    { "$ref": "command.json" },
+    {
+      "title": "HMICommand",
+      "description": "Command with optional TASE.2 extension, will generate a ControlSent event if sent to the topic 'HMIControl.<source>'",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Identifier of the control signal. If not specified, \"tase2\" must be provided and its \"tase2_id\" is used to resolve the identifier"
+        },
+        "value": {
+          "oneOf": [
+            { "type": "boolean" },
+            { "type": "integer" },
+            { "type": "number" }
+          ],
+          "description": "Control value"
+        },
+        "tase2": {
+          "type": "object",
+          "description": "Optional TASE.2 extension",
+          "properties": {
+            "tase2_id": {
+              "type": "string",
+              "description": "TASE.2 data type identifier"
+            },
+            "signalisation_type": {
+              "type": "string",
+              "enum": ["TS", "TC", "TVC", "TM", "CG"],
+              "description": "Signalisation type"
+            },
+            "cause": {
+              "type": "integer",
+              "description": "Cause of transmission code"
+            },
+            "validity": {
+              "type": "integer",
+              "description": "Validity state code",
+              "default": 0
+            },
+            "operatorBlocked": {
+              "type": "boolean",
+              "description": "Indicates whether the signal is operator-blocked",
+              "default": false
+            }
+          },
+          "required": ["tase2_id", "signalisation_type"]
+        }
+      },
+      "required": ["value"],
+      "anyOf": [
+        { "required": ["id"] },
+        { "required": ["tase2"] }
+      ]
+    }
+  ]
+}

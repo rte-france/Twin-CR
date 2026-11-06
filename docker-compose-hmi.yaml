@@ -1,0 +1,37 @@
+#
+# Copyright (c) 2025-2026, RTE (https://www.rte-france.com)
+# See AUTHORS.md
+# SPDX-License-Identifier: MPL-2.0
+# This file is part of Twin-CR, a platform for real-time cyber-physical
+# co-simulation of power systems.
+#
+
+include:
+  - docker-compose-core.yaml
+
+services:
+  hmi:
+    profiles: ["hmi"]
+    container_name: hmi
+    build:
+      context: .
+      dockerfile: envs/Dockerfile.hmi
+    depends_on:
+      twincr-core:
+        condition: service_healthy
+        restart: true
+      nats:
+        condition: service_started
+      clickhouse:
+        condition: service_healthy
+    environment:
+      - DISPLAY=${DOCKER_DISPLAY:-${DISPLAY}}
+      - TZ=Europe/Paris
+      - NATS_URL=nats://${NATS_HOST}:${NATS_PORT}
+    env_file:
+      - .env
+    volumes:
+      - ./:/home/orchestrator/
+      - /tmp/.X11-unix:/tmp/.X11-unix
+      - ${HOME}/.Xauthority:/root/.Xauthority
+    command: ["/bin/bash", "-c", "unset http_proxy https_proxy ftp_proxy no_proxy HTTP_PROXY HTTPS_PROXY FTP_PROXY NO_PROXY; cd /home/orchestrator && python3 -u Orchestrator/hmi/hmi_nats.py $CONFIG_PATH hmi --mode $MODE & python3 -u Orchestrator/hmi/hmi_nats.py $CONFIG_PATH game_master --mode $MODE"]

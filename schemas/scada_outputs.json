@@ -1,0 +1,65 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "SCADA Outputs Configuration",
+  "description": "List of measurements published to the SCADA, by Dynawo or by the asset simulator. A subset of the game master outputs: only what the cyber mapping carries",
+  "type": "array",
+  "items": {
+    "type": "object",
+    "properties": {
+      "equipmentId": {
+        "type": ["string", "null"],
+        "description": "IIDM equipment identifier"
+      },
+      "kind": {
+        "type": "string",
+        "description": "Type of measurement (typical values include ('P', 'Q', 'U', 'i', 'state', 'OmegaRef'))"
+      },
+      "topic": {
+        "type": "string",
+        "description": "NATS topic for publishing"
+      },
+      "dynawo_id": {
+        "type": "string",
+        "description": "Dynawo model variable ID"
+      },
+      "id": {
+        "type": "string",
+        "description": "Unique identifier"
+      },
+      "factor": {
+        "type": "number",
+        "description": "Scaling factor from Dynawo units to raw units (MW, kV, Hz) (value published in raw units). Defaults to 1"
+      },
+      "source": {
+        "type": "string",
+        "description": "Cyber node from which the measurement will be sent"
+      },
+      "destination": {
+        "type": "string",
+        "description": "Cyber node to which the measurement will be sent"
+      },
+      "publish_on_change": {
+        "type": "boolean",
+        "description": "Only publish when value changes"
+      },
+      "tase2": {
+        "type": "string",
+        "description": "TASE2 protocol identifier"
+      },
+      "period": {
+        "type": "number",
+        "description": "Periodicity of publishing in seconds (default = simulator period)"
+      },
+      "period_offset": {
+        "type": "number",
+        "description": "Offset to the publishing period (default = random value in [0, period[)"
+      },
+      "simulator": {
+        "type": "string",
+        "enum": ["dynawo", "asset_simulator"],
+        "description": "Simulator this entry belongs to; the orchestrator only drives the dynawo ones"
+      }
+    },
+    "required": ["topic", "id", "simulator", "source", "destination"]
+  }
+}

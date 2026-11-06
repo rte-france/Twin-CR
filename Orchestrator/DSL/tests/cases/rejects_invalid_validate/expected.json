@@ -1,0 +1,4 @@
+{
+  "applied": [],
+  "load_error": "No game master input with iidm this_breaker_does_not_exist and attribute state (line 3: \"after 0 seconds, open switch $breaker;\") (line 8: \"after 2 seconds, validate(isolate(\"this_breaker_does_not_exist\", \"01_1\"));\")"
+}

@@ -1,0 +1,24 @@
+#
+# Copyright (c) 2026, RTE (https://www.rte-france.com)
+# See AUTHORS.md
+# SPDX-License-Identifier: MPL-2.0
+# This file is part of Twin-CR, a platform for real-time cyber-physical
+# co-simulation of power systems.
+#
+
+FROM python:3.14-slim
+LABEL org.opencontainers.image.licenses="MPL-2.0"
+
+# Install curl for healthcheck
+RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
+
+# Install Python dependencies
+WORKDIR /home/orchestrator/configurator_client
+COPY pyproject.toml /tmp/pyproject.toml
+RUN python -c "import tomllib; print('\\n'.join(tomllib.load(open('/tmp/pyproject.toml', 'rb'))['project']['dependencies']))" > /tmp/requirements.txt \
+    && pip install --no-cache-dir -r /tmp/requirements.txt
+
+# Copy the source code
+COPY . /home/orchestrator/configurator_client
+
+CMD ["fastapi", "run", "src/main.py", "--port", "8080", "--host", "0.0.0.0"]

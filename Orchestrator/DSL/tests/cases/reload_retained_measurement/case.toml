@@ -1,0 +1,22 @@
+#
+# Copyright (c) 2025-2026, RTE (https://www.rte-france.com)
+# See AUTHORS.md
+# SPDX-License-Identifier: MPL-2.0
+# This file is part of Twin-CR, a platform for real-time cyber-physical
+# co-simulation of power systems.
+#
+
+duration = 16
+period = 1.0
+reload_at = 8.0
+
+[[measurements]]      # the right-hand side, measured only before the dump
+time = 3.2
+iidm_id = "02_1"
+attribute = "P"
+value = 100.0
+[[measurements]]      # the left-hand side arrives only after the reload
+time = 10.2
+iidm_id = "01_1"
+attribute = "P"
+value = 150.0

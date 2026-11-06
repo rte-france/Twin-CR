@@ -1,0 +1,833 @@
+% Reverse-engineered from DSL_Description.pdf (pdfTeX 1.40.26, TeX Live 2024), whose sources were never committed.
+% Build with: latexmk -pdf DSL_Description.tex
+%
+% WARNING: this document describes the DSL as of April 2026 and is out of date. The grammar has since moved to
+% Orchestrator/DSL/PowerEventDSL.g4 and changed substantially: 'set simulation duration' and 'set time step' are
+% gone, 'print' and units were removed, 'dynamic cluster' became 'cluster', 'checkAndApply' became 'validate',
+% and function arguments no longer carry an element type. Sections are kept here as they were published so the
+% rewrite can proceed one section at a time.
+
+\documentclass[12pt]{article}
+
+\usepackage[margin=1in]{geometry}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage[T1]{fontenc}
+\usepackage{hyperref}
+
+\lstset{
+  basicstyle=\ttfamily\small,
+  backgroundcolor=\color{black!7},
+  frame=single,
+  rulecolor=\color{black!45},
+  numbers=left,
+  numberstyle=\tiny,
+  numbersep=8pt,
+  breaklines=true,
+  breakatwhitespace=false,
+  showstringspaces=false,
+  columns=fixed,
+  keepspaces=true,
+}
+
+\title{\textbf{DSL Grammar Documentation for Simulation Sequencing}}
+\author{Sreejith P. Sajeev}
+\date{April 14, 2026}
+
+\begin{document}
+\maketitle
+
+\section{Introduction}
+
+This document details the Domain-Specific Language (DSL) for sequencing events in a power system simulator, based
+on the \texttt{PowerEventDSL.g4} grammar. \textbf{Implemented using ANTLR}, this DSL provides robust parsing for
+defining simulation parameters and scheduling events. Key features include:
+
+\begin{itemize}
+  \item \textbf{Simulation Parameters}: Set duration and time steps.
+  \item \textbf{Time-Based Events}: Trigger actions at specific times, at \texttt{now}, or over intervals.
+  \item \textbf{Immediate Events}: Actions without an \texttt{at} clause execute at the next step (\texttt{now}).
+  \item \textbf{Absolute Setpoints}: Set load/generator to \texttt{P/Q/U} with optional \texttt{from} for ramps;
+        signed values supported.
+  \item \textbf{Condition-Based Events}: Respond to dynamic system states and measurement channels
+        (\texttt{voltage}, \texttt{frequency}, \texttt{P}, \texttt{Q}, \texttt{U}, \texttt{state}).
+  \item \textbf{Dependent Events}: Link actions to prior tagged events.
+  \item \textbf{Targeting}: Single, list, static \texttt{cluster}, and \texttt{dynamic cluster} targets; dynamic
+        filters (\texttt{regex}, \texttt{group by}, \texttt{where}, device on qualifiers).
+  \item \textbf{Line Actions}: Open/close transmission lines directly by IIDM identifier.
+  \item \textbf{Network Actions}: Fine-grained \texttt{change network characteristics} (link/node) with
+        \texttt{drop}, \texttt{delay}, and \texttt{corruption} operators.
+  \item \textbf{Print Actions}: Log informational comments into the session trace using \texttt{print}; does not
+        modify system state.
+\end{itemize}
+
+All statements end with a semicolon (\texttt{;}) for well-defined syntax.
+
+\section{Simulation Parameters}
+
+\subsection{Set Simulation Duration}
+
+\textbf{Syntax:}
+\begin{lstlisting}
+set simulation duration to <NUMBER> <TIME_UNIT>;
+\end{lstlisting}
+
+\textbf{Example:}
+\begin{lstlisting}
+set simulation duration to 30 seconds;
+\end{lstlisting}
+
+\textbf{Description:} Defines the total simulation runtime. \texttt{<TIME\_UNIT>} can be \texttt{second(s)},
+\texttt{minute(s)}, or \texttt{hour(s)}.
+
+\subsection{Set Time Step}
+
+\textbf{Syntax:}
+\begin{lstlisting}
+set time step to <NUMBER> <TIME_UNIT>;
+\end{lstlisting}
+
+\textbf{Example:}
+\begin{lstlisting}
+set time step to 1 seconds;
+\end{lstlisting}
+
+\textbf{Description:} Specifies the interval between simulation updates. Time units accept singular or plural
+forms.
+
+\section{Event Definitions}
+
+Events describe \textit{when} and \textit{under what conditions} actions are executed.
+
+\subsection{Time Expressions}
+
+\textbf{Syntax:}
+\begin{lstlisting}
+<TIME_EXPR> ::= <NUMBER> <TIME_UNIT>
+              | now
+              | now + <NUMBER> <TIME_UNIT>
+              | now - <NUMBER> <TIME_UNIT>
+
+<TIME_SPEC> ::= <TIME_EXPR>
+              | [<TIME_EXPR>, <TIME_EXPR>] [with law <LAW_SPEC>]
+\end{lstlisting}
+
+\textbf{Description:} \texttt{now} resolves to the next simulator step (\texttt{current\_time} +
+\texttt{time\_step}).
+
+\subsection{Point-in-Time Event}
+
+\textbf{Syntax:}
+\begin{lstlisting}
+at <TIME_SPEC>, <ACTION> [tagged "<TAG_ID>"];
+\end{lstlisting}
+
+\textbf{Example:}
+\begin{lstlisting}
+at 5 seconds, open switch "S1" tagged "event1";
+at now + 10 seconds, close switch "S1";
+\end{lstlisting}
+
+\subsection{Immediate Event}
+
+\textbf{Syntax:}
+\begin{lstlisting}
+<ACTION> [tagged "<TAG_ID>"];
+\end{lstlisting}
+
+\textbf{Example:}
+\begin{lstlisting}
+open switch "S1";
+\end{lstlisting}
+
+\textbf{Description:} Executes at \texttt{now} (next simulator step).
+
+\subsection{Interval-Based Event}
+
+\textbf{Syntax:}
+\begin{lstlisting}
+at [<TIME_EXPR>, <TIME_EXPR>] [with law <LAW_SPEC>], <ACTION>;
+\end{lstlisting}
+
+\textbf{Example:}
+\begin{lstlisting}
+at [now, now + 20 seconds] with law "linear", decrease load "B3" by 10%;
+at [7 seconds , 14 seconds ] with law " linear " , decrease load " B3 " by 10%;
+\end{lstlisting}
+
+\textbf{Description:} Applies an action across a time interval. Law can be \texttt{linear} or a quoted string
+(custom). Linear is the only built-in scaling law.
+
+\subsection{Condition-Based Event}
+
+\textbf{Syntax:}
+\begin{lstlisting}
+when <VARIABLE> at <COMPONENT_TYPE> "<COMPONENT_ID>" <OPERATOR> <NUMBER> <UNIT>, <ACTION>;
+\end{lstlisting}
+
+\textbf{Examples:}
+\begin{lstlisting}
+when voltage at bus "Bus1" < 0.9 pu, increase load "Load1" by 10%;
+when frequency at voltageLevel "_BUS____2_VL" > 50.1 Hz, decrease generator "G1" by 5%;
+when P at line "L1" > 8 pu, decrease generator "G2" by 5%;
+when state at asset "BreakerA" == 0, close switch "CB5";
+\end{lstlisting}
+
+\textbf{Description:} Evaluated every step; triggers once when the predicate becomes true (unless configured as
+persistent). Supported \texttt{<COMPONENT\_TYPE>} include \texttt{bus}, \texttt{line}, \texttt{asset}, and
+\texttt{voltageLevel} (IIDM context).
+
+\subsection{Dependent Event}
+
+\textbf{Syntax:}
+\begin{lstlisting}
+after "<TAG_ID>" is completed, <ACTION>;
+\end{lstlisting}
+
+\textbf{Example:}
+\begin{lstlisting}
+after "event1" is completed, apply fault at line "L1";
+\end{lstlisting}
+
+\textbf{Description:} Executes the action on the first step after the referenced tag completes.
+
+\subsection{Tags and Dependency Semantics}
+
+\textbf{What a tag represents:}
+\begin{itemize}
+  \item A tag is a symbolic label attached with \texttt{tagged "<TAG\_ID>"} to name one event declaration.
+  \item Tags are synchronization and traceability handles; they do not change the control action payload itself.
+\end{itemize}
+
+\textbf{How tags are implemented:}
+\begin{itemize}
+  \item Each parsed event receives an internal unique event id (UUID).
+  \item When an event is tagged, the interpreter stores a label mapping \texttt{<TAG\_ID> -> event id}.
+  \item \texttt{after "<TAG\_ID>" is completed} resolves the label to an internal dependency id; unknown tags
+        raise a semantic error.
+  \item Dependency events are promoted once the upstream event status becomes completed. Completion follows event
+        type semantics: point/immediate events complete on execution, interval events complete at interval end,
+        and condition events complete on first trigger.
+\end{itemize}
+
+\textbf{How tags are intended to be used:}
+\begin{itemize}
+  \item Tag milestone events that other events must wait for.
+  \item Use unique, descriptive names (for example \texttt{"line\_disconnect"} or \texttt{"voltage\_control"}) to
+        keep dependency chains readable.
+  \item Keep one meaning per tag and avoid reusing the same label across unrelated phases.
+  \item For multi-phase workflows, define explicit tags for each phase boundary instead of relying on implicit
+        timing.
+\end{itemize}
+
+\section{Action Types}
+
+\subsection{Switch Actions}
+
+\textbf{Syntax:}
+\begin{lstlisting}
+open switch "<SWITCH_ID>";
+close switch "<SWITCH_ID>";
+\end{lstlisting}
+
+\textbf{Effect:} Disconnect or connect network elements via breakers/switches.
+
+\subsection{Line Actions}
+
+\textbf{Syntax:}
+\begin{lstlisting}
+open line "<LINE_ID>";
+close line "<LINE_ID>";
+\end{lstlisting}
+
+\textbf{Examples:}
+\begin{lstlisting}
+at 5 seconds, open line "LINE_B_A_1" tagged "line_disconnect";
+at 15 seconds, close line "LINE_B_A_1";
+when voltage at voltageLevel "VL_A_225" < 0.95 pu, open line "LINE_C_A_1";
+after "line_disconnect" is completed, decrease load "LOAD1" by 5%;
+\end{lstlisting}
+
+\textbf{Description:} Disconnect or connect transmission lines directly by their IIDM identifier. Uses
+\texttt{state} attribute with values \texttt{0} (open/disconnected) and \texttt{1} (close/connected). These values
+can be customized via the \texttt{ControlValueResolver} configuration or environment variable
+\texttt{CONTROL\_VALUE\_MAP}.
+
+\subsection{Load Actions}
+
+\textbf{Syntax:}
+\begin{lstlisting}
+increase load <TARGET> by <NUMBER>%;
+decrease load <TARGET> by <NUMBER>%;
+\end{lstlisting}
+
+\textbf{Targets:} single ID, list, cluster, dynamic cluster with filters.
+
+\subsection{Generator Actions}
+
+\textbf{Syntax:}
+\begin{lstlisting}
+increase generator <TARGET> by <NUMBER>%;
+decrease generator <TARGET> by <NUMBER>%;
+\end{lstlisting}
+
+\textbf{Effect:} Adjust generation setpoints; may interact with control loops.
+
+\subsection{Set Actions (Absolute Values and Ramps)}
+
+\textbf{Syntax:}
+\begin{lstlisting}
+set load <TARGET> [from <SIGNED_NUMBER>] to <SIGNED_NUMBER> [P|Q|U];
+set generator <TARGET> [from <SIGNED_NUMBER>] to <SIGNED_NUMBER> [P|Q|U];
+\end{lstlisting}
+
+\textbf{Examples:}
+\begin{lstlisting}
+set generator "G1" to 900 P;
+set generator "G1" from 700 to 900 P;
+set load "L1" to -100 Q;
+\end{lstlisting}
+
+\textbf{Description:}
+\begin{itemize}
+  \item Point events set the absolute value immediately.
+  \item Interval events with law \texttt{"linear"} ramp the absolute value.
+  \item If \texttt{from} is omitted on a linear interval, the ramp starts from the current measured value.
+  \item \texttt{<SIGNED\_NUMBER>} accepts an optional \texttt{+} or \texttt{-}.
+\end{itemize}
+
+\subsection{Fault Actions}
+
+\textbf{Syntax:}
+\begin{lstlisting}
+apply fault at <COMPONENT_TYPE> "<COMPONENT_ID>";
+clear fault at <COMPONENT_TYPE> "<COMPONENT_ID>";
+\end{lstlisting}
+
+\textbf{Effect:} Insert/remove short-circuit conditions or equivalent models.
+
+\subsection{Print Action}
+
+\textbf{Syntax:}
+\begin{lstlisting}
+print "<MESSAGE>";
+\end{lstlisting}
+
+\textbf{Examples:}
+\begin{lstlisting}
+at 5 seconds, print "Raising load in Area A";
+at now, print "Starting fault injection sequence";
+when voltage at voltageLevel "_BUS____2_VL" < 0.95 pu, print "Undervoltage detected at Bus 2";
+after "event1" is completed, print "Phase 1 complete, beginning recovery";
+print "Immediate annotation at next step";
+\end{lstlisting}
+
+\textbf{Description:}
+\begin{itemize}
+  \item Logs an informational text comment into the session trace.
+  \item Does not modify the system state - it is purely an annotation mechanism.
+  \item The message is recorded in the session event store and included in the action output with
+        \texttt{actionType: "print"}.
+  \item During session replay, \texttt{print} entries appear in chronological order alongside other actions,
+        helping explain the intent or context of subsequent operations.
+  \item Can be used with all event triggers: time-based (\texttt{at}), immediate, condition-based
+        (\texttt{when}), and dependent (\texttt{after}).
+\end{itemize}
+
+\subsection{Network Actions}
+
+These actions modify underlying network/telemetry characteristics (IIDM-compatible), at either link (edge) or node
+(vertex) scope.
+
+\textbf{General Syntax}
+
+\begin{lstlisting}
+change network characteristics
+   [link from "<SRC_ID>" to "<DST_ID>"]?
+   [node "<NODE_ID>"]*
+   (<OPERATOR_CLAUSE>)+ ;
+\end{lstlisting}
+
+Multiple operator clauses can be composed in a single statement.
+
+\textbf{Operators}
+
+\begin{itemize}
+  \item \texttt{drop}: packet/measurement loss
+\begin{lstlisting}
+drop fixed <true|false>
+drop random <PROBABILITY>
+\end{lstlisting}
+
+  \item \texttt{delay}: latency injection
+\begin{lstlisting}
+delay fixed <NUMBER> seconds
+delay gauss mean <NUMBER> seconds stddev <NUMBER> seconds
+\end{lstlisting}
+
+  \item \texttt{corruption}: data perturbation
+\begin{lstlisting}
+corruption none [likelihood <PROBABILITY>]
+corruption random_noise_measurement [likelihood <PROBABILITY>] range <LOW> to <HIGH>
+corruption random_noise_control [likelihood <PROBABILITY>] range <LOW> to <HIGH>
+corruption shift_measurement [likelihood <PROBABILITY>] by <NUMBER>
+corruption zero_out_measurement [likelihood <PROBABILITY>] [value <NUMBER>]
+corruption invert_control [likelihood <PROBABILITY>] [by <NUMBER>]
+\end{lstlisting}
+\end{itemize}
+
+\textbf{Examples}
+\begin{lstlisting}
+at 1 seconds, change network characteristics
+  link from "CC" to "substation_1",
+  drop fixed true
+  tagged "CC_to_substation_1";
+
+after "CC_to_substation_1" is completed, change network characteristics
+  link from "CC" to "substation_2",
+  link from "CC" to "substation_3",
+  node "substation_2",
+  delay fixed 0.15 seconds;
+
+at 6 seconds, change network characteristics
+  link from "CC" to "substation_5", node "substation_5", node "substation_4",
+  corruption shift_measurement likelihood 0.2 by 0.02
+  tagged "substation_5_shift";
+
+at 8 seconds, change network characteristics
+  link from "CC" to "substation_2", node "substation_2",
+  delay gauss mean 0.15 seconds stddev 0.1 seconds;
+
+at 8 seconds, change network characteristics
+  link from "CC" to "substation_2", node "substation_2",
+  corruption none likelihood 0.2;
+
+at 8 seconds, change network characteristics
+  link from "CC" to "substation_2", node "substation_2",
+  corruption zero_out_measurement;
+
+at 10 seconds, change network characteristics
+  link from "CC" to "substation_2", node "substation_2",
+  corruption invert_control;
+\end{lstlisting}
+
+\section{Target Specifications}
+
+\subsection{Single Target}
+
+\textbf{Syntax:} \texttt{"<ID>"} \quad \textbf{Example:} \texttt{"B3"}
+
+\subsection{List Target}
+
+\textbf{Syntax:} \texttt{[<ITEM>, <ITEM>, ...]} \quad \textbf{Example:} \texttt{["B1", "B2"]}
+
+\subsection{Cluster Target}
+
+\textbf{Syntax:} \texttt{cluster ["<ID>", "<ID>", ...]}
+
+\subsection{Dynamic Cluster Target with Filters}
+
+\textbf{Purpose:} Resolve device groups at runtime using metadata/topology.
+
+\begin{lstlisting}
+dynamic cluster regex "<REGEX>" on <DEVICE_KIND>
+dynamic cluster group by "<ATTRIBUTE>" "<VALUE>" on <DEVICE_KIND>
+dynamic cluster where "<PROPERTY>" <OP> <VALUE> on <DEVICE_KIND>
+\end{lstlisting}
+
+\textbf{Examples:}
+\begin{lstlisting}
+at 8 seconds, increase load dynamic cluster regex "LOAD.*" on load by 10%;
+
+at 22 seconds, decrease load dynamic cluster
+   group by "voltage_level_id" "_BUS____2_VL" on load by 15%;
+
+at 28 seconds, increase generator dynamic cluster
+   where "target_p" > 50 MW on generator by 10%;
+
+at 30 seconds, increase load dynamic cluster
+   group by "substation_id" "_BUS____4_SS" on load by 12%;
+\end{lstlisting}
+
+\section{Error and Corruption Types}
+
+\subsection{Syntax Errors}
+
+Missing semicolons, invalid tokens, or misordered keywords. Detected by ANTLR.
+
+\subsection{Semantic Errors}
+
+Invalid identifiers, unit mismatches (e.g., comparing voltage to Hz), or intervals where start $\geq$ end.
+
+\subsection{Runtime Errors}
+
+Unresolved dynamic clusters, missing dependency tags, or acting on disconnected components. Network/IIDM operators
+validate probabilities in $[0,1]$ and positive times.
+
+\section{ANTLR Implementation}
+
+The DSL is powered by ANTLR:
+\begin{itemize}
+  \item \textbf{Grammar File}: \texttt{PowerEventDSL.g4}
+  \item \textbf{Generated Classes}: Lexer (\texttt{PowerEventDSLLexer}), Parser (\texttt{PowerEventDSLParser}),
+        Visitor (\texttt{PowerEventDSLVisitor}).
+  \item \textbf{Process}: Parses DSL into an Abstract Syntax Tree (AST) for interpretation.
+\end{itemize}
+
+\section{Example DSL Scripts}
+
+\subsection{IEEE 14-Bus Demonstration (Time/Condition/Dependent/Dynamic)}
+
+\begin{lstlisting}
+// Compatible with IEEE 14-bus network
+// Demonstrates time-based, condition-based, dependent events, and dynamic clusters
+// Adjusted to avoid transformer and line parsing errors
+
+// Set simulation parameters
+set simulation duration to 60 seconds;
+set time step to 1 seconds;
+
+// Time-based events
+at 5 seconds, open switch "S1" tagged "switch_open";
+at 15 seconds, close switch "S1";
+
+// Line actions
+at 5 seconds, open line "LINE_B_A_1" tagged "line_open";
+at 20 seconds, close line "LINE_B_A_1";
+
+// Print action: annotate the session log
+at 8 seconds, print "Raising load in Area A";
+
+// Interval-based load increase with linear law
+at [10 seconds, 20 seconds] with law "linear", increase load "LOAD 2" by 20%;
+
+// Condition-based generator adjustment
+when voltage at voltageLevel "_BUS____1_VL" > 1.05 pu,
+   decrease generator "GEN   1" by 10% tagged "voltage_control";
+
+// Condition-triggered print annotation
+when voltage at voltageLevel "_BUS____2_VL" < 0.95 pu,
+   print "Undervoltage detected at Bus 2";
+
+// Dependent event
+after "switch_open" is completed, close switch "S2";
+after "line_open" is completed, decrease load "LOAD   3" by 5%;
+
+// Fault application and clearing
+at 12 seconds, apply fault at line "_BUS____1-_BUS____2-1";
+at 18 seconds, clear fault at line "_BUS____1-_BUS____2-1";
+
+// List-based load increase
+at 3 seconds, increase load ["LOAD  2", "LOAD 3", "LOAD 4"] by 15%;
+
+// Cluster-based generator decrease
+at 25 seconds, decrease generator cluster "GenCluster" ["GEN  2", "GEN 3"] by 5%;
+
+// Complex condition-based load adjustment (logical AND)
+when (voltage at voltageLevel "_BUS____2_VL" < 0.95 pu
+       and frequency at voltageLevel "_BUS____2_VL" > 50.1 Hz),
+  increase load "LOAD  2" by 5%;
+
+// Interval-based load decrease with step law
+at [7 seconds, 14 seconds] with law "step", decrease load "LOAD  3" by 10%;
+
+// Dependent event after voltage control
+after "voltage_control" is completed, open switch "S3";
+
+// Dynamic clusters
+at 8 seconds, increase load dynamic cluster regex "LOAD.*" on load by 10%;
+at 22 seconds, decrease load dynamic cluster group by "voltage_level_id" "_BUS____2_VL" on load by 15%;
+at 28 seconds, increase generator dynamic cluster where "target_p" > 50 MW on generator by 10%;
+at 30 seconds, increase load dynamic cluster group by "substation_id" "_BUS____4_SS" on load by 12%;
+\end{lstlisting}
+
+\subsection{IIDM/Network Actions Demonstration}
+
+\begin{lstlisting}
+// IIDM network characteristics manipulation demo
+set simulation duration to 1800 seconds;
+set time step to 1 seconds;
+
+at 1 seconds, change network characteristics
+  link from "CC" to "substation_1",
+  drop fixed true
+  tagged "CC_to_substation_1";
+
+after "CC_to_substation_1" is completed, change network characteristics
+  link from "CC" to "substation_2",
+  link from "CC" to "substation_3",
+  node "substation_2",
+  delay fixed 0.15 seconds;
+
+at 2 seconds, change network characteristics
+  node "substation_3", node "CC",
+  corruption random_noise_measurement range 0.0 to 0.001
+  tagged "substation_3_noise";
+
+at 5 seconds, change network characteristics
+  link from "CC" to "substation_6",
+  node "substation_6",
+  drop random 0.2;
+
+when voltage at voltageLevel "VL_A_400" < 0.97 pu, change network characteristics
+  link from "CC" to "substation_4", node "substation_4",
+  drop random 0.3;
+
+at 6 seconds, change network characteristics
+  link from "CC" to "substation_5", node "substation_5", node "substation_4",
+  corruption shift_measurement likelihood 0.2 by 0.02
+  tagged "substation_5_shift";
+
+after "substation_5_shift" is completed, change network characteristics
+  link from "CC" to "substation_7",
+  node "substation_7",
+  drop fixed false;
+
+at 8 seconds, change network characteristics
+  link from "CC" to "substation_2", node "substation_2",
+  delay gauss mean 0.15 seconds stddev 0.1 seconds;
+
+at 8 seconds, change network characteristics
+  link from "CC" to "substation_2", node "substation_2",
+  corruption none likelihood 0.2;
+
+at 8 seconds, change network characteristics
+  link from "CC" to "substation_2", node "substation_2",
+  corruption zero_out_measurement;
+
+at 10 seconds, change network characteristics
+  link from "CC" to "substation_2", node "substation_2",
+  corruption invert_control;
+\end{lstlisting}
+
+\subsection{Now time Expression and Set actions}
+
+\begin{lstlisting}
+set simulation duration to 300 seconds;
+set time step to 1 seconds;
+
+at now, open switch "VL_A_400_COUPLER_BREAKER";
+at now + 10 seconds, set load dynamic cluster regex "^Y.*(T|Y|TR).[12].$" on load to 50 P;
+at 30 seconds, set generator "GEN_F_1" to 100 Q;
+at [now, now + 20 seconds] with law "linear", set generator "GEN_F_4" to 900 P;
+\end{lstlisting}
+
+\subsection{Line Actions Demonstration}
+
+\begin{lstlisting}
+// Demonstrates line open/close actions
+set simulation duration to 60 seconds;
+set time step to 1 seconds;
+
+// Open a line at a specific time
+at 5 seconds, open line "LINE_B_A_1" tagged "line_disconnect";
+
+// Close the line later
+at 25 seconds, close line "LINE_B_A_1";
+
+// Condition-based line action
+when voltage at voltageLevel "VL_A_225" < 0.95 pu, open line "LINE_C_A_1";
+
+// Dependent action after line disconnect
+after "line_disconnect" is completed, decrease load "LOAD1" by 10%;
+
+// Multiple line operations
+at 10 seconds, open line "LINE_D_A_1";
+at 15 seconds, open line "LINE_E_A_1";
+at 30 seconds, close line "LINE_D_A_1";
+at 35 seconds, close line "LINE_E_A_1";
+\end{lstlisting}
+
+\subsection{Print Actions Demonstration}
+
+\begin{lstlisting}
+// Demonstrates print actions for session logging
+set simulation duration to 60 seconds;
+set time step to 1 seconds;
+
+// Immediate print at next step
+print "Scenario start: IEEE 14-bus stress test";
+
+// Time-based print annotations
+at 5 seconds, print "Phase 1: Disconnecting line LINE_B_A_1";
+at 5 seconds, open line "LINE_B_A_1" tagged "line_disconnect";
+
+at 15 seconds, print "Phase 2: Applying fault injection";
+at 15 seconds, apply fault at line "_BUS____1-_BUS____2-1";
+
+// Condition-triggered print
+when voltage at voltageLevel "_BUS____2_VL" < 0.95 pu,
+   print "WARNING: Undervoltage detected at Bus 2";
+
+// Dependent print after tagged event
+after "line_disconnect" is completed,
+   print "Line disconnect confirmed, starting recovery";
+
+// Using now-relative timing
+at now + 30 seconds, print "Midpoint checkpoint reached";
+\end{lstlisting}
+
+\section{Best Practices}
+
+\begin{itemize}
+  \item Use consistent units (seconds, pu, Hz, probabilities in $[0,1]$).
+  \item Terminate every statement with \texttt{;}.
+  \item Tag synchronization points for dependency chains.
+  \item Validate interpolation laws and ensure interval bounds are consistent.
+  \item Scope network/IIDM operators carefully (link vs.\ node), and prefer explicit tagging for auditability.
+  \item Use \texttt{from} for deterministic ramps, otherwise the ramp starts from the current measurement.
+  \item Prefer \texttt{open line} / \texttt{close line} for transmission line control over switch-based
+        approaches for clarity.
+  \item Use \texttt{print} statements to annotate key phases, decisions, or observations in scenarios---they aid
+        debugging and make session replays self-documenting.
+\end{itemize}
+
+\section{Function DSL Extension}
+
+This section documents the function extension available in the current interpreter. It is additive to the
+constructs documented above and introduces reusable action templates with invocation-time parameter binding.
+
+\subsection{Function Definition}
+
+\textbf{Syntax:}
+\begin{lstlisting}
+func <NAME>(<PARAM_1>, <PARAM_2>, ...) {
+   at +0 seconds, <EXECUTABLE>;
+   at +5 seconds, <EXECUTABLE>;
+   when <DYNAMIC_EXPRESSION>, <EXECUTABLE>;
+   after "<TAG_ID>" is completed, <EXECUTABLE>;
+}
+\end{lstlisting}
+
+\textbf{Example:}
+\begin{lstlisting}
+func stagedLoadBoost(target, amount) {
+   at +0 seconds, increase load target by amount% tagged "boost_start";
+   at +5 seconds, decrease load target by amount% tagged "boost_end";
+}
+\end{lstlisting}
+
+\textbf{Description:}
+\begin{itemize}
+  \item Function bodies contain \texttt{functionStatement} entries. Inside a function, \texttt{at} timestamps are
+        relative to the function invocation time.
+  \item A function body may contain ordinary actions, nested function calls, or \texttt{checkAndApply(...)} around
+        a function call.
+  \item \texttt{when} and \texttt{after} are also allowed inside a function body.
+  \item Function definitions are simulation-scoped within the active interpreter session.
+\end{itemize}
+
+\subsection{Function Invocation}
+
+\textbf{Syntax:}
+\begin{lstlisting}
+<NAME>(<ARG_1>, <ARG_2>, ...);
+<NAME>(param_1: <ARG_1>, param_2: <ARG_2>);
+checkAndApply(<NAME>(...));
+\end{lstlisting}
+
+\textbf{Examples:}
+\begin{lstlisting}
+stagedLoadBoost("_LOAD___2_EC", 5);
+
+at 35 seconds, stagedLoadBoost("_LOAD___3_EC", 3);
+
+at 42 seconds, checkAndApply(
+   stagedLoadBoost(target: "_LOAD___4_EC", amount: 2)
+);
+\end{lstlisting}
+
+\textbf{Description:}
+\begin{itemize}
+  \item A direct call expands the function body into ordinary DSL events immediately.
+  \item Direct calls may appear as bare statements or under \texttt{at}, \texttt{when}, and \texttt{after}
+        triggers.
+  \item Arguments may be positional or named. Named arguments bind by parameter name. Positional arguments must
+        appear before named arguments.
+  \item Parameters can be used in targets, numeric fields, booleans, time values, tags, and nested function-call
+        arguments.
+\end{itemize}
+
+\subsection{Relative Timing Rules}
+
+\textbf{Examples:}
+\begin{lstlisting}
+func couplerPulse(target) {
+   at +0 seconds, open switch target tagged "pulse_opened";
+   after "pulse_opened" is completed, close switch target;
+}
+
+at 60 seconds, couplerPulse("VL_A_400_COUPLER_BREAKER");
+\end{lstlisting}
+
+\textbf{Description:}
+\begin{itemize}
+  \item All explicit times inside a function body are relative to the invocation time.
+  \item In the example above, the \texttt{open switch} action is scheduled at 60 seconds.
+  \item Dependency-based statements such as \texttt{after "pulse\_opened" is completed} remain relative to the
+        events created by that invocation.
+\end{itemize}
+
+\subsection{Verification with checkAndApply}
+
+\textbf{Syntax:}
+\begin{lstlisting}
+checkAndApply(<FUNCTION_CALL>);
+\end{lstlisting}
+
+\textbf{Example:}
+\begin{lstlisting}
+func plannedConsignation(breaker, coupler) {
+   at +0 seconds, open switch breaker tagged "breaker_opened";
+   at +20 seconds, couplerPulse(coupler);
+}
+
+at 150 seconds, checkAndApply(
+   plannedConsignation(
+      breaker: "VL_A_400_TRANSFO_1_BREAKER",
+      coupler: "VL_A_400_COUPLER_BREAKER"
+   )
+);
+\end{lstlisting}
+
+\textbf{Description:}
+\begin{itemize}
+  \item \texttt{checkAndApply(...)} performs a preflight expansion of the function call before persisting any
+        generated events.
+  \item If one generated action is invalid, unschedulable, or blocked by a higher-priority conflicting action, the
+        entire function invocation is rejected.
+  \item No partial application occurs: the expanded batch is persisted only if all checks pass.
+\end{itemize}
+
+\subsection{Tags Inside Functions}
+
+\textbf{Description:}
+\begin{itemize}
+  \item Tags declared inside a function invocation are local to that invocation.
+  \item Repeated calls to the same function keep their internal tags isolated from one another.
+  \item Tagging the function call itself creates an outer synchronization point that completes only after all
+        child events of that invocation have completed.
+\end{itemize}
+
+\subsection{Complete Function Example}
+
+\begin{lstlisting}
+set simulation duration to 120 seconds;
+set time step to 1 seconds;
+
+func stagedLoadBoost(target, amount) {
+   at +0 seconds, increase load target by amount% tagged "boost_start";
+   at +5 seconds, decrease load target by amount% tagged "boost_end";
+}
+
+func recoverySequence(target, amount) {
+   at +0 seconds, stagedLoadBoost(target, amount);
+   after "boost_end" is completed, increase load target by 1%;
+}
+
+at 20 seconds, stagedLoadBoost("_LOAD___2_EC", 5);
+at 35 seconds, checkAndApply(stagedLoadBoost(target: "_LOAD___3_EC", amount: 3));
+after "line_disconnect" is completed, recoverySequence("_LOAD___4_EC", 2) tagged "recovery_done";
+\end{lstlisting}
+
+\end{document}

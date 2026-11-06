@@ -1,0 +1,57 @@
+#
+# Copyright (c) 2025-2026, RTE (https://www.rte-france.com)
+# See AUTHORS.md
+# SPDX-License-Identifier: MPL-2.0
+# This file is part of Twin-CR, a platform for real-time cyber-physical
+# co-simulation of power systems.
+#
+
+services:
+  twincr-core:
+    env_file:
+      - .env-tests
+
+  configurator-client:
+    env_file:
+      - .env-tests
+
+  gamemaster:
+    env_file:
+      - .env-tests
+
+  automata:
+    env_file:
+      - .env-tests
+
+  # profile "full" would include services that can be build (CI could catch a broken Dockerfile), but that are not tested by the NRT
+  # Disabled to save space on the (very small) github runner disk
+  session-manager:
+    profiles: ["full"]
+    env_file:
+      - .env-tests
+
+  keycloak:
+    profiles: ["full"]
+    env_file:
+      - .env-tests
+
+  keycloak-seed:
+    profiles: ["full"]
+
+  garage-webui:
+    profiles: ["full"]
+
+  argus-backend-scada:
+    # Disable backends in tests as they are currently not tested
+    profiles: ["backend", "argus"]
+    env_file:
+      - .env-tests
+
+  argus-backend-gm:
+    profiles: ["backend", "argus"]
+    env_file:
+      - .env-tests
+
+  argus:
+    env_file:
+      - .env-tests

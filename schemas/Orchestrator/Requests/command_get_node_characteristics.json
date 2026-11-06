@@ -1,0 +1,15 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "GetNodeCharacteristicsCommandRequest",
+  "type": "object",
+  "properties": {
+    "command": {
+      "type": "string",
+      "const": "get_node_characteristics"
+    },
+    "node": {
+      "$ref": "node.json"
+    }
+  },
+  "required": ["command", "node"]
+}

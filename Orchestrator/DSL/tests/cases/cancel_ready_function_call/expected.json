@@ -1,0 +1,9 @@
+{
+  "applied": [],
+  "cancellation": {
+    "cancelled": true,
+    "kind": "function_call",
+    "match": "isolateFeeder",
+    "status_before": "ready"
+  }
+}

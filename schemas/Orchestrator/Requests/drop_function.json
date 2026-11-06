@@ -1,0 +1,42 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "DropFunction",
+  "type": "object",
+  "description": "Drop function applied to links or nodes",
+  "oneOf": [
+    {
+      "title": "FixedDropFunction",
+      "type": "object",
+      "description": "Always drops or never drops",
+      "properties": {
+        "type": {
+          "type": "string",
+          "const": "fixed",
+          "description": "Whether to always drop (true) or never drop (false)"
+        },
+        "value": {
+          "type": "boolean",
+          "description": "true = always drop, false = never drop"
+        }
+      },
+      "required": ["type", "value"]
+    },
+    {
+      "title": "RandomDropFunction",
+      "type": "object",
+      "description": "Drops randomly with a given probability",
+      "properties": {
+        "type": {
+          "type": "string",
+          "const": "random",
+          "description": "Drop probability"
+        },
+        "value": {
+          "type": "number",
+          "description": "Probability of dropping the message (0.0-1.0)"
+        }
+      },
+      "required": ["type", "value"]
+    }
+  ]
+}

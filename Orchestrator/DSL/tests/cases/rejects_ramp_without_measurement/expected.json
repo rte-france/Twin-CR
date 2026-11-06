@@ -1,0 +1,4 @@
+{
+  "applied": [],
+  "load_error": "without 'from', the ramp starts from the element's current value, which needs a measurement: No game master output with iidm Tr1011-4011 and attribute lock (line 3: \"after [2 seconds, 6 seconds], set 2_windings_transformer \"Tr1011-4011\" input \"lock\" to 1;\")"
+}

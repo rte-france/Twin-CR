@@ -1,0 +1,21 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "DynawoTimelinePublication",
+  "description": "Publication of a timeline event on topic 'Dynawo.Timeline'",
+  "type": "object",
+  "properties": {
+    "message": {
+      "type": "string",
+      "description": "Human-readable description of the timeline event"
+    },
+    "modelName": {
+      "type": "string",
+      "description": "Name of the model emitting the event"
+    },
+    "time": {
+      "type": "string",
+      "description": "Simulation time of the event, guaranteed to be convertible to a float"
+    }
+  },
+  "required": ["message", "modelName", "time"]
+}

@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<dyn:dynamicModelsArchitecture xmlns:dyn="http://www.rte-france.com/dynawo">
+  <dyn:blackBoxModel id="Fault" lib="NodeFault" parFile="InitEvents.par" parId="Fault"/>
+  <dyn:connect id1="Fault" var1="fault_terminal" id2="NETWORK" var2="4032_401_ACPIN"/>
+  <!-- <dyn:blackBoxModel id="L4032-4044_state" lib="EventQuadripoleConnection" parFile="InitEvents.par" parId="L4032-4044_state"/>
+  <dyn:connect id1="L4032-4044_state" var1="event_state1_value" id2="NETWORK" var2="L4032-4044_state_value"/> -->
+</dyn:dynamicModelsArchitecture>

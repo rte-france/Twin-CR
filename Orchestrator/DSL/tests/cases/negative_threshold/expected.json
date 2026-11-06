@@ -1,0 +1,13 @@
+{
+  "applied": [
+    {
+      "command": {
+        "attribute": "state",
+        "command": "iidm_command",
+        "iidm_id": "01_1_breaker",
+        "value": 1.0
+      },
+      "t": 7.0
+    }
+  ]
+}

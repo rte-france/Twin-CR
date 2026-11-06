@@ -1,0 +1,35 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<dyn:jobs xmlns:dyn="http://www.rte-france.com/dynawo">
+  <dyn:job name="IEEE14 - Disconnect Line">
+    <dyn:solver lib="dynawo_SolverSIM" parFile="IEEE14.par" parId="SimplifiedSolver"/>
+    <dyn:modeler compileDir="outputs/compilation">
+      <dyn:network iidmFile="IEEE14.iidm" parFile="IEEE14.par" parId="Network"/>
+      <dyn:dynModels dydFile="IEEE14.dyd"/>
+      <dyn:dynModels dydFile="RTConnectors.dyd"/>
+      <dyn:precompiledModels useStandardModels="true"/>
+      <dyn:modelicaModels useStandardModels="true"/>
+    </dyn:modeler>
+    <dyn:simulation startTime="0" stopTime="999999"/>
+    <dyn:outputs directory="outputs">
+      <dyn:constraints exportMode="XML"/>
+      <dyn:timeline exportMode="XML"/>
+      <dyn:curves inputFile="curves.xml" exportMode="CSV"/>
+      <dyn:logs>
+        <dyn:appender tag="" file="dynawo.log" lvlFilter="INFO"/>
+      </dyn:logs>
+    </dyn:outputs>
+	<dyn:interactiveSettings couplingTimeStep="10">
+      <dyn:channels>
+        <dyn:channel id="zmq_input" kind="INPUT" type="ZMQ" endpoint="tcp://*:5555"/>
+        <dyn:channel id="zmq_output" kind="OUTPUT" type="ZMQ" endpoint="tcp://*:5556"/>
+      </dyn:channels>
+      <dyn:streams>
+        <dyn:stream data="CURVES" channel="zmq_output" format="BYTES"/>
+        <dyn:stream data="TIMELINE" channel="zmq_output" format="JSON"/>
+        <dyn:stream data="CONSTRAINTS" channel="zmq_output" format="JSON"/>
+        <dyn:stream data="DUMP" channel="zmq_output"/>
+       </dyn:streams>
+      <dyn:clock type="EXTERNAL" triggerChannel="zmq_input"/>
+    </dyn:interactiveSettings>
+  </dyn:job>
+</dyn:jobs>

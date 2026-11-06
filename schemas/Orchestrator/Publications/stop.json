@@ -1,0 +1,14 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "StopPublication",
+  "description": "Publication indicating that the simulation has stopped on topic 'stop'",
+  "type": "object",
+  "properties": {
+    "status": {
+      "type": "string",
+      "const": "Stopped",
+      "description": "Indicates the simulation has stopped"
+    }
+  },
+  "required": ["status"]
+}

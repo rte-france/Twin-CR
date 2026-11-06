@@ -1,0 +1,18 @@
+[
+    {
+        "t_start": 0,
+        "command": "change_network_characteristics",
+        "links": [],
+        "nodes": ["substation_2"],
+        "characteristics": {
+            "corruption_functions": [
+                {
+                    "type": "RandomNoiseMeasurementCorruption",
+                    "likelihood": 0.001,
+                    "noise_min": -340282346638528859811704183484516925440,
+                    "noise_max": 340282346638528859811704183484516925440
+                }
+            ]
+        }
+    }
+]

@@ -1,0 +1,377 @@
+#
+# Copyright (c) 2025-2026, RTE (https://www.rte-france.com)
+# See AUTHORS.md
+# SPDX-License-Identifier: MPL-2.0
+# This file is part of Twin-CR, a platform for real-time cyber-physical
+# co-simulation of power systems.
+#
+
+# =================================================================================================================#
+# Rules for generating variables list for the generation of configuration files (dynawo_output, dynawo curves, ...)
+# -----
+#  Rules can be read as a dictionary (iidm_class, dynawo model) : {mapping: pattern, factor: float}
+#  Dynawo models can be defined:
+#    1. in the IIDM, and not redefined in DYD file -> default Component model in Model NETWORK
+#    2. in the IIDM, and be redefined in DYD (through static_id)
+#    3. in the DYD only
+#  Rules should be considered in order:
+#    - if model only defined in IIDM (case 1): look for rule (iidm_class, null)
+#    - if model defined in DYD (case 2, 3):
+#       1. look for rule matching (null, dynawo_model)
+#       2. look for a variable in dynamic model var list matching pattern in (iidm_class, "default")
+#  The dynawo model key is either an exact library name or a glob pattern (fnmatch, e.g. "HvdcVsc*"): an exact key
+#    takes precedence over the patterns, and among the matching patterns the most specific (longest) one wins
+#    (see Configurator.find_rules)
+#  A key can reference other keys to share rules (see Configurator._resolve_lib_rules):
+#    - alias:        GeneratorPTanPhi: GeneratorPQ
+#    - inheritance:  GeneratorPQ: {extends: "Generator*SignalN*", deltaP: {...}}, the other entries adding or
+#                    overriding rules by kind, a null entry removing the kind (e.g. "Q: null")
+#    A reference is a key of the same section (exact key, even for a pattern key such as "Generator*SignalN*"), or
+#    "section:key" for another section, "null" standing for the null section or key (e.g. "generator:null").
+#    References can be chained, cycles and unknown keys are reported as errors
+#  The rules of models outside the public Dynawo library (e.g. RTE's private models) are defined in an extra
+#    output_rules.yaml (Configurator extra_rules_dir, main_configure --extra_rules_dir), merged by section over this one
+# =================================================================================================================#
+
+# Dynawo models (with or without static ID -> will be search first)
+null:
+  PhaseShifterI:
+    tap:
+      mapping: "phaseShifter_tap"
+      factor: 1
+  DYNModelOmegaRef:
+    OmegaRef:
+      mapping: "omegaRef_0_value"
+      factor: 50
+  GeneratorPV:
+    P:
+      mapping: "regex:.*PGen$"
+      factor: 1
+    Q:
+      mapping: "regex:.*QGenPu$"
+      factor: 100
+  StaticVarCompensator: "static_var_compensator:default"
+
+  # Simplified generators (Dynawo.Electrical.Machines.OmegaRef and SignalN): same outputs as GeneratorPV
+  "Generator*SignalN*":
+    P:
+      mapping: "generator_PGen"
+      factor: 1
+    Q:
+      mapping: "generator_QGenPu"
+      factor: 100
+  GeneratorPQ:
+    extends: "Generator*SignalN*"
+    # deltaP:
+    #   mapping: "regex:.*deltaP"
+    #   factor: 1
+  GeneratorPTanPhi: GeneratorPQ
+  GeneratorPVDiagramPQ: GeneratorPQ
+  GeneratorAlphaBeta: "Generator*SignalN*"
+  GeneratorPVFixed: "Generator*SignalN*"
+
+  # Inverter based generation and storage: injected powers in pu (base SnRef, generator convention)
+  "PhotovoltaicsWecc*":
+    P:
+      mapping: "regex:.*_injector_PInjPu$"
+      factor: 100
+    Q:
+      mapping: "regex:.*_injector_QInjPu$"
+      factor: 100
+  "WT*WeccCurrentSource*": "PhotovoltaicsWecc*"  # WT4A, WT4B, WTG3, WTG4A and WTG4B
+  "WeccWT3CurrentSource*": "PhotovoltaicsWecc*"
+  "BESSWecc*": "PhotovoltaicsWecc*"
+  "DERa*": "PhotovoltaicsWecc*"
+  "*IBG":  # GenericIBG and AggregatedIBG
+    extends: "PhotovoltaicsWecc*"
+    # deltaP:
+    #   mapping: "regex:.*deltaP"
+    #   factor: 1
+  InjectorBG:
+    P:
+      mapping: "injector_PInjPu"
+      factor: 100
+    Q:
+      mapping: "injector_QInjPu"
+      factor: 100
+  "IECW*":  # IECWPP4* and IECWT4*
+    P:
+      mapping: "regex:.*_wT4Injector_PGenPu$"
+      factor: 100
+    Q:
+      mapping: "regex:.*_wT4Injector_QGenPu$"
+      factor: 100
+  "GridFormingConverter*":
+    P:
+      mapping: "converter_PGenPu"
+      factor: 100
+    Q:
+      mapping: "converter_QGenPu"
+      factor: 100
+  GridFormingEpri:
+    P:
+      mapping: "gfm_injectorURI_PInjPu"
+      factor: 100
+    Q:
+      mapping: "gfm_injectorURI_QInjPu"
+      factor: 100
+
+  # HVDC models not following the standard Dynawo HVDC variable names (see hvdc_line default).
+  "HvdcVsc*":
+    P1:
+      mapping: "hvdc_Conv1_PInjPu"
+      factor: -100
+    P2:
+      mapping: "hvdc_Conv2_PInjPu"
+      factor: -100
+    Q1:
+      mapping: "hvdc_Conv1_QInjPu"
+      factor: -100
+    Q2:
+      mapping: "hvdc_Conv2_QInjPu"
+      factor: -100
+
+  # Dynamic models of network components (powers in pu base SnRef, receptor convention)
+  "Line*":  # Line and LineFault
+    P1:
+      mapping: "line_P1Pu"
+      factor: 100
+    P2:
+      mapping: "line_P2Pu"
+      factor: 100
+    Q1:
+      mapping: "line_Q1Pu"
+      factor: 100
+    Q2:
+      mapping: "line_Q2Pu"
+      factor: 100
+  "Transformer*":  # No side 2 powers in TransformerFixedRatioAndPhase and the tap changer models
+    P1:
+      mapping: "transformer_P1Pu"
+      factor: 100
+    Q1:
+      mapping: "transformer_Q1Pu"
+      factor: 100
+  "Transformer*TapChanger":
+    extends: "Transformer*"
+    tap:
+      mapping: "transformer_tap"
+      factor: 1
+  TransformerFixedRatio:
+    P1:
+      mapping: "transformer_P1Pu"
+      factor: 100
+    P2:
+      mapping: "transformer_P2Pu"
+      factor: 100
+    Q1:
+      mapping: "transformer_Q1Pu"
+      factor: 100
+    Q2:
+      mapping: "transformer_Q2Pu"
+      factor: 100
+  NetworkTransformer: TransformerFixedRatio
+  "ShuntB*":
+    Q:
+      mapping: "shunt_QPu"
+      factor: 100
+  "Bus*":  # Bus and BusWithInit
+    U:
+      mapping: "bus_U"  # In kV
+      factor: 1
+    angle:
+      mapping: "bus_UPhase"
+      factor: 57.29577951308232  # Rad to degrees
+  "InfiniteBus*": []
+  InertialGrid: []
+  LoadShedding: []
+  Measurements: []
+
+  # Automatons
+  PhaseShifterP: PhaseShifterI
+  TapChangerAutomaton:
+    tap:
+      mapping: "tapChanger_tap"
+      factor: 1
+  "SecondaryVoltageControl*": []
+  SecondaryVoltageControlSimp:
+    level:
+      mapping: "secondaryVoltageControl_level"  # Between -1 and 1
+      factor: 1
+  DYNModelSecondaryVoltageControlSimplified:
+    level:
+      mapping: "level_value"
+      factor: 1
+  "CurrentLimitAutomaton*": []
+  "DistanceProtectionLine*": []
+  HVRT: []
+  "LVRT*": []
+  LackOfVoltageRelay: []
+  LossOfSynchronismProtection: []
+  OverVoltageAutomaton: []
+  UnderVoltageAutomaton: []
+  SpeedProtection: []
+  "UFLS*": []
+  PhaseShifterBlockingI: []
+  "TapChangerBlockingAutomaton*": []
+  SecondaryFrequencyRegulation: []
+  VRRemote: []
+  PowerTransferHVDCEmulation: []
+  GenericAutomaton: []
+  SignalN: []
+  DYNModelAreaShedding: []
+  DYNModelCentralizedShuntsSectionControl: []
+  DYNModelVariationArea: []
+  DYNModelVoltageMeasurementsUtilities: []
+  DYNModelVoltageSetPointChange: []
+  # Events, faults and signal sources
+  "Event*": []
+  NodeFault: []
+  VariableImpedantFault: []
+  "*Table": []
+  "*Step": []
+  ConditionalForward: []
+  DiscreteIntegrator: []
+  Ramp: []
+  SetPoint: []
+  SineWave: []
+  WeightedDifference: []
+
+# Models existing in IIDM
+generator:
+  default:
+    P:
+      mapping: "regex:.*PGen$"
+      factor: 1
+    PmPu:
+      mapping: "regex:.*PmPu"
+      factor: ["generator_PNomTurb", "generator_PNom"]
+    # deltaP:
+    #   mapping: "regex:.*deltaP"
+    #   factor: 1
+    Q:
+      mapping: "regex:.*QGen$"
+      factor: 1
+  null:
+    P:
+      mapping: "@ID@_P_value"
+      factor: 100
+    Q:
+      mapping: "@ID@_Q_value"
+      factor: 100
+load:
+  default:
+    P:
+      mapping: "regex:.*PPu"
+      factor: 100
+    Q:
+      mapping: "regex:.*QPu"
+      factor: 100
+  null: generator:null
+2_windings_transformer:
+  null:
+    P1:
+      mapping: "@ID@_P1_value"
+      factor: 100
+    P2:
+      mapping: "@ID@_P2_value"
+      factor: 100
+    Q1:
+      mapping: "@ID@_Q1_value"
+      factor: 100
+    Q2:
+      mapping: "@ID@_Q2_value"
+      factor: 100
+    i1:
+      mapping: "@ID@_iS1ToS2Side1_value"
+      factor: 1
+    i2:
+      mapping: "@ID@_iS2ToS1Side2_value"
+      factor: 1
+    tap:
+      mapping: "@ID@_step_value"  # IIDM tap position of the ratio or phase tap changer (single step 0 without tap changer)
+      factor: 1
+line:
+  null:
+    extends: "2_windings_transformer:null"
+    tap: null  # Lines have no tap changer
+    U1:
+      mapping: "@ID@_U1_value"
+      factor: "iidm:vNom"
+      side: 1
+    U2:
+      mapping: "@ID@_U2_value"
+      factor: "iidm:vNom"
+      side: 2
+    state:
+      mapping: "@ID@_state_value"
+      factor: 1
+static_var_compensator:
+  default:
+    P:
+      mapping: "regex:.*PInjPu"
+      factor: 100
+    Q:
+      mapping: "regex:.*QInjPu"
+      factor: 100
+  null: generator:null
+hvdc_line:
+  default:  # Standard Dynawo HVDC models (Dynawo.Electrical.HVDC), see null section for the other ones
+    P1:
+      mapping: "hvdc_P1Pu"  # In pu (base SnRef), receptor convention
+      factor: 100
+    P2:
+      mapping: "hvdc_P2Pu"
+      factor: 100
+    Q1:
+      mapping: "hvdc_Q1Pu"
+      factor: 100
+    Q2:
+      mapping: "hvdc_Q2Pu"
+      factor: 100
+  null:
+    P1:
+      mapping: "@ID@_P1_value"
+      factor: -100
+    P2:
+      mapping: "@ID@_P2_value"
+      factor: -100
+    Q1:
+      mapping: "@ID@_Q1_value"
+      factor: -100
+    Q2:
+      mapping: "@ID@_Q2_value"
+      factor: -100
+battery:
+  default:
+    P:
+      mapping: "regex:.*PInjPu$"
+      factor: "BESScb_SNom"
+    Q:
+      mapping: "regex:.*QInjPu$"
+      factor: "BESScb_SNom"
+  null: generator:null
+bus:
+  null:
+    U:
+      mapping: "@ID@_U_value"
+      factor: 1
+    angle:
+      mapping: "@ID@_phi_value"
+      factor: 1
+busbar_section:
+  null: bus:null
+shunt_compensator:
+  default:
+    Q:
+      mapping: "regex:.*QGen$"
+      factor: 1
+  null:
+    Q:
+      mapping: "@ID@_Q_value"
+      factor: 1
+switch:
+  null:
+    state:
+      mapping: "@ID@_state_value"
+      factor: 1

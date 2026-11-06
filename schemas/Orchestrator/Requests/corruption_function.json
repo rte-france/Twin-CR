@@ -1,0 +1,123 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "CorruptionFunction",
+  "type": "object",
+  "description": "Corruption function applied to links or nodes",
+  "oneOf": [
+    {
+      "title": "NoCorruption",
+      "type": "object",
+      "description": "Corruption function without effect",
+      "properties": {
+        "type": {"type": "string", "const": "NoCorruption"},
+        "likelihood": {
+          "type": "number",
+          "description": "Probability that this corruption will be applied",
+          "default": 1.0
+        }
+      },
+      "required": ["type"]
+    },
+    {
+      "title": "RandomNoiseMeasurementCorruption",
+      "type": "object",
+      "description": "Corruption function that applies a uniform random noise to measurements",
+      "properties": {
+        "type": {"type": "string", "const": "RandomNoiseMeasurementCorruption"},
+        "likelihood": {
+          "type": "number",
+          "description": "Probability that this corruption will be applied",
+          "default": 1.0
+        },
+        "noise_min": {
+          "type": "number",
+          "description": "Minimum value of the uniform noise range"
+        },
+        "noise_max": {
+          "type": "number",
+          "description": "Maximum value of the uniform noise range"
+        }
+      },
+      "required": ["type", "noise_min", "noise_max"]
+    },
+    {
+      "title": "RandomNoiseControlCorruption",
+      "type": "object",
+      "description": "Corruption function that applies a uniform random noise to controls",
+      "properties": {
+        "type": {"type": "string", "const": "RandomNoiseControlCorruption"},
+        "likelihood": {
+          "type": "number",
+          "description": "Probability that this corruption will be applied",
+          "default": 1.0
+        },
+        "noise_min": {
+          "type": "number",
+          "description": "Minimum value of the uniform noise range"
+        },
+        "noise_max": {
+          "type": "number",
+          "description": "Maximum value of the uniform noise range"
+        }
+      },
+      "required": ["type", "noise_min", "noise_max"]
+    },
+    {
+      "title": "ZeroOutMeasurementCorruption",
+      "type": "object",
+      "description": "Corruption function that replaces the value of measurements by a set value (default 0)",
+      "properties": {
+        "type": {"type": "string", "const": "ZeroOutMeasurementCorruption"},
+        "likelihood": {
+          "type": "number",
+          "description": "Probability that this corruption will be applied",
+          "default": 1.0
+        },
+        "zero_value": {
+          "type": "number",
+          "description": "The value to replace the measurement with",
+          "default": 0
+        }
+      },
+      "required": ["type"]
+    },
+    {
+      "title": "ShiftMeasurementCorruption",
+      "type": "object",
+      "description": "Corruption function that shifts the value of measurements by a set value",
+      "properties": {
+        "type": {"type": "string", "const": "ShiftMeasurementCorruption"},
+        "likelihood": {
+          "type": "number",
+          "description": "Probability that this corruption will be applied",
+          "default": 1.0
+        },
+        "shift_value": {
+          "type": "number",
+          "description": "Amount to shift the value",
+          "default": 0
+        }
+      },
+      "required": ["type"]
+    },
+    {
+      "title": "InvertControlCorruption",
+      "type": "object",
+      "description": "Corruption function that multiplies the value of controls by a set value (default: -1)",
+      "properties": {
+        "type": {"type": "string", "const": "InvertControlCorruption"},
+        "likelihood": {
+          "type": "number",
+          "description": "Probability that this corruption will be applied",
+          "default": 1.0
+        },
+        "invert_factor": {
+          "type": "number",
+          "description": "Factor to multiply control values with",
+          "default": -1
+        }
+      },
+      "required": ["type"]
+    }
+  ]
+}

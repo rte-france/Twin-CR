@@ -1,0 +1,68 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Game Master Outputs Configuration",
+  "description": "List of measurements published to the game master, by Dynawo or by the asset simulator",
+  "type": "array",
+  "items": {
+    "type": "object",
+    "properties": {
+      "equipmentId": {
+        "type": ["string", "null"],
+        "description": "IIDM equipment identifier, null for a purely dynamic model, which is identified by 'model' instead"
+      },
+      "kind": {
+        "type": "string",
+        "description": "Type of measurement (typical values include ('P', 'Q', 'U', 'i', 'state', 'OmegaRef', 'PmPu', 'deltaP'))"
+      },
+      "voltage_level": {
+        "type": "string",
+        "description": "Voltage level identifier"
+      },
+      "substation": {
+        "type": "string",
+        "description": "Substation identifier"
+      },
+      "topic": {
+        "type": "string",
+        "description": "NATS topic for publishing"
+      },
+      "dynawo_id": {
+        "type": "string",
+        "description": "Dynawo model variable ID"
+      },
+      "id": {
+        "type": "string",
+        "description": "Unique identifier"
+      },
+      "factor": {
+        "type": "number",
+        "description": "Scaling factor from Dynawo units to raw units (MW, kV, Hz) (value published in raw units). Defaults to 1"
+      },
+      "simulator": {
+        "type": "string",
+        "enum": ["dynawo", "asset_simulator"],
+        "description": "Simulator this entry belongs to; the orchestrator only drives the dynawo ones"
+      },
+      "model": {
+        "type": "string",
+        "description": "Name of the dynamic model, what 'equipmentId' is for IIDM equipment. Required, with 'model_lib', when 'equipmentId' is null"
+      },
+      "model_lib": {
+        "type": "string",
+        "description": "Which kind of dynamic model it is (e.g. DYNModelOmegaRef), what the pypowsybl element type is for IIDM equipment"
+      }
+    },
+    "required": ["id", "topic", "simulator"],
+    "if": {
+      "properties": {"simulator": {"const": "dynawo"}},
+      "required": ["simulator"]
+    },
+    "then": {
+      "description": "A Dynawo entry is either IIDM equipment (string 'equipmentId') or a purely dynamic model ('model' and 'model_lib')",
+      "anyOf": [
+        {"properties": {"equipmentId": {"type": "string"}}, "required": ["equipmentId"]},
+        {"required": ["model", "model_lib"]}
+      ]
+    }
+  }
+}

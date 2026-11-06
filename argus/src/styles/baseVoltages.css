@@ -1,0 +1,29 @@
+/*
+Copyright (c) 2026, RTE (https://www.rte-france.com)
+See AUTHORS.md
+SPDX-License-Identifier: MPL-2.0
+This file is part of Twin-CR, a platform for real-time cyber-physical
+co-simulation of power systems.
+*/
+
+.sld-vl300to500 {
+    background-color: #ff0000;
+}
+.sld-vl180to300 {
+    background-color: #228b22;
+}
+.sld-vl120to180 {
+    background-color: #01afaf;
+}
+.sld-vl70to120 {
+    background-color: #cc5500;
+}
+.sld-vl50to70 {
+    background-color: #a020f0;
+}
+.sld-vl30to50 {
+    background-color: #ff8290;
+}
+.sld-vl0to30 {
+    background-color: #abae28;
+}

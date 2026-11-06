@@ -1,0 +1,27 @@
+/*
+Copyright (c) 2025-2026, RTE (https://www.rte-france.com)
+See AUTHORS.md
+SPDX-License-Identifier: MPL-2.0
+This file is part of Twin-CR, a platform for real-time cyber-physical
+co-simulation of power systems.
+*/
+
+/* Expand documentation width for RTD theme (wy-nav-content) */
+.wy-nav-content {
+  max-width: none;
+  margin: 0 auto;
+  padding: 2rem 3rem;
+}
+
+@media screen and (min-width: 1200px) {
+  .wy-nav-content {
+    padding-left: 4rem;
+    padding-right: 4rem;
+  }
+}
+
+/* PyData theme variables, applied when that theme is active */
+:root {
+  --pst-content-max-width: min(120rem, 95vw);
+  --pst-sidebar-width: 20rem;
+}

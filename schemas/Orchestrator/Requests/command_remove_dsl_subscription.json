@@ -1,0 +1,16 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "RemoveDslSubscriptionCommandRequest",
+  "type": "object",
+  "properties": {
+    "command": {
+      "type": "string",
+      "const": "remove_dsl_subscription"
+    },
+    "id": {
+      "type": "string",
+      "description": "ID of the information to remove"
+    }
+  },
+  "required": ["command", "id"]
+}

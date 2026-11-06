@@ -1,0 +1,26 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "DynawoConstraintsPublication",
+  "description": "Publication of a constraint event on topic 'Dynawo.Constraints'",
+  "type": "object",
+  "properties": {
+    "description": {
+      "type": "string",
+      "description": "Description of the constraint event"
+    },
+    "modelName": {
+      "type": "string",
+      "description": "Name of the model associated with the constraint"
+    },
+    "time": {
+      "type": "string",
+      "description": "Simulation time of the event, guaranteed to be convertible to a float"
+    },
+    "eventType": {
+      "type": "string",
+      "enum": ["BEGIN", "END"],
+      "description": "Indicates whether the constraint starts or ends"
+    }
+  },
+  "required": ["description", "modelName", "time", "type"]
+}

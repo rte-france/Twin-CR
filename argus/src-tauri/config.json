@@ -1,0 +1,11 @@
+{
+  "keycloak_url": "https://localhost:8443",
+  "keycloak_realm": "twincr",
+  "keycloak_client_id": "session-manager-client",
+  "session_manager_url": "http://localhost:8090",
+  "lobby_url": "http://localhost:8080",
+  "environment": "development",
+  "api_url": "http://localhost:3000",
+  "api_token": "",
+  "oauth_dev_port": 8005
+}

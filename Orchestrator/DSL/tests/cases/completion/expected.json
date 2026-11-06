@@ -1,0 +1,107 @@
+{
+  "applied": [],
+  "completions": {
+    "after 5 seconds, dec": {
+      "replace_from": 17,
+      "suggestions": [
+        "decrease"
+      ]
+    },
+    "after 5 seconds, decrease load \"01_1\" input \"": {
+      "replace_from": 44,
+      "suggestions": [
+        "\"P\"",
+        "\"Q\""
+      ]
+    },
+    "after 5 seconds, decrease load \"01_1\" input \"P\" ": {
+      "replace_from": 48,
+      "suggestions": [
+        "by"
+      ]
+    },
+    "after 5 seconds, decrease load cluster \"": {
+      "replace_from": 39,
+      "suggestions": [
+        "\"feeders\""
+      ]
+    },
+    "after 5 seconds, isol": {
+      "replace_from": 17,
+      "suggestions": [
+        "isolateFeeder"
+      ]
+    },
+    "after 5 seconds, open ": {
+      "replace_from": 22,
+      "suggestions": [
+        "line",
+        "switch",
+        "transformer"
+      ]
+    },
+    "after 5 seconds, open switch \"01_1_b": {
+      "replace_from": 29,
+      "suggestions": [
+        "\"01_1_breaker\""
+      ]
+    },
+    "after 5 seconds, open switch $": {
+      "replace_from": 29,
+      "suggestions": []
+    },
+    "after 5 seconds, open transformer \"Tr1011-40": {
+      "replace_from": 34,
+      "suggestions": [
+        "\"Tr1011-4011\""
+      ]
+    },
+    "after 5 seconds, set \"": {
+      "replace_from": 21,
+      "suggestions": [
+        "\"DYNModelRST\""
+      ]
+    },
+    "after 5 seconds, set \"DYNModelRST\" \"RST_40": {
+      "replace_from": 35,
+      "suggestions": [
+        "\"RST_4011\"",
+        "\"RST_4012\""
+      ]
+    },
+    "after 5 seconds, set \"DYNModelRST\" \"RST_4011\" input \"": {
+      "replace_from": 52,
+      "suggestions": [
+        "\"U\"",
+        "\"deltaU\""
+      ]
+    },
+    "after 5 seconds, set \"DYNModelRST\" [\"RST_4011\", \"": {
+      "replace_from": 48,
+      "suggestions": [
+        "\"RST_4011\"",
+        "\"RST_4012\""
+      ]
+    },
+    "func f(alpha, beta) { after 0 seconds, open switch $": {
+      "replace_from": 51,
+      "suggestions": [
+        "$alpha",
+        "$beta"
+      ]
+    },
+    "when \"DYNModelOmegaRef\" \"OmegaRef\" output \"": {
+      "replace_from": 42,
+      "suggestions": [
+        "\"OmegaRef\""
+      ]
+    },
+    "when load \"01_1\" output \"": {
+      "replace_from": 24,
+      "suggestions": [
+        "\"P\"",
+        "\"Q\""
+      ]
+    }
+  }
+}

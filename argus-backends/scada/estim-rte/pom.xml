@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+Copyright (c) 2025-2026, RTE (https://www.rte-france.com)
+See AUTHORS.md
+SPDX-License-Identifier: MPL-2.0
+This file is part of Twin-CR, a platform for real-time cyber-physical
+co-simulation of power systems.
+-->
+
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <groupId>org.TwinCR</groupId>
+    <artifactId>scada</artifactId>
+    <version>5.5.0</version>
+    <relativePath>../pom.xml</relativePath>
+  </parent>
+
+  <artifactId>estim-rte</artifactId>
+
+  <dependencies>
+    <dependency>
+      <groupId>${project.groupId}</groupId>
+      <artifactId>utils</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.rte-france.powsybl</groupId>
+      <artifactId>powsybl-hades2-integration</artifactId>
+      <version>${powsyblrtecore.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>com.rte-france.powsybl</groupId>
+      <artifactId>powsybl-estim-integration</artifactId>
+      <version>${powsyblrtecore.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>com.rte-france.powsybl</groupId>
+      <artifactId>powsybl-die-importer</artifactId>
+      <version>${powsyblrtecore.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>com.rte-france.powsybl</groupId>
+      <artifactId>powsybl-die</artifactId>
+      <version>${powsyblrtecore.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>com.rte-france.powsybl</groupId>
+      <artifactId>powsybl-iidm-cvg-extensions-serde</artifactId>
+      <version>${powsyblrtecore.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>com.rte-france.powsybl</groupId>
+      <artifactId>powsybl-iidm-cvg-extensions-api</artifactId>
+      <version>${powsyblrtecore.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>com.rte-france.powsybl</groupId>
+      <artifactId>powsybl-iidm-cvg-extensions-impl</artifactId>
+      <version>${powsyblrtecore.version}</version>
+    </dependency>
+  </dependencies>
+</project>

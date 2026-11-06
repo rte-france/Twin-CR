@@ -1,0 +1,114 @@
+#
+# Copyright (c) 2025-2026, RTE (https://www.rte-france.com)
+# See AUTHORS.md
+# SPDX-License-Identifier: MPL-2.0
+# This file is part of Twin-CR, a platform for real-time cyber-physical
+# co-simulation of power systems.
+#
+
+include:
+  - docker-compose-dependencies.yaml
+
+services:
+  gamemaster:
+    profiles: ["legacy_dsl"]
+    container_name: gamemaster
+    build:
+      context: .
+      dockerfile: envs/Dockerfile.gamemaster
+    depends_on:
+      twincr-core:
+        condition: service_healthy
+        restart: true
+      nats:
+        condition: service_started
+      clickhouse:
+        condition: service_healthy
+    environment:
+      - TZ=Europe/Paris
+      - LOG_LEVEL=INFO
+      - DSL_COMMAND_LOG_ENABLED=true
+      - NATS_URL=nats://${NATS_HOST}:${NATS_PORT}
+    env_file:
+      - .env
+    volumes:
+      - ./:/app
+    ports:
+      - "${LEGACY_DSL_SERVER_EXPOSED_PORT:-8001}:${DSL_SERVER_PORT}"
+    command: ["/bin/bash", "-c", "unset http_proxy https_proxy ftp_proxy no_proxy HTTP_PROXY HTTPS_PROXY FTP_PROXY NO_PROXY && uvicorn gamemaster.app.main:app --host 0.0.0.0 --port ${DSL_SERVER_PORT}"]
+
+  twincr-core:
+    container_name: twincr-core
+    build:
+      context: .
+      dockerfile: envs/Dockerfile.orchestrator
+      args:
+        # ON also builds the regression suite and runs it inside the image build, so a red test fails the build.
+        WITH_TESTS: ${WITH_TESTS:-OFF}
+    depends_on:
+      nats:
+        condition: service_started
+      clickhouse:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "test", "-f", "/tmp/orchestrator_healthcheck"]
+      interval: 5s
+      timeout: 300s  # Extracting the simulator can take some time the first time the service is run
+    ports:
+      - "${DSL_SERVER_EXPOSED_PORT}:${DSL_SERVER_PORT}"
+    command: ["/bin/bash", "-c", " chmod +x /home/orchestrator/envs/fetch_simulators.sh && bash -c /home/orchestrator/envs/fetch_simulators.sh && unset http_proxy https_proxy ftp_proxy no_proxy HTTP_PROXY HTTPS_PROXY FTP_PROXY NO_PROXY && chmod +x /home/orchestrator/envs/run_orchestrator.sh && bash -c /home/orchestrator/envs/run_orchestrator.sh"]
+    environment:
+      - TZ=Europe/Paris
+      - NATS_URL=nats://${NATS_HOST}:${NATS_PORT}
+    volumes:
+      - ./:/home/orchestrator/
+    env_file:
+      - .env
+
+  configurator-client:
+    container_name: configurator-client
+    build:
+      context: configurator_client
+      dockerfile: Dockerfile-no-uv
+    depends_on:
+      twincr-core:
+        condition: service_healthy
+        restart: true
+      nats:
+        condition: service_started
+      clickhouse:
+        condition: service_healthy
+    volumes:
+      - ./:/home/orchestrator/
+    healthcheck:
+      test: ["CMD-SHELL", "if [ \"$MODE\" = \"CLICKHOUSE\" ]; then curl -f http://localhost:${CONFIGURATOR_PORT}/status || exit 1; else exit 0; fi"]
+      interval: 5s
+      timeout: 5s
+      start_period: 10s
+    ports:
+      - "${CONFIGURATOR_EXPOSED_PORT}:${CONFIGURATOR_PORT}"
+    environment:
+      - NATS_URL=nats://${NATS_HOST}:${NATS_PORT}
+      - AWS_ENDPOINT_URL_S3=http://${GARAGE_HOST}:${GARAGE_PORT}
+    env_file:
+      - .env
+    command: ["/bin/bash", "-c", "unset http_proxy https_proxy ftp_proxy no_proxy HTTP_PROXY HTTPS_PROXY FTP_PROXY NO_PROXY && chmod +x /home/orchestrator/configurator_client/configurator_client.sh && /home/orchestrator/configurator_client/configurator_client.sh"]
+
+  automata:
+    container_name: automata
+    build:
+      context: .
+      dockerfile: envs/Dockerfile.automata
+    depends_on:
+      nats:
+        condition: service_started
+      configurator-client:
+        condition: service_healthy
+    volumes:
+      - ./:/home/orchestrator/
+      - ./logs:/logs
+    environment:
+      - NATS_URL=nats://${NATS_HOST}:${NATS_PORT}
+    env_file:
+      - .env
+    command: ["/bin/bash", "-c", "unset http_proxy https_proxy ftp_proxy no_proxy HTTP_PROXY HTTPS_PROXY FTP_PROXY NO_PROXY && python -u automata_launcher.py"]

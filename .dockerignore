@@ -1,0 +1,13 @@
+/cache
+/docs
+/argus/build
+/argus/node_modules
+/argus/src-tauri/target
+/AppImage
+/data
+/Orchestrator/build
+/Orchestrator/.cache
+/session-manager/session-manager-db
+**/venv
+**/.venv
+**/__pycache__

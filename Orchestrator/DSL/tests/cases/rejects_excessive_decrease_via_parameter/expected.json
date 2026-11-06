@@ -1,0 +1,4 @@
+{
+  "applied": [],
+  "load_error": "increase by -150% would take the input multiplier below zero, a decrease is limited to 100% (line 3: \"after 0 seconds, increase load $feeder input \"P\" by $amount%;\") (line 7: \"after 2 seconds, trim(\"01_1\", -150);\")"
+}

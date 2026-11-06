@@ -1,0 +1,28 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Command",
+  "description": "List of valid commands that can be sent to the topic 'GameMasterControl.<source>'",
+  "oneOf": [
+    { "$ref": "command.json" },
+    {
+      "title": "GameMasterCommand",
+      "description": "Game master command, will generate an ActualControl event if sent to the topic 'GameMasterControl.<source>'",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Identifier of the control signal"
+        },
+        "value": {
+          "oneOf": [
+            { "type": "boolean" },
+            { "type": "integer" },
+            { "type": "number" }
+          ],
+          "description": "Value of the signal"
+        }
+      },
+      "required": ["id", "value"]
+    }
+  ]
+}

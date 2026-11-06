@@ -1,0 +1,3203 @@
+[
+    {
+        "equipmentId": "Tr1011-4011",
+        "kind": "state",
+        "id": "NETWORK_Tr1011-4011_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "Tr1011-4011",
+        "kind": "lock",
+        "id": "NETWORK_Tr1011-4011_TAP_CHANGER_locked_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "Tr11-1011",
+        "kind": "state",
+        "id": "NETWORK_Tr11-1011_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "Tr11-1011",
+        "kind": "lock",
+        "id": "NETWORK_Tr11-1011_TAP_CHANGER_locked_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "Tr4011-g9",
+        "kind": "state",
+        "id": "NETWORK_Tr4011-g9_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "Tr4011-g9",
+        "kind": "lock",
+        "id": "NETWORK_Tr4011-g9_TAP_CHANGER_locked_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "Tr1012-4012",
+        "kind": "state",
+        "id": "NETWORK_Tr1012-4012_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "Tr1012-4012",
+        "kind": "lock",
+        "id": "NETWORK_Tr1012-4012_TAP_CHANGER_locked_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "Tr1012-g1",
+        "kind": "state",
+        "id": "NETWORK_Tr1012-g1_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "Tr1012-g1",
+        "kind": "lock",
+        "id": "NETWORK_Tr1012-g1_TAP_CHANGER_locked_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "Tr12-1012",
+        "kind": "state",
+        "id": "NETWORK_Tr12-1012_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "Tr12-1012",
+        "kind": "lock",
+        "id": "NETWORK_Tr12-1012_TAP_CHANGER_locked_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "Tr4012-g10",
+        "kind": "state",
+        "id": "NETWORK_Tr4012-g10_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "Tr4012-g10",
+        "kind": "lock",
+        "id": "NETWORK_Tr4012-g10_TAP_CHANGER_locked_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "Tr1013-g2",
+        "kind": "state",
+        "id": "NETWORK_Tr1013-g2_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "Tr1013-g2",
+        "kind": "lock",
+        "id": "NETWORK_Tr1013-g2_TAP_CHANGER_locked_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "Tr13-1013",
+        "kind": "state",
+        "id": "NETWORK_Tr13-1013_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "Tr13-1013",
+        "kind": "lock",
+        "id": "NETWORK_Tr13-1013_TAP_CHANGER_locked_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "Tr1014-g3",
+        "kind": "state",
+        "id": "NETWORK_Tr1014-g3_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "Tr1014-g3",
+        "kind": "lock",
+        "id": "NETWORK_Tr1014-g3_TAP_CHANGER_locked_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "Tr1021-g4",
+        "kind": "state",
+        "id": "NETWORK_Tr1021-g4_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "Tr1021-g4",
+        "kind": "lock",
+        "id": "NETWORK_Tr1021-g4_TAP_CHANGER_locked_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "Tr1022-4022",
+        "kind": "state",
+        "id": "NETWORK_Tr1022-4022_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "Tr1022-4022",
+        "kind": "lock",
+        "id": "NETWORK_Tr1022-4022_TAP_CHANGER_locked_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "Tr1022-g5",
+        "kind": "state",
+        "id": "NETWORK_Tr1022-g5_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "Tr1022-g5",
+        "kind": "lock",
+        "id": "NETWORK_Tr1022-g5_TAP_CHANGER_locked_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "Tr22-1022",
+        "kind": "state",
+        "id": "NETWORK_Tr22-1022_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "Tr22-1022",
+        "kind": "lock",
+        "id": "NETWORK_Tr22-1022_TAP_CHANGER_locked_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "Tr1-1041",
+        "kind": "state",
+        "id": "NETWORK_Tr1-1041_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "Tr1-1041",
+        "kind": "lock",
+        "id": "NETWORK_Tr1-1041_TAP_CHANGER_locked_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "Tr1042-g6",
+        "kind": "state",
+        "id": "NETWORK_Tr1042-g6_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "Tr1042-g6",
+        "kind": "lock",
+        "id": "NETWORK_Tr1042-g6_TAP_CHANGER_locked_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "Tr2-1042",
+        "kind": "state",
+        "id": "NETWORK_Tr2-1042_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "Tr2-1042",
+        "kind": "lock",
+        "id": "NETWORK_Tr2-1042_TAP_CHANGER_locked_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "Tr1043-g7",
+        "kind": "state",
+        "id": "NETWORK_Tr1043-g7_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "Tr1043-g7",
+        "kind": "lock",
+        "id": "NETWORK_Tr1043-g7_TAP_CHANGER_locked_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "Tr3-1043",
+        "kind": "state",
+        "id": "NETWORK_Tr3-1043_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "Tr3-1043",
+        "kind": "lock",
+        "id": "NETWORK_Tr3-1043_TAP_CHANGER_locked_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "Tr1044-4044a",
+        "kind": "state",
+        "id": "NETWORK_Tr1044-4044a_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "Tr1044-4044a",
+        "kind": "lock",
+        "id": "NETWORK_Tr1044-4044a_TAP_CHANGER_locked_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "Tr1044-4044b",
+        "kind": "state",
+        "id": "NETWORK_Tr1044-4044b_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "Tr1044-4044b",
+        "kind": "lock",
+        "id": "NETWORK_Tr1044-4044b_TAP_CHANGER_locked_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "Tr4-1044",
+        "kind": "state",
+        "id": "NETWORK_Tr4-1044_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "Tr4-1044",
+        "kind": "lock",
+        "id": "NETWORK_Tr4-1044_TAP_CHANGER_locked_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "Tr1045-4045a",
+        "kind": "state",
+        "id": "NETWORK_Tr1045-4045a_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "Tr1045-4045a",
+        "kind": "lock",
+        "id": "NETWORK_Tr1045-4045a_TAP_CHANGER_locked_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "Tr1045-4045b",
+        "kind": "state",
+        "id": "NETWORK_Tr1045-4045b_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "Tr1045-4045b",
+        "kind": "lock",
+        "id": "NETWORK_Tr1045-4045b_TAP_CHANGER_locked_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "Tr5-1045",
+        "kind": "state",
+        "id": "NETWORK_Tr5-1045_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "Tr5-1045",
+        "kind": "lock",
+        "id": "NETWORK_Tr5-1045_TAP_CHANGER_locked_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "Tr2031-4031",
+        "kind": "state",
+        "id": "NETWORK_Tr2031-4031_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "Tr2031-4031",
+        "kind": "lock",
+        "id": "NETWORK_Tr2031-4031_TAP_CHANGER_locked_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "Tr31-2031",
+        "kind": "state",
+        "id": "NETWORK_Tr31-2031_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "Tr31-2031",
+        "kind": "lock",
+        "id": "NETWORK_Tr31-2031_TAP_CHANGER_locked_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "Tr4031-g12",
+        "kind": "state",
+        "id": "NETWORK_Tr4031-g12_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "Tr4031-g12",
+        "kind": "lock",
+        "id": "NETWORK_Tr4031-g12_TAP_CHANGER_locked_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "Tr2032-g8",
+        "kind": "state",
+        "id": "NETWORK_Tr2032-g8_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "Tr2032-g8",
+        "kind": "lock",
+        "id": "NETWORK_Tr2032-g8_TAP_CHANGER_locked_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "Tr32-2032",
+        "kind": "state",
+        "id": "NETWORK_Tr32-2032_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "Tr32-2032",
+        "kind": "lock",
+        "id": "NETWORK_Tr32-2032_TAP_CHANGER_locked_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "Tr4021-g11",
+        "kind": "state",
+        "id": "NETWORK_Tr4021-g11_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "Tr4021-g11",
+        "kind": "lock",
+        "id": "NETWORK_Tr4021-g11_TAP_CHANGER_locked_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "Tr4041-g13",
+        "kind": "state",
+        "id": "NETWORK_Tr4041-g13_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "Tr4041-g13",
+        "kind": "lock",
+        "id": "NETWORK_Tr4041-g13_TAP_CHANGER_locked_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "Tr41-4041",
+        "kind": "state",
+        "id": "NETWORK_Tr41-4041_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "Tr41-4041",
+        "kind": "lock",
+        "id": "NETWORK_Tr41-4041_TAP_CHANGER_locked_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "Tr4042-g14",
+        "kind": "state",
+        "id": "NETWORK_Tr4042-g14_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "Tr4042-g14",
+        "kind": "lock",
+        "id": "NETWORK_Tr4042-g14_TAP_CHANGER_locked_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "Tr42-4042",
+        "kind": "state",
+        "id": "NETWORK_Tr42-4042_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "Tr42-4042",
+        "kind": "lock",
+        "id": "NETWORK_Tr42-4042_TAP_CHANGER_locked_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "Tr43-4043",
+        "kind": "state",
+        "id": "NETWORK_Tr43-4043_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "Tr43-4043",
+        "kind": "lock",
+        "id": "NETWORK_Tr43-4043_TAP_CHANGER_locked_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "Tr46-4046",
+        "kind": "state",
+        "id": "NETWORK_Tr46-4046_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "Tr46-4046",
+        "kind": "lock",
+        "id": "NETWORK_Tr46-4046_TAP_CHANGER_locked_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "Tr4047-g15",
+        "kind": "state",
+        "id": "NETWORK_Tr4047-g15_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "Tr4047-g15",
+        "kind": "lock",
+        "id": "NETWORK_Tr4047-g15_TAP_CHANGER_locked_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "Tr47-4047",
+        "kind": "state",
+        "id": "NETWORK_Tr47-4047_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "Tr47-4047",
+        "kind": "lock",
+        "id": "NETWORK_Tr47-4047_TAP_CHANGER_locked_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "Tr4051-g16",
+        "kind": "state",
+        "id": "NETWORK_Tr4051-g16_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "Tr4051-g16",
+        "kind": "lock",
+        "id": "NETWORK_Tr4051-g16_TAP_CHANGER_locked_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "Tr51-4051",
+        "kind": "state",
+        "id": "NETWORK_Tr51-4051_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "Tr51-4051",
+        "kind": "lock",
+        "id": "NETWORK_Tr51-4051_TAP_CHANGER_locked_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "Tr61-4061",
+        "kind": "state",
+        "id": "NETWORK_Tr61-4061_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "Tr61-4061",
+        "kind": "lock",
+        "id": "NETWORK_Tr61-4061_TAP_CHANGER_locked_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "Tr4061-g17",
+        "kind": "state",
+        "id": "NETWORK_Tr4061-g17_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "Tr4061-g17",
+        "kind": "lock",
+        "id": "NETWORK_Tr4061-g17_TAP_CHANGER_locked_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "Tr62-4062",
+        "kind": "state",
+        "id": "NETWORK_Tr62-4062_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "Tr62-4062",
+        "kind": "lock",
+        "id": "NETWORK_Tr62-4062_TAP_CHANGER_locked_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "Tr4063-g18",
+        "kind": "state",
+        "id": "NETWORK_Tr4063-g18_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "Tr4063-g18",
+        "kind": "lock",
+        "id": "NETWORK_Tr4063-g18_TAP_CHANGER_locked_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "Tr63-4063",
+        "kind": "state",
+        "id": "NETWORK_Tr63-4063_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "Tr63-4063",
+        "kind": "lock",
+        "id": "NETWORK_Tr63-4063_TAP_CHANGER_locked_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "Tr4071-g19",
+        "kind": "state",
+        "id": "NETWORK_Tr4071-g19_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "Tr4071-g19",
+        "kind": "lock",
+        "id": "NETWORK_Tr4071-g19_TAP_CHANGER_locked_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "Tr71-4071",
+        "kind": "state",
+        "id": "NETWORK_Tr71-4071_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "Tr71-4071",
+        "kind": "lock",
+        "id": "NETWORK_Tr71-4071_TAP_CHANGER_locked_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "Tr4072-g20",
+        "kind": "state",
+        "id": "NETWORK_Tr4072-g20_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "Tr4072-g20",
+        "kind": "lock",
+        "id": "NETWORK_Tr4072-g20_TAP_CHANGER_locked_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "Tr72-4072",
+        "kind": "state",
+        "id": "NETWORK_Tr72-4072_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "Tr72-4072",
+        "kind": "lock",
+        "id": "NETWORK_Tr72-4072_TAP_CHANGER_locked_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "L1011-1013a",
+        "kind": "state",
+        "id": "NETWORK_L1011-1013a_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "L1011-1013b",
+        "kind": "state",
+        "id": "NETWORK_L1011-1013b_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "L1012-1014a",
+        "kind": "state",
+        "id": "NETWORK_L1012-1014a_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "L1012-1014b",
+        "kind": "state",
+        "id": "NETWORK_L1012-1014b_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "L1013-1014a",
+        "kind": "state",
+        "id": "NETWORK_L1013-1014a_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "L1013-1014b",
+        "kind": "state",
+        "id": "NETWORK_L1013-1014b_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "L1021-1022a",
+        "kind": "state",
+        "id": "NETWORK_L1021-1022a_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "L1021-1022b",
+        "kind": "state",
+        "id": "NETWORK_L1021-1022b_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "L1041-1043a",
+        "kind": "state",
+        "id": "NETWORK_L1041-1043a_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "L1041-1043b",
+        "kind": "state",
+        "id": "NETWORK_L1041-1043b_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "L1041-1045a",
+        "kind": "state",
+        "id": "NETWORK_L1041-1045a_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "L1041-1045b",
+        "kind": "state",
+        "id": "NETWORK_L1041-1045b_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "L1042-1044a",
+        "kind": "state",
+        "id": "NETWORK_L1042-1044a_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "L1042-1044b",
+        "kind": "state",
+        "id": "NETWORK_L1042-1044b_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "L1042-1045",
+        "kind": "state",
+        "id": "NETWORK_L1042-1045_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "L1043-1044a",
+        "kind": "state",
+        "id": "NETWORK_L1043-1044a_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "L1043-1044b",
+        "kind": "state",
+        "id": "NETWORK_L1043-1044b_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "L2031-2032a",
+        "kind": "state",
+        "id": "NETWORK_L2031-2032a_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "L2031-2032b",
+        "kind": "state",
+        "id": "NETWORK_L2031-2032b_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "L4011-4012",
+        "kind": "state",
+        "id": "NETWORK_L4011-4012_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "L4011-4021",
+        "kind": "state",
+        "id": "NETWORK_L4011-4021_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "L4011-4022",
+        "kind": "state",
+        "id": "NETWORK_L4011-4022_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "L4011-4071",
+        "kind": "state",
+        "id": "NETWORK_L4011-4071_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "L4012-4022",
+        "kind": "state",
+        "id": "NETWORK_L4012-4022_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "L4012-4071",
+        "kind": "state",
+        "id": "NETWORK_L4012-4071_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "L4021-4032",
+        "kind": "state",
+        "id": "NETWORK_L4021-4032_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "L4021-4042",
+        "kind": "state",
+        "id": "NETWORK_L4021-4042_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "L4022-4031a",
+        "kind": "state",
+        "id": "NETWORK_L4022-4031a_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "L4022-4031b",
+        "kind": "state",
+        "id": "NETWORK_L4022-4031b_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "L4031-4032",
+        "kind": "state",
+        "id": "NETWORK_L4031-4032_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "L4031-4041a",
+        "kind": "state",
+        "id": "NETWORK_L4031-4041a_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "L4031-4041b",
+        "kind": "state",
+        "id": "NETWORK_L4031-4041b_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "L4032-4042",
+        "kind": "state",
+        "id": "NETWORK_L4032-4042_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "L4032-4044",
+        "kind": "state",
+        "id": "NETWORK_L4032-4044_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "L4041-4044",
+        "kind": "state",
+        "id": "NETWORK_L4041-4044_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "L4041-4061",
+        "kind": "state",
+        "id": "NETWORK_L4041-4061_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "L4042-4043",
+        "kind": "state",
+        "id": "NETWORK_L4042-4043_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "L4042-4044",
+        "kind": "state",
+        "id": "NETWORK_L4042-4044_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "L4043-4044",
+        "kind": "state",
+        "id": "NETWORK_L4043-4044_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "L4043-4046",
+        "kind": "state",
+        "id": "NETWORK_L4043-4046_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "L4043-4047",
+        "kind": "state",
+        "id": "NETWORK_L4043-4047_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "L4044-4045a",
+        "kind": "state",
+        "id": "NETWORK_L4044-4045a_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "L4044-4045b",
+        "kind": "state",
+        "id": "NETWORK_L4044-4045b_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "L4045-4051a",
+        "kind": "state",
+        "id": "NETWORK_L4045-4051a_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "L4045-4051b",
+        "kind": "state",
+        "id": "NETWORK_L4045-4051b_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "L4045-4062",
+        "kind": "state",
+        "id": "NETWORK_L4045-4062_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "L4046-4047",
+        "kind": "state",
+        "id": "NETWORK_L4046-4047_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "L4061-4062",
+        "kind": "state",
+        "id": "NETWORK_L4061-4062_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "L4062-4063a",
+        "kind": "state",
+        "id": "NETWORK_L4062-4063a_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "L4062-4063b",
+        "kind": "state",
+        "id": "NETWORK_L4062-4063b_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "L4071-4072a",
+        "kind": "state",
+        "id": "NETWORK_L4071-4072a_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "L4071-4072b",
+        "kind": "state",
+        "id": "NETWORK_L4071-4072b_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "11_1",
+        "kind": "P",
+        "id": "NETWORK_11_1_PRefPu_value",
+        "factor": 100.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "11_1",
+        "kind": "Q",
+        "id": "NETWORK_11_1_QRefPu_value",
+        "factor": 100.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "12_1",
+        "kind": "P",
+        "id": "NETWORK_12_1_PRefPu_value",
+        "factor": 100.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "12_1",
+        "kind": "Q",
+        "id": "NETWORK_12_1_QRefPu_value",
+        "factor": 100.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "13_1",
+        "kind": "P",
+        "id": "NETWORK_13_1_PRefPu_value",
+        "factor": 100.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "13_1",
+        "kind": "Q",
+        "id": "NETWORK_13_1_QRefPu_value",
+        "factor": 100.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "22_1",
+        "kind": "P",
+        "id": "NETWORK_22_1_PRefPu_value",
+        "factor": 100.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "22_1",
+        "kind": "Q",
+        "id": "NETWORK_22_1_QRefPu_value",
+        "factor": 100.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "01_1",
+        "kind": "P",
+        "id": "NETWORK_01_1_PRefPu_value",
+        "factor": 100.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "01_1",
+        "kind": "Q",
+        "id": "NETWORK_01_1_QRefPu_value",
+        "factor": 100.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "02_1",
+        "kind": "P",
+        "id": "NETWORK_02_1_PRefPu_value",
+        "factor": 100.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "02_1",
+        "kind": "Q",
+        "id": "NETWORK_02_1_QRefPu_value",
+        "factor": 100.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "03_1",
+        "kind": "P",
+        "id": "NETWORK_03_1_PRefPu_value",
+        "factor": 100.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "03_1",
+        "kind": "Q",
+        "id": "NETWORK_03_1_QRefPu_value",
+        "factor": 100.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "04_1",
+        "kind": "P",
+        "id": "NETWORK_04_1_PRefPu_value",
+        "factor": 100.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "04_1",
+        "kind": "Q",
+        "id": "NETWORK_04_1_QRefPu_value",
+        "factor": 100.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "05_1",
+        "kind": "P",
+        "id": "NETWORK_05_1_PRefPu_value",
+        "factor": 100.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "05_1",
+        "kind": "Q",
+        "id": "NETWORK_05_1_QRefPu_value",
+        "factor": 100.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "31_1",
+        "kind": "P",
+        "id": "NETWORK_31_1_PRefPu_value",
+        "factor": 100.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "31_1",
+        "kind": "Q",
+        "id": "NETWORK_31_1_QRefPu_value",
+        "factor": 100.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "32_1",
+        "kind": "P",
+        "id": "NETWORK_32_1_PRefPu_value",
+        "factor": 100.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "32_1",
+        "kind": "Q",
+        "id": "NETWORK_32_1_QRefPu_value",
+        "factor": 100.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "41_1",
+        "kind": "P",
+        "id": "NETWORK_41_1_PRefPu_value",
+        "factor": 100.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "41_1",
+        "kind": "Q",
+        "id": "NETWORK_41_1_QRefPu_value",
+        "factor": 100.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "42_1",
+        "kind": "P",
+        "id": "NETWORK_42_1_PRefPu_value",
+        "factor": 100.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "42_1",
+        "kind": "Q",
+        "id": "NETWORK_42_1_QRefPu_value",
+        "factor": 100.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "43_1",
+        "kind": "P",
+        "id": "NETWORK_43_1_PRefPu_value",
+        "factor": 100.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "43_1",
+        "kind": "Q",
+        "id": "NETWORK_43_1_QRefPu_value",
+        "factor": 100.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "46_1",
+        "kind": "P",
+        "id": "NETWORK_46_1_PRefPu_value",
+        "factor": 100.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "46_1",
+        "kind": "Q",
+        "id": "NETWORK_46_1_QRefPu_value",
+        "factor": 100.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "47_1",
+        "kind": "P",
+        "id": "NETWORK_47_1_PRefPu_value",
+        "factor": 100.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "47_1",
+        "kind": "Q",
+        "id": "NETWORK_47_1_QRefPu_value",
+        "factor": 100.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "51_1",
+        "kind": "P",
+        "id": "NETWORK_51_1_PRefPu_value",
+        "factor": 100.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "51_1",
+        "kind": "Q",
+        "id": "NETWORK_51_1_QRefPu_value",
+        "factor": 100.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "61_1",
+        "kind": "P",
+        "id": "NETWORK_61_1_PRefPu_value",
+        "factor": 100.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "61_1",
+        "kind": "Q",
+        "id": "NETWORK_61_1_QRefPu_value",
+        "factor": 100.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "62_1",
+        "kind": "P",
+        "id": "NETWORK_62_1_PRefPu_value",
+        "factor": 100.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "62_1",
+        "kind": "Q",
+        "id": "NETWORK_62_1_QRefPu_value",
+        "factor": 100.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "63_1",
+        "kind": "P",
+        "id": "NETWORK_63_1_PRefPu_value",
+        "factor": 100.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "63_1",
+        "kind": "Q",
+        "id": "NETWORK_63_1_QRefPu_value",
+        "factor": 100.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "71_1",
+        "kind": "P",
+        "id": "NETWORK_71_1_PRefPu_value",
+        "factor": 100.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "71_1",
+        "kind": "Q",
+        "id": "NETWORK_71_1_QRefPu_value",
+        "factor": 100.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "72_1",
+        "kind": "P",
+        "id": "NETWORK_72_1_PRefPu_value",
+        "factor": 100.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "72_1",
+        "kind": "Q",
+        "id": "NETWORK_72_1_QRefPu_value",
+        "factor": 100.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "Tr1011-4011_breaker2",
+        "kind": "state",
+        "id": "NETWORK_Tr1011-4011_breaker2_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "Tr11-1011_breaker1",
+        "kind": "state",
+        "id": "NETWORK_Tr11-1011_breaker1_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "L1011-1013a_breaker1",
+        "kind": "state",
+        "id": "NETWORK_L1011-1013a_breaker1_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "L1011-1013b_breaker1",
+        "kind": "state",
+        "id": "NETWORK_L1011-1013b_breaker1_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "Tr1011-4011_breaker1",
+        "kind": "state",
+        "id": "NETWORK_Tr1011-4011_breaker1_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "Tr4011-g9_breaker1",
+        "kind": "state",
+        "id": "NETWORK_Tr4011-g9_breaker1_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "L4011-4012_breaker1",
+        "kind": "state",
+        "id": "NETWORK_L4011-4012_breaker1_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "L4011-4021_breaker2",
+        "kind": "state",
+        "id": "NETWORK_L4011-4021_breaker2_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "L4011-4022_breaker1",
+        "kind": "state",
+        "id": "NETWORK_L4011-4022_breaker1_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "L4011-4071_breaker2",
+        "kind": "state",
+        "id": "NETWORK_L4011-4071_breaker2_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "11_1_breaker",
+        "kind": "state",
+        "id": "NETWORK_11_1_breaker_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "Tr11-1011_breaker2",
+        "kind": "state",
+        "id": "NETWORK_Tr11-1011_breaker2_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "g09_breaker",
+        "kind": "state",
+        "id": "NETWORK_g09_breaker_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "Tr4011-g9_breaker2",
+        "kind": "state",
+        "id": "NETWORK_Tr4011-g9_breaker2_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "Tr1012-4012_breaker2",
+        "kind": "state",
+        "id": "NETWORK_Tr1012-4012_breaker2_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "Tr1012-g1_breaker1",
+        "kind": "state",
+        "id": "NETWORK_Tr1012-g1_breaker1_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "Tr12-1012_breaker1",
+        "kind": "state",
+        "id": "NETWORK_Tr12-1012_breaker1_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "L1012-1014a_breaker2",
+        "kind": "state",
+        "id": "NETWORK_L1012-1014a_breaker2_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "L1012-1014b_breaker2",
+        "kind": "state",
+        "id": "NETWORK_L1012-1014b_breaker2_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "4012-Ind_breaker",
+        "kind": "state",
+        "id": "NETWORK_4012-Ind_breaker_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "Tr1012-4012_breaker1",
+        "kind": "state",
+        "id": "NETWORK_Tr1012-4012_breaker1_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "Tr4012-g10_breaker1",
+        "kind": "state",
+        "id": "NETWORK_Tr4012-g10_breaker1_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "L4011-4012_breaker2",
+        "kind": "state",
+        "id": "NETWORK_L4011-4012_breaker2_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "L4012-4022_breaker1",
+        "kind": "state",
+        "id": "NETWORK_L4012-4022_breaker1_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "L4012-4071_breaker2",
+        "kind": "state",
+        "id": "NETWORK_L4012-4071_breaker2_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "12_1_breaker",
+        "kind": "state",
+        "id": "NETWORK_12_1_breaker_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "Tr12-1012_breaker2",
+        "kind": "state",
+        "id": "NETWORK_Tr12-1012_breaker2_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "g01_breaker",
+        "kind": "state",
+        "id": "NETWORK_g01_breaker_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "Tr1012-g1_breaker2",
+        "kind": "state",
+        "id": "NETWORK_Tr1012-g1_breaker2_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "g10_breaker",
+        "kind": "state",
+        "id": "NETWORK_g10_breaker_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "Tr4012-g10_breaker2",
+        "kind": "state",
+        "id": "NETWORK_Tr4012-g10_breaker2_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "Tr1013-g2_breaker1",
+        "kind": "state",
+        "id": "NETWORK_Tr1013-g2_breaker1_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "Tr13-1013_breaker1",
+        "kind": "state",
+        "id": "NETWORK_Tr13-1013_breaker1_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "L1011-1013a_breaker2",
+        "kind": "state",
+        "id": "NETWORK_L1011-1013a_breaker2_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "L1011-1013b_breaker2",
+        "kind": "state",
+        "id": "NETWORK_L1011-1013b_breaker2_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "L1013-1014a_breaker1",
+        "kind": "state",
+        "id": "NETWORK_L1013-1014a_breaker1_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "L1013-1014b_breaker1",
+        "kind": "state",
+        "id": "NETWORK_L1013-1014b_breaker1_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "13_1_breaker",
+        "kind": "state",
+        "id": "NETWORK_13_1_breaker_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "Tr13-1013_breaker2",
+        "kind": "state",
+        "id": "NETWORK_Tr13-1013_breaker2_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "g02_breaker",
+        "kind": "state",
+        "id": "NETWORK_g02_breaker_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "Tr1013-g2_breaker2",
+        "kind": "state",
+        "id": "NETWORK_Tr1013-g2_breaker2_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "Tr1014-g3_breaker1",
+        "kind": "state",
+        "id": "NETWORK_Tr1014-g3_breaker1_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "L1012-1014a_breaker1",
+        "kind": "state",
+        "id": "NETWORK_L1012-1014a_breaker1_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "L1012-1014b_breaker1",
+        "kind": "state",
+        "id": "NETWORK_L1012-1014b_breaker1_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "L1013-1014a_breaker2",
+        "kind": "state",
+        "id": "NETWORK_L1013-1014a_breaker2_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "L1013-1014b_breaker2",
+        "kind": "state",
+        "id": "NETWORK_L1013-1014b_breaker2_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "g03_breaker",
+        "kind": "state",
+        "id": "NETWORK_g03_breaker_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "Tr1014-g3_breaker2",
+        "kind": "state",
+        "id": "NETWORK_Tr1014-g3_breaker2_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "Tr1021-g4_breaker1",
+        "kind": "state",
+        "id": "NETWORK_Tr1021-g4_breaker1_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "L1021-1022a_breaker2",
+        "kind": "state",
+        "id": "NETWORK_L1021-1022a_breaker2_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "L1021-1022b_breaker2",
+        "kind": "state",
+        "id": "NETWORK_L1021-1022b_breaker2_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "g04_breaker",
+        "kind": "state",
+        "id": "NETWORK_g04_breaker_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "Tr1021-g4_breaker2",
+        "kind": "state",
+        "id": "NETWORK_Tr1021-g4_breaker2_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "1022-Cap_breaker",
+        "kind": "state",
+        "id": "NETWORK_1022-Cap_breaker_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "Tr1022-4022_breaker2",
+        "kind": "state",
+        "id": "NETWORK_Tr1022-4022_breaker2_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "Tr1022-g5_breaker1",
+        "kind": "state",
+        "id": "NETWORK_Tr1022-g5_breaker1_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "Tr22-1022_breaker1",
+        "kind": "state",
+        "id": "NETWORK_Tr22-1022_breaker1_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "L1021-1022a_breaker1",
+        "kind": "state",
+        "id": "NETWORK_L1021-1022a_breaker1_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "L1021-1022b_breaker1",
+        "kind": "state",
+        "id": "NETWORK_L1021-1022b_breaker1_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "Tr1022-4022_breaker1",
+        "kind": "state",
+        "id": "NETWORK_Tr1022-4022_breaker1_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "L4011-4022_breaker2",
+        "kind": "state",
+        "id": "NETWORK_L4011-4022_breaker2_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "L4012-4022_breaker2",
+        "kind": "state",
+        "id": "NETWORK_L4012-4022_breaker2_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "L4022-4031a_breaker2",
+        "kind": "state",
+        "id": "NETWORK_L4022-4031a_breaker2_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "L4022-4031b_breaker2",
+        "kind": "state",
+        "id": "NETWORK_L4022-4031b_breaker2_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "22_1_breaker",
+        "kind": "state",
+        "id": "NETWORK_22_1_breaker_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "Tr22-1022_breaker2",
+        "kind": "state",
+        "id": "NETWORK_Tr22-1022_breaker2_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "g05_breaker",
+        "kind": "state",
+        "id": "NETWORK_g05_breaker_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "Tr1022-g5_breaker2",
+        "kind": "state",
+        "id": "NETWORK_Tr1022-g5_breaker2_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "1041-Cap_breaker",
+        "kind": "state",
+        "id": "NETWORK_1041-Cap_breaker_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "Tr1-1041_breaker1",
+        "kind": "state",
+        "id": "NETWORK_Tr1-1041_breaker1_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "L1041-1043a_breaker1",
+        "kind": "state",
+        "id": "NETWORK_L1041-1043a_breaker1_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "L1041-1043b_breaker1",
+        "kind": "state",
+        "id": "NETWORK_L1041-1043b_breaker1_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "L1041-1045a_breaker1",
+        "kind": "state",
+        "id": "NETWORK_L1041-1045a_breaker1_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "L1041-1045b_breaker2",
+        "kind": "state",
+        "id": "NETWORK_L1041-1045b_breaker2_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "01_1_breaker",
+        "kind": "state",
+        "id": "NETWORK_01_1_breaker_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "Tr1-1041_breaker2",
+        "kind": "state",
+        "id": "NETWORK_Tr1-1041_breaker2_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "Tr1042-g6_breaker1",
+        "kind": "state",
+        "id": "NETWORK_Tr1042-g6_breaker1_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "Tr2-1042_breaker1",
+        "kind": "state",
+        "id": "NETWORK_Tr2-1042_breaker1_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "L1042-1044a_breaker2",
+        "kind": "state",
+        "id": "NETWORK_L1042-1044a_breaker2_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "L1042-1044b_breaker2",
+        "kind": "state",
+        "id": "NETWORK_L1042-1044b_breaker2_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "L1042-1045_breaker1",
+        "kind": "state",
+        "id": "NETWORK_L1042-1045_breaker1_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "02_1_breaker",
+        "kind": "state",
+        "id": "NETWORK_02_1_breaker_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "Tr2-1042_breaker2",
+        "kind": "state",
+        "id": "NETWORK_Tr2-1042_breaker2_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "g06_breaker",
+        "kind": "state",
+        "id": "NETWORK_g06_breaker_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "Tr1042-g6_breaker2",
+        "kind": "state",
+        "id": "NETWORK_Tr1042-g6_breaker2_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "1043-Cap_breaker",
+        "kind": "state",
+        "id": "NETWORK_1043-Cap_breaker_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "Tr1043-g7_breaker1",
+        "kind": "state",
+        "id": "NETWORK_Tr1043-g7_breaker1_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "Tr3-1043_breaker1",
+        "kind": "state",
+        "id": "NETWORK_Tr3-1043_breaker1_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "L1041-1043a_breaker2",
+        "kind": "state",
+        "id": "NETWORK_L1041-1043a_breaker2_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "L1041-1043b_breaker2",
+        "kind": "state",
+        "id": "NETWORK_L1041-1043b_breaker2_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "L1043-1044a_breaker1",
+        "kind": "state",
+        "id": "NETWORK_L1043-1044a_breaker1_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "L1043-1044b_breaker1",
+        "kind": "state",
+        "id": "NETWORK_L1043-1044b_breaker1_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "03_1_breaker",
+        "kind": "state",
+        "id": "NETWORK_03_1_breaker_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "Tr3-1043_breaker2",
+        "kind": "state",
+        "id": "NETWORK_Tr3-1043_breaker2_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "g07_breaker",
+        "kind": "state",
+        "id": "NETWORK_g07_breaker_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "Tr1043-g7_breaker2",
+        "kind": "state",
+        "id": "NETWORK_Tr1043-g7_breaker2_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "1044-Cap_breaker",
+        "kind": "state",
+        "id": "NETWORK_1044-Cap_breaker_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "Tr1044-4044a_breaker2",
+        "kind": "state",
+        "id": "NETWORK_Tr1044-4044a_breaker2_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "Tr1044-4044b_breaker2",
+        "kind": "state",
+        "id": "NETWORK_Tr1044-4044b_breaker2_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "Tr4-1044_breaker1",
+        "kind": "state",
+        "id": "NETWORK_Tr4-1044_breaker1_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "L1042-1044a_breaker1",
+        "kind": "state",
+        "id": "NETWORK_L1042-1044a_breaker1_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "L1042-1044b_breaker1",
+        "kind": "state",
+        "id": "NETWORK_L1042-1044b_breaker1_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "L1043-1044a_breaker2",
+        "kind": "state",
+        "id": "NETWORK_L1043-1044a_breaker2_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "L1043-1044b_breaker2",
+        "kind": "state",
+        "id": "NETWORK_L1043-1044b_breaker2_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "Tr1044-4044a_breaker1",
+        "kind": "state",
+        "id": "NETWORK_Tr1044-4044a_breaker1_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "Tr1044-4044b_breaker1",
+        "kind": "state",
+        "id": "NETWORK_Tr1044-4044b_breaker1_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "L4032-4044_breaker2",
+        "kind": "state",
+        "id": "NETWORK_L4032-4044_breaker2_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "L4041-4044_breaker2",
+        "kind": "state",
+        "id": "NETWORK_L4041-4044_breaker2_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "L4042-4044_breaker2",
+        "kind": "state",
+        "id": "NETWORK_L4042-4044_breaker2_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "L4043-4044_breaker2",
+        "kind": "state",
+        "id": "NETWORK_L4043-4044_breaker2_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "L4044-4045a_breaker2",
+        "kind": "state",
+        "id": "NETWORK_L4044-4045a_breaker2_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "L4044-4045b_breaker2",
+        "kind": "state",
+        "id": "NETWORK_L4044-4045b_breaker2_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "04_1_breaker",
+        "kind": "state",
+        "id": "NETWORK_04_1_breaker_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "Tr4-1044_breaker2",
+        "kind": "state",
+        "id": "NETWORK_Tr4-1044_breaker2_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "1045-Cap_breaker",
+        "kind": "state",
+        "id": "NETWORK_1045-Cap_breaker_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "Tr1045-4045a_breaker2",
+        "kind": "state",
+        "id": "NETWORK_Tr1045-4045a_breaker2_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "Tr1045-4045b_breaker2",
+        "kind": "state",
+        "id": "NETWORK_Tr1045-4045b_breaker2_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "Tr5-1045_breaker1",
+        "kind": "state",
+        "id": "NETWORK_Tr5-1045_breaker1_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "L1041-1045a_breaker2",
+        "kind": "state",
+        "id": "NETWORK_L1041-1045a_breaker2_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "L1041-1045b_breaker1",
+        "kind": "state",
+        "id": "NETWORK_L1041-1045b_breaker1_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "L1042-1045_breaker2",
+        "kind": "state",
+        "id": "NETWORK_L1042-1045_breaker2_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "Tr1045-4045a_breaker1",
+        "kind": "state",
+        "id": "NETWORK_Tr1045-4045a_breaker1_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "Tr1045-4045b_breaker1",
+        "kind": "state",
+        "id": "NETWORK_Tr1045-4045b_breaker1_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "L4044-4045a_breaker1",
+        "kind": "state",
+        "id": "NETWORK_L4044-4045a_breaker1_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "L4044-4045b_breaker1",
+        "kind": "state",
+        "id": "NETWORK_L4044-4045b_breaker1_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "L4045-4051a_breaker1",
+        "kind": "state",
+        "id": "NETWORK_L4045-4051a_breaker1_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "L4045-4051b_breaker2",
+        "kind": "state",
+        "id": "NETWORK_L4045-4051b_breaker2_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "L4045-4062_breaker1",
+        "kind": "state",
+        "id": "NETWORK_L4045-4062_breaker1_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "05_1_breaker",
+        "kind": "state",
+        "id": "NETWORK_05_1_breaker_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "Tr5-1045_breaker2",
+        "kind": "state",
+        "id": "NETWORK_Tr5-1045_breaker2_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "Tr2031-4031_breaker2",
+        "kind": "state",
+        "id": "NETWORK_Tr2031-4031_breaker2_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "Tr31-2031_breaker1",
+        "kind": "state",
+        "id": "NETWORK_Tr31-2031_breaker1_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "L2031-2032a_breaker1",
+        "kind": "state",
+        "id": "NETWORK_L2031-2032a_breaker1_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "L2031-2032b_breaker2",
+        "kind": "state",
+        "id": "NETWORK_L2031-2032b_breaker2_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "Tr2031-4031_breaker1",
+        "kind": "state",
+        "id": "NETWORK_Tr2031-4031_breaker1_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "Tr4031-g12_breaker1",
+        "kind": "state",
+        "id": "NETWORK_Tr4031-g12_breaker1_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "L4022-4031a_breaker1",
+        "kind": "state",
+        "id": "NETWORK_L4022-4031a_breaker1_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "L4022-4031b_breaker1",
+        "kind": "state",
+        "id": "NETWORK_L4022-4031b_breaker1_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "L4031-4032_breaker2",
+        "kind": "state",
+        "id": "NETWORK_L4031-4032_breaker2_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "L4031-4041a_breaker1",
+        "kind": "state",
+        "id": "NETWORK_L4031-4041a_breaker1_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "L4031-4041b_breaker1",
+        "kind": "state",
+        "id": "NETWORK_L4031-4041b_breaker1_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "31_1_breaker",
+        "kind": "state",
+        "id": "NETWORK_31_1_breaker_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "Tr31-2031_breaker2",
+        "kind": "state",
+        "id": "NETWORK_Tr31-2031_breaker2_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "g12_breaker",
+        "kind": "state",
+        "id": "NETWORK_g12_breaker_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "Tr4031-g12_breaker2",
+        "kind": "state",
+        "id": "NETWORK_Tr4031-g12_breaker2_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "Tr2032-g8_breaker1",
+        "kind": "state",
+        "id": "NETWORK_Tr2032-g8_breaker1_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "Tr32-2032_breaker1",
+        "kind": "state",
+        "id": "NETWORK_Tr32-2032_breaker1_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "L2031-2032a_breaker2",
+        "kind": "state",
+        "id": "NETWORK_L2031-2032a_breaker2_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "L2031-2032b_breaker1",
+        "kind": "state",
+        "id": "NETWORK_L2031-2032b_breaker1_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "32_1_breaker",
+        "kind": "state",
+        "id": "NETWORK_32_1_breaker_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "Tr32-2032_breaker2",
+        "kind": "state",
+        "id": "NETWORK_Tr32-2032_breaker2_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "g08_breaker",
+        "kind": "state",
+        "id": "NETWORK_g08_breaker_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "Tr2032-g8_breaker2",
+        "kind": "state",
+        "id": "NETWORK_Tr2032-g8_breaker2_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "Tr4021-g11_breaker1",
+        "kind": "state",
+        "id": "NETWORK_Tr4021-g11_breaker1_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "L4011-4021_breaker1",
+        "kind": "state",
+        "id": "NETWORK_L4011-4021_breaker1_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "L4021-4032_breaker2",
+        "kind": "state",
+        "id": "NETWORK_L4021-4032_breaker2_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "L4021-4042_breaker2",
+        "kind": "state",
+        "id": "NETWORK_L4021-4042_breaker2_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "g11_breaker",
+        "kind": "state",
+        "id": "NETWORK_g11_breaker_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "Tr4021-g11_breaker2",
+        "kind": "state",
+        "id": "NETWORK_Tr4021-g11_breaker2_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "L4021-4032_breaker1",
+        "kind": "state",
+        "id": "NETWORK_L4021-4032_breaker1_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "L4031-4032_breaker1",
+        "kind": "state",
+        "id": "NETWORK_L4031-4032_breaker1_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "L4032-4042_breaker1",
+        "kind": "state",
+        "id": "NETWORK_L4032-4042_breaker1_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "L4032-4044_breaker1",
+        "kind": "state",
+        "id": "NETWORK_L4032-4044_breaker1_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "4041-Cap_breaker",
+        "kind": "state",
+        "id": "NETWORK_4041-Cap_breaker_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "Tr4041-g13_breaker1",
+        "kind": "state",
+        "id": "NETWORK_Tr4041-g13_breaker1_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "Tr41-4041_breaker1",
+        "kind": "state",
+        "id": "NETWORK_Tr41-4041_breaker1_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "L4031-4041a_breaker2",
+        "kind": "state",
+        "id": "NETWORK_L4031-4041a_breaker2_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "L4031-4041b_breaker2",
+        "kind": "state",
+        "id": "NETWORK_L4031-4041b_breaker2_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "L4041-4044_breaker1",
+        "kind": "state",
+        "id": "NETWORK_L4041-4044_breaker1_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "L4041-4061_breaker1",
+        "kind": "state",
+        "id": "NETWORK_L4041-4061_breaker1_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "41_1_breaker",
+        "kind": "state",
+        "id": "NETWORK_41_1_breaker_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "Tr41-4041_breaker2",
+        "kind": "state",
+        "id": "NETWORK_Tr41-4041_breaker2_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "g13_breaker",
+        "kind": "state",
+        "id": "NETWORK_g13_breaker_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "Tr4041-g13_breaker2",
+        "kind": "state",
+        "id": "NETWORK_Tr4041-g13_breaker2_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "Tr4042-g14_breaker1",
+        "kind": "state",
+        "id": "NETWORK_Tr4042-g14_breaker1_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "Tr42-4042_breaker1",
+        "kind": "state",
+        "id": "NETWORK_Tr42-4042_breaker1_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "L4021-4042_breaker1",
+        "kind": "state",
+        "id": "NETWORK_L4021-4042_breaker1_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "L4032-4042_breaker2",
+        "kind": "state",
+        "id": "NETWORK_L4032-4042_breaker2_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "L4042-4043_breaker1",
+        "kind": "state",
+        "id": "NETWORK_L4042-4043_breaker1_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "L4042-4044_breaker1",
+        "kind": "state",
+        "id": "NETWORK_L4042-4044_breaker1_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "42_1_breaker",
+        "kind": "state",
+        "id": "NETWORK_42_1_breaker_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "Tr42-4042_breaker2",
+        "kind": "state",
+        "id": "NETWORK_Tr42-4042_breaker2_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "g14_breaker",
+        "kind": "state",
+        "id": "NETWORK_g14_breaker_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "Tr4042-g14_breaker2",
+        "kind": "state",
+        "id": "NETWORK_Tr4042-g14_breaker2_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "4043-Cap_breaker",
+        "kind": "state",
+        "id": "NETWORK_4043-Cap_breaker_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "Tr43-4043_breaker1",
+        "kind": "state",
+        "id": "NETWORK_Tr43-4043_breaker1_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "L4042-4043_breaker2",
+        "kind": "state",
+        "id": "NETWORK_L4042-4043_breaker2_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "L4043-4044_breaker1",
+        "kind": "state",
+        "id": "NETWORK_L4043-4044_breaker1_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "L4043-4046_breaker2",
+        "kind": "state",
+        "id": "NETWORK_L4043-4046_breaker2_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "L4043-4047_breaker1",
+        "kind": "state",
+        "id": "NETWORK_L4043-4047_breaker1_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "43_1_breaker",
+        "kind": "state",
+        "id": "NETWORK_43_1_breaker_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "Tr43-4043_breaker2",
+        "kind": "state",
+        "id": "NETWORK_Tr43-4043_breaker2_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "4046-Cap_breaker",
+        "kind": "state",
+        "id": "NETWORK_4046-Cap_breaker_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "Tr46-4046_breaker1",
+        "kind": "state",
+        "id": "NETWORK_Tr46-4046_breaker1_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "L4043-4046_breaker1",
+        "kind": "state",
+        "id": "NETWORK_L4043-4046_breaker1_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "L4046-4047_breaker1",
+        "kind": "state",
+        "id": "NETWORK_L4046-4047_breaker1_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "46_1_breaker",
+        "kind": "state",
+        "id": "NETWORK_46_1_breaker_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "Tr46-4046_breaker2",
+        "kind": "state",
+        "id": "NETWORK_Tr46-4046_breaker2_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "Tr4047-g15_breaker1",
+        "kind": "state",
+        "id": "NETWORK_Tr4047-g15_breaker1_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "Tr47-4047_breaker1",
+        "kind": "state",
+        "id": "NETWORK_Tr47-4047_breaker1_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "L4043-4047_breaker2",
+        "kind": "state",
+        "id": "NETWORK_L4043-4047_breaker2_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "L4046-4047_breaker2",
+        "kind": "state",
+        "id": "NETWORK_L4046-4047_breaker2_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "47_1_breaker",
+        "kind": "state",
+        "id": "NETWORK_47_1_breaker_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "Tr47-4047_breaker2",
+        "kind": "state",
+        "id": "NETWORK_Tr47-4047_breaker2_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "g15_breaker",
+        "kind": "state",
+        "id": "NETWORK_g15_breaker_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "Tr4047-g15_breaker2",
+        "kind": "state",
+        "id": "NETWORK_Tr4047-g15_breaker2_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "4051-Cap_breaker",
+        "kind": "state",
+        "id": "NETWORK_4051-Cap_breaker_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "Tr4051-g16_breaker1",
+        "kind": "state",
+        "id": "NETWORK_Tr4051-g16_breaker1_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "Tr51-4051_breaker1",
+        "kind": "state",
+        "id": "NETWORK_Tr51-4051_breaker1_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "L4045-4051a_breaker2",
+        "kind": "state",
+        "id": "NETWORK_L4045-4051a_breaker2_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "L4045-4051b_breaker1",
+        "kind": "state",
+        "id": "NETWORK_L4045-4051b_breaker1_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "51_1_breaker",
+        "kind": "state",
+        "id": "NETWORK_51_1_breaker_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "Tr51-4051_breaker2",
+        "kind": "state",
+        "id": "NETWORK_Tr51-4051_breaker2_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "g16_breaker",
+        "kind": "state",
+        "id": "NETWORK_g16_breaker_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "Tr4051-g16_breaker2",
+        "kind": "state",
+        "id": "NETWORK_Tr4051-g16_breaker2_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "Tr61-4061_breaker1",
+        "kind": "state",
+        "id": "NETWORK_Tr61-4061_breaker1_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "L4041-4061_breaker2",
+        "kind": "state",
+        "id": "NETWORK_L4041-4061_breaker2_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "L4061-4062_breaker1",
+        "kind": "state",
+        "id": "NETWORK_L4061-4062_breaker1_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "61_1_breaker",
+        "kind": "state",
+        "id": "NETWORK_61_1_breaker_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "Tr61-4061_breaker2",
+        "kind": "state",
+        "id": "NETWORK_Tr61-4061_breaker2_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "Tr4061-g17_breaker1",
+        "kind": "state",
+        "id": "NETWORK_Tr4061-g17_breaker1_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "Tr62-4062_breaker1",
+        "kind": "state",
+        "id": "NETWORK_Tr62-4062_breaker1_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "L4045-4062_breaker2",
+        "kind": "state",
+        "id": "NETWORK_L4045-4062_breaker2_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "L4061-4062_breaker2",
+        "kind": "state",
+        "id": "NETWORK_L4061-4062_breaker2_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "L4062-4063a_breaker2",
+        "kind": "state",
+        "id": "NETWORK_L4062-4063a_breaker2_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "L4062-4063b_breaker2",
+        "kind": "state",
+        "id": "NETWORK_L4062-4063b_breaker2_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "62_1_breaker",
+        "kind": "state",
+        "id": "NETWORK_62_1_breaker_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "Tr62-4062_breaker2",
+        "kind": "state",
+        "id": "NETWORK_Tr62-4062_breaker2_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "g17_breaker",
+        "kind": "state",
+        "id": "NETWORK_g17_breaker_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "Tr4061-g17_breaker2",
+        "kind": "state",
+        "id": "NETWORK_Tr4061-g17_breaker2_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "Tr4063-g18_breaker1",
+        "kind": "state",
+        "id": "NETWORK_Tr4063-g18_breaker1_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "Tr63-4063_breaker1",
+        "kind": "state",
+        "id": "NETWORK_Tr63-4063_breaker1_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "L4062-4063a_breaker1",
+        "kind": "state",
+        "id": "NETWORK_L4062-4063a_breaker1_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "L4062-4063b_breaker1",
+        "kind": "state",
+        "id": "NETWORK_L4062-4063b_breaker1_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "63_1_breaker",
+        "kind": "state",
+        "id": "NETWORK_63_1_breaker_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "Tr63-4063_breaker2",
+        "kind": "state",
+        "id": "NETWORK_Tr63-4063_breaker2_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "g18_breaker",
+        "kind": "state",
+        "id": "NETWORK_g18_breaker_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "Tr4063-g18_breaker2",
+        "kind": "state",
+        "id": "NETWORK_Tr4063-g18_breaker2_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "4071-Ind_breaker",
+        "kind": "state",
+        "id": "NETWORK_4071-Ind_breaker_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "Tr4071-g19_breaker1",
+        "kind": "state",
+        "id": "NETWORK_Tr4071-g19_breaker1_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "Tr71-4071_breaker1",
+        "kind": "state",
+        "id": "NETWORK_Tr71-4071_breaker1_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "L4011-4071_breaker1",
+        "kind": "state",
+        "id": "NETWORK_L4011-4071_breaker1_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "L4012-4071_breaker1",
+        "kind": "state",
+        "id": "NETWORK_L4012-4071_breaker1_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "L4071-4072a_breaker1",
+        "kind": "state",
+        "id": "NETWORK_L4071-4072a_breaker1_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "L4071-4072b_breaker1",
+        "kind": "state",
+        "id": "NETWORK_L4071-4072b_breaker1_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "71_1_breaker",
+        "kind": "state",
+        "id": "NETWORK_71_1_breaker_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "Tr71-4071_breaker2",
+        "kind": "state",
+        "id": "NETWORK_Tr71-4071_breaker2_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "g19_breaker",
+        "kind": "state",
+        "id": "NETWORK_g19_breaker_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "Tr4071-g19_breaker2",
+        "kind": "state",
+        "id": "NETWORK_Tr4071-g19_breaker2_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "Tr4072-g20_breaker1",
+        "kind": "state",
+        "id": "NETWORK_Tr4072-g20_breaker1_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "Tr72-4072_breaker1",
+        "kind": "state",
+        "id": "NETWORK_Tr72-4072_breaker1_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "L4071-4072a_breaker2",
+        "kind": "state",
+        "id": "NETWORK_L4071-4072a_breaker2_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "L4071-4072b_breaker2",
+        "kind": "state",
+        "id": "NETWORK_L4071-4072b_breaker2_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "72_1_breaker",
+        "kind": "state",
+        "id": "NETWORK_72_1_breaker_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "Tr72-4072_breaker2",
+        "kind": "state",
+        "id": "NETWORK_Tr72-4072_breaker2_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "g20_breaker",
+        "kind": "state",
+        "id": "NETWORK_g20_breaker_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "Tr4072-g20_breaker2",
+        "kind": "state",
+        "id": "NETWORK_Tr4072-g20_breaker2_state_value",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    },
+    {
+        "model_lib": "DYNModelRST",
+        "equipmentId": null,
+        "kind": "U",
+        "id": "RST_4011_uNom",
+        "factor": 1.0,
+        "model": "RST_4011",
+        "variable": "uNom",
+        "simulator": "dynawo"
+    },
+    {
+        "model_lib": "DYNModelRST",
+        "equipmentId": null,
+        "kind": "deltaU",
+        "id": "RST_4011_deltaU",
+        "factor": 1.0,
+        "model": "RST_4011",
+        "variable": "deltaU",
+        "simulator": "dynawo"
+    },
+    {
+        "model_lib": "DYNModelRST",
+        "equipmentId": null,
+        "kind": "U",
+        "id": "RST_4012_uNom",
+        "factor": 1.0,
+        "model": "RST_4012",
+        "variable": "uNom",
+        "simulator": "dynawo"
+    }
+]

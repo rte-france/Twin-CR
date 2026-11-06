@@ -1,0 +1,28 @@
+#
+# Copyright (c) 2025-2026, RTE (https://www.rte-france.com)
+# See AUTHORS.md
+# SPDX-License-Identifier: MPL-2.0
+# This file is part of Twin-CR, a platform for real-time cyber-physical
+# co-simulation of power systems.
+#
+
+repos:
+  - repo: local
+    hooks:
+      - id: add-license-header
+        name: Add license headers
+        entry: python3 licensing.py
+        language: system
+        pass_filenames: true
+        always_run: true
+      - id: check-env-examples
+        name: Check .env-example consistency
+        entry: python3 tools/env_sync.py check
+        language: system
+        pass_filenames: false
+        files: (^|/)(\.env-example|docker-compose[^/]*\.yaml)$
+  # Scans the staged changes with the rules of .gitleaks.toml.
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.30.1
+    hooks:
+      - id: gitleaks

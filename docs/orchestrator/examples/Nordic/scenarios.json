@@ -1,0 +1,16 @@
+[
+    {
+        "t_start": 9999,
+        "command": "change_network_characteristics",
+        "links": [],
+        "nodes": ["S_1042"],
+        "characteristics": {
+            "corruption_functions": [
+                {
+                    "type": "ShiftMeasurementCorruption",
+                    "shift_value": 0.1
+                }
+            ]
+        }
+    }
+]

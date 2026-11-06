@@ -1,0 +1,58 @@
+[
+    {
+        "id": "U_B1",
+        "dynawo_id": "NETWORK_B1_Upu_value",
+        "topic": "substation_1",
+        "source": "substation_1",
+        "destination": "CC",
+        "factor": 225,
+        "simulator": "dynawo"
+    },
+    {
+        "id": "U_B2",
+        "dynawo_id": "NETWORK_B2_Upu_value",
+        "topic": "substation_2",
+        "source": "substation_2",
+        "destination": "CC",
+        "factor": 225,
+        "simulator": "dynawo"
+    },
+    {
+        "id": "U_B3",
+        "dynawo_id": "NETWORK_B3_Upu_value",
+        "topic": "substation_3",
+        "source": "substation_3",
+        "destination": "CC",
+        "factor": 225,
+        "simulator": "dynawo"
+    },
+    {
+        "id": "U_B4",
+        "dynawo_id": "NETWORK_B4_Upu_value",
+        "topic": "substation_4",
+        "source": "substation_4",
+        "destination": "CC",
+        "factor": 225,
+        "simulator": "dynawo"
+    },
+    {
+        "id": "OMEGA",
+        "dynawo_id": "OMEGA_REF_omegaRef_grp_0",
+        "topic": "substation_2",
+        "source": "substation_2",
+        "destination": "CC",
+        "factor": 50,
+        "simulator": "dynawo"
+    },
+    {
+        "id": "PL1_state",
+        "dynawo_id": "NETWORK_PL1_state",
+        "equipmentId": "PL1",
+        "kind": "state",
+        "topic": "PL1",
+        "source": "substation_1",
+        "destination": "CC",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    }
+]

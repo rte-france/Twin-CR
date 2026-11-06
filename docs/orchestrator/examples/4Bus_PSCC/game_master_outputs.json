@@ -1,0 +1,67 @@
+[
+    {
+        "equipmentId": "B1",
+        "id": "U_B1",
+        "dynawo_id": "NETWORK_B1_Upu_value",
+        "topic": "substation_1",
+        "kind": "U",
+        "factor": 225,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "B2",
+        "id": "U_B2",
+        "dynawo_id": "NETWORK_B2_Upu_value",
+        "topic": "substation_2",
+        "kind": "U",
+        "factor": 225,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "B3",
+        "id": "U_B3",
+        "dynawo_id": "NETWORK_B3_Upu_value",
+        "kind": "U",
+        "topic": "substation_3",
+        "factor": 225,
+        "simulator": "dynawo"
+    },
+    {
+        "equipmentId": "B4",
+        "id": "U_B4",
+        "dynawo_id": "NETWORK_B4_Upu_value",
+        "topic": "substation_4",
+        "kind": "U",
+        "factor": 225,
+        "simulator": "dynawo"
+    },
+    {
+        "model_lib": "DYNModelOmegaRef",
+        "equipmentId": null,
+        "id": "OMEGA",
+        "dynawo_id": "OMEGA_REF_omegaRef_grp_0",
+        "topic": "substation_2",
+        "kind": "OmegaRef",
+        "factor": 50,
+        "simulator": "dynawo",
+        "model": "OMEGA_REF"
+    },
+    {
+        "equipmentId": "L2",
+        "id": "L2",
+        "dynawo_id": "L2_load_deltaP",
+        "topic": "substation_2",
+        "kind": "deltaP",
+        "factor": 1,
+        "simulator": "dynawo"
+    },
+    {
+        "id": "PL1_state",
+        "dynawo_id": "NETWORK_PL1_state",
+        "equipmentId": "PL1",
+        "kind": "state",
+        "topic": "PL1",
+        "factor": 1.0,
+        "simulator": "dynawo"
+    }
+]

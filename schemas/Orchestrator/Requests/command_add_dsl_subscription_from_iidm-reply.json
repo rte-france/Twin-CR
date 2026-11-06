@@ -1,0 +1,22 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "oneOf": [
+    {
+      "title": "AddDslSubscriptionFromIidmCommandReply",
+      "properties": {
+        "status": {
+          "type": "string",
+          "const": "OK"
+        },
+        "reply": {
+          "type": "string",
+          "description": "True ID of the requested variable"
+        }
+      },
+      "required": ["status", "reply"]
+    },
+    {
+      "$ref": "error_response.json"
+    }
+  ]
+}

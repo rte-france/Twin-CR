@@ -1,0 +1,65 @@
+<!--
+Copyright (c) 2025-2026, RTE (https://www.rte-france.com)
+See AUTHORS.md
+SPDX-License-Identifier: MPL-2.0
+This file is part of Twin-CR, a platform for real-time cyber-physical
+co-simulation of power systems.
+-->
+
+<configuration>
+    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <Pattern>%d{yyyy-MM-dd_HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</Pattern>
+        </encoder>
+    </appender>
+
+    <root level="INFO">
+        <appender-ref ref="STDOUT" />
+    </root>
+    <logger name="org.nocrala.tools.texttablefmt" level="ERROR" additivity="false">
+        <appender-ref ref="STDOUT" />
+    </logger>
+    <logger name="com.powsybl.triplestore" level="INFO" additivity="false">
+        <appender-ref ref="STDOUT" />
+    </logger>
+
+    <logger name="com.rte_france.powsybl.iidm.import_.die.Utils" level="ERROR" additivity="false">
+        <appender-ref ref="STDOUT" />
+    </logger>
+    <logger name="com.rte_france.powsybl.iidm.import_.die.GeneratorHelperDie" level="ERROR" additivity="false">
+        <appender-ref ref="STDOUT" />
+    </logger>
+    <logger name="com.rte_france.powsybl.iidm.import_.die.BusBarHelperDie" level="ERROR" additivity="false">
+        <appender-ref ref="STDOUT" />
+    </logger>
+    <logger name="org.TwinCR.argus_backends.common.gridmodel.GridModel" level="ERROR" additivity="false">
+        <appender-ref ref="STDOUT" />
+    </logger>
+    <logger name="com.rte_france.powsybl.iidm.import_.die.CurrentLimitsHelperDie" level="ERROR" additivity="false">
+        <appender-ref ref="STDOUT" />
+    </logger>
+    <logger name="com.rte_france.powsybl.iidm.import_.die.RatioTapChangerHelperDie" level="ERROR" additivity="false">
+        <appender-ref ref="STDOUT" />
+    </logger>
+    <logger name="com.powsybl.iidm.network.impl.AbstractTapChangerAdderImpl" level="ERROR" additivity="false">
+        <appender-ref ref="STDOUT" />
+    </logger>
+    <logger name="com.powsybl.sld.model.graphs.VoltageLevelGraph" level="ERROR" additivity="false">
+        <appender-ref ref="STDOUT" />
+    </logger>
+    <logger name="com.powsybl.sld.layout.ImplicitCellDetector" level="ERROR" additivity="false">
+        <appender-ref ref="STDOUT" />
+    </logger>
+    <logger name="com.powsybl.sld.layout.BlockOrganizer" level="ERROR" additivity="false">
+        <appender-ref ref="STDOUT" />
+    </logger>
+    <logger name="com.powsybl.sld.builders.NetworkGraphBuilder" level="ERROR" additivity="false">
+        <appender-ref ref="STDOUT" />
+    </logger>
+    <logger name="com.powsybl.diagram.components.ResourcesComponentLibrary" level="ERROR" additivity="false">
+        <appender-ref ref="STDOUT" />
+    </logger>
+    <logger name="com.powsybl.sld.layout.PositionVoltageLevelLayout" level="ERROR" additivity="false">
+        <appender-ref ref="STDOUT" />
+    </logger>
+</configuration>

@@ -1,0 +1,73 @@
+Twin-CR
+
+The source code of Twin-CR is licensed under the Mozilla Public License 2.0
+(see LICENSE). The copyright holder and the contributors are listed in
+AUTHORS.md.
+
+This repository also contains the third-party code, data and assets listed
+below. Each entry quotes the notice and the license stated in the files.
+
+
+1. Code from the iTesla project
+
+   Files:
+     argus-backends/scada/estim-rte/src/main/java/org/TwinCR/utils/estim/EstimCliTool.java
+     argus-backends/utils/src/main/java/org/TwinCR/utils/estim/EstimTool.java
+     argus-backends/utils/src/main/java/org/TwinCR/utils/InjectionTool.java
+     argus-backends/utils/src/main/java/org/TwinCR/utils/MeasurementTool.java
+
+   Notice: Copyright (c) 2016, All partners of the iTesla project
+           (http://www.itesla-project.eu/consortium)
+   License: Mozilla Public License, v. 2.0
+
+
+2. Example data from the Dynawo project
+
+   Files:
+     docs/game_master/examples/IEEE14.iidm
+     docs/orchestrator/examples/IEEE14/IEEE14.par
+       Notice: Copyright (c) 2015-2020, RTE (http://www.rte-france.com)
+     docs/orchestrator/examples/4Bus_PSCC/RTConnectors.dyd
+     docs/orchestrator/examples/Nordic/Network.par
+     docs/orchestrator/examples/Nordic/Nordic.jobs
+     docs/orchestrator/examples/Nordic/Nordic.par
+       Notice: Copyright (c) 2023, RTE (http://www.rte-france.com)
+
+   Each file states that it is part of Dynawo (https://github.com/dynawo/dynawo).
+   The AUTHORS.txt named in their header is the one of the Dynawo project,
+   not the AUTHORS.md of this repository. All six files have been modified
+   in this repository since their import (see the git history).
+   License: MPL-2.0 (SPDX identifier in each file)
+
+
+3. E.ON Energy Research Center logo
+
+   File:
+     docs/game_master/assets/ERC_logo.svg
+
+   Logo of the E.ON Energy Research Center (E.ON ERC), RWTH Aachen University,
+   shown in docs/game_master/README.md.
+   License: none stated in the repository.
+
+
+4. Contributor Covenant
+
+   File:
+     CODE_OF_CONDUCT.md
+
+   Adapted from the Contributor Covenant, version 3.0, stewarded by the
+   Organization for Ethical Source.
+   License: CC BY-SA 4.0 (https://creativecommons.org/licenses/by-sa/4.0/)
+
+
+5. Keycloak login theme
+
+   File:
+     keycloak/themes/twincr/login/template.ftl
+
+   Derived from the login template of the keycloak.v2 theme of Keycloak 26.6.1
+   (https://github.com/keycloak/keycloak/blob/26.6.1/themes/src/main/resources/theme/keycloak.v2/login/template.ftl),
+   modified for Twin-CR. The theme declares keycloak.v2 as its parent.
+   Notice: Copyright Red Hat, Inc. and/or its affiliates, and individual
+           contributors
+   License: Apache License 2.0 (LICENSES/Apache-2.0.txt)

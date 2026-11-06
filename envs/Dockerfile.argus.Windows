@@ -1,0 +1,68 @@
+#
+# Copyright (c) 2025-2026, RTE (https://www.rte-france.com)
+# See AUTHORS.md
+# SPDX-License-Identifier: MPL-2.0
+# This file is part of Twin-CR, a platform for real-time cyber-physical
+# co-simulation of power systems.
+#
+
+FROM --platform=linux/amd64 devraymondsh/ubuntu-rust:jammy-latest AS wbuilder
+
+# Set environment variables to avoid interactive prompts during package installation
+ENV DEBIAN_FRONTEND=noninteractive
+
+RUN apt-get update && apt-get install -y software-properties-common && add-apt-repository universe
+
+# Tauri and build dependencies
+# Note: libwebkit2gtk dev package name varies by distro version; try 4.1 then 4.0
+RUN apt-get install -y \
+        xdg-utils libfuse2 \
+        build-essential curl wget file \
+        libssl-dev libgtk-3-dev libayatana-appindicator3-dev librsvg2-dev \
+        pkg-config clang mold git zstd \
+    && (apt-get install -y libwebkit2gtk-4.1-dev || apt-get install -y libwebkit2gtk-4.0-dev) \
+    && apt-get install -y nsis lld llvm clang
+
+# GUI and display dependencies for running in container
+RUN apt-get install -y xvfb x11-utils x11-apps dbus-x11
+
+# Install Node.js and npm
+RUN curl -fsSL https://deb.nodesource.com/setup_24.x | bash - && \
+    apt-get install -y nodejs
+
+# Enable pnpm via corepack (bundled with Node.js 24)
+ENV NODE_USE_ENV_PROXY=1
+RUN corepack enable && corepack prepare pnpm@latest --activate && npm i -g typescript
+
+COPY argus argus
+
+WORKDIR /argus
+
+# Install JS deps
+ENV CI=true
+RUN pnpm install || pnpm approve-builds esbuild msgpackr-extract unrs-resolver
+
+#RUN pnpm up --latest  # Might need to be removed? (opposite of lock file)
+
+# Patch the build script to skip TypeScript compilation
+RUN sed -i 's/tsc && vite build/vite build/' package.json
+
+# Windows target
+RUN rustup target add x86_64-pc-windows-msvc \
+    && cargo install --locked cargo-xwin
+
+# Build argus debug and release version
+RUN (rm /argus/bundlew.log.* || /bin/true) \
+    && export LOG=bundlew.log.$(date +%Y%m%d.%H%M) \
+    && (rm -r src-tauri/target || /bin/true) \
+    && (pnpm tauri build --no-bundle --runner cargo-xwin --target x86_64-pc-windows-msvc 2>&1 | tee -a $LOG) \
+    && (pnpm tauri build -d --no-bundle --runner cargo-xwin --target x86_64-pc-windows-msvc 2>&1 | tee -a $LOG) \
+    && zstd --rm $LOG
+
+FROM ubuntu:jammy
+
+WORKDIR /app
+
+COPY --from=wbuilder --chmod=555 /argus/src-tauri/target/x86_64-pc-windows-msvc/debug/argus.exe /app/argus-debug.exe
+COPY --from=wbuilder --chmod=555 /argus/src-tauri/target/x86_64-pc-windows-msvc/release/argus.exe /app/argus-release.exe
+COPY --from=wbuilder --chmod=555 /argus/bundlew.log.* /app/

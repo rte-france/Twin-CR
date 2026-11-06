@@ -1,0 +1,29 @@
+#
+# Copyright (c) 2025-2026, RTE (https://www.rte-france.com)
+# See AUTHORS.md
+# SPDX-License-Identifier: MPL-2.0
+# This file is part of Twin-CR, a platform for real-time cyber-physical
+# co-simulation of power systems.
+#
+
+duration = 2
+period = 1.0
+
+completions = [
+  "after 5 seconds, dec",                                  # a keyword by prefix
+  "after 5 seconds, isol",                                 # a defined function by name
+  "after 5 seconds, open switch \"01_1_b",                 # an element id, from the element type
+  "after 5 seconds, decrease load \"01_1\" input \"",      # the attributes that element actually has
+  "when load \"01_1\" output \"",                       # output attributes come from the other mapping
+  "after 5 seconds, decrease load cluster \"",             # a cluster defined above
+  "func f(alpha, beta) { after 0 seconds, open switch $",  # parameters of the enclosing function
+  "after 5 seconds, open switch $",                        # nothing in scope at the top level
+  "after 5 seconds, open ",                                # only the keywords the grammar allows right there
+  "after 5 seconds, open transformer \"Tr1011-40",          # transformers of either winding count
+  "after 5 seconds, decrease load \"01_1\" input \"P\" ",    # idem, one keyword deep into an action
+  "after 5 seconds, set \"",                                # a model library, where an element type could also go
+  "after 5 seconds, set \"DYNModelRST\" \"RST_40",           # the models that library has
+  "after 5 seconds, set \"DYNModelRST\" \"RST_4011\" input \"",  # the kinds that model accepts, not iidm attributes
+  "when \"DYNModelOmegaRef\" \"OmegaRef\" output \"",       # and the kinds it publishes, on the output side
+  "after 5 seconds, set \"DYNModelRST\" [\"RST_4011\", \"",      # inside a list the library still governs, not the sibling
+]

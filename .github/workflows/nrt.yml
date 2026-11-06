@@ -1,0 +1,112 @@
+#
+# Copyright (c) 2025-2026, RTE (https://www.rte-france.com)
+# See AUTHORS.md
+# SPDX-License-Identifier: MPL-2.0
+# This file is part of Twin-CR, a platform for real-time cyber-physical
+# co-simulation of power systems.
+#
+
+name: Non Regression Tests
+
+on:
+  push:
+    branches: [ main, develop ]
+    paths: &nrt_paths
+      # Everything except what the NRT does not build nor run (last matching pattern wins)
+      - '**'
+      - '!**/*.md'
+      - '!LICENSE'
+      - '!CHANGELOG'
+      - '!.devcontainer/**'
+      - '!.pre-commit-config.yaml'
+      - '!licensing.py'
+      - '!mise.toml'
+      - '!argus/**'                   # currently untested (disabled by docker-compose-tests.overrides.yaml)
+      - '!argus-backends/**'          # currently untested (disabled by docker-compose-tests.overrides.yaml)
+      - '!keycloak/**'                # currently untested (disabled by docker-compose-tests.overrides.yaml)
+      - '!session-manager/**'         # currently untested (disabled by docker-compose-tests.overrides.yaml)
+      - '!envs/Dockerfile.argus*'
+      - '!envs/build_argus_AppImage.sh'
+      - '!envs/bundle.sh'
+      - '!envs/Dockerfile.hmi'        # legacy hmi untested (profile hmi)
+      - '!envs/requirements-hmi.txt'
+      - '!docs/**'
+      - 'docs/orchestrator/examples/**'  # Test cases
+  pull_request:
+    branches: [ main, develop ]
+    # Don't run on draft PR's
+    types: [ opened, synchronize, reopened, ready_for_review ]
+    paths: *nrt_paths
+
+jobs:
+  nrt-tests:
+    if: github.event.pull_request.draft == false
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Create empty .env  # Overwritten by .env-tests but docker stills needs it
+        run: touch .env
+
+      # The compose files refuse to load without them (garage, keycloak): random values (masked), for this run only
+      - name: Generate dev secrets
+        run: ./setup.sh --only secrets --garage-env .env-tests
+
+      # Docker cache setup: layers are stored in the GitHub Actions cache (type=gha)
+      - name: Set up Docker Buildx
+        id: buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Expose GitHub runtime for the gha build cache
+        uses: crazy-max/ghaction-github-runtime@v3
+
+      - name: Build Docker images
+        env:
+          BUILDX_BUILDER: ${{ steps.buildx.outputs.name }}
+        run: |
+          # One cache scope per built service (mode=max also caches the intermediate build stages)
+          cat > /tmp/docker-compose-ci-cache.yaml <<'EOF'
+          services:
+            twincr-core:
+              build: {cache_from: ["type=gha,scope=twincr-core"], cache_to: ["type=gha,scope=twincr-core,mode=max"]}
+            configurator-client:
+              build: {cache_from: ["type=gha,scope=configurator-client"], cache_to: ["type=gha,scope=configurator-client,mode=max"]}
+            gamemaster:
+              build: {cache_from: ["type=gha,scope=gamemaster"], cache_to: ["type=gha,scope=gamemaster,mode=max"]}
+            automata:
+              build: {cache_from: ["type=gha,scope=automata"], cache_to: ["type=gha,scope=automata,mode=max"]}
+          EOF
+          docker compose --env-file .env-tests -f docker-compose.yaml -f docker-compose-tests.overrides.yaml -f /tmp/docker-compose-ci-cache.yaml \
+            build --progress=plain
+
+      - name: Download and extract simulators
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: ./setup.sh --only dynawo
+
+      - name: Init garage credentials
+        run: ./setup.sh --only garage --garage-env .env-tests
+
+      # Install python dependencies
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install test dependencies
+        run: pip install -r tests/requirements.txt
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+
+      # Run pytest
+      - name: Run NRT tests
+        env:
+          PYTHONUNBUFFERED: 1
+        run: |
+          pytest tests/nrt.py -vv -s

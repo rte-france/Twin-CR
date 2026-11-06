@@ -1,0 +1,24 @@
+#
+# Copyright (c) 2025-2026, RTE (https://www.rte-france.com)
+# See AUTHORS.md
+# SPDX-License-Identifier: MPL-2.0
+# This file is part of Twin-CR, a platform for real-time cyber-physical
+# co-simulation of power systems.
+#
+
+services:
+  cleanup:
+    image: debian
+    command: sh -c "rm -rf /var/lib/garage/"
+    container_name: garage-cleanup
+    volumes:
+      - type: bind
+        source: ./garage-data/meta
+        target: /var/lib/garage/meta
+        bind:
+          create_host_path: true
+      - type: bind
+        source: ./garage-data/data
+        target: /var/lib/garage/data
+        bind:
+          create_host_path: true

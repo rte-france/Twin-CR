@@ -1,0 +1,103 @@
+{
+  "applied": [
+    {
+      "command": {
+        "attribute": "U",
+        "command": "dynamic_model_command",
+        "dynamic_model": "RST_4011",
+        "value": 400.0
+      },
+      "t": 2.0
+    },
+    {
+      "command": {
+        "attribute": "deltaU",
+        "command": "dynamic_model_scale_multiplier",
+        "dynamic_model": "RST_4011",
+        "multiplier_increase": -0.1
+      },
+      "t": 5.0
+    },
+    {
+      "command": {
+        "attribute": "deltaU",
+        "command": "dynamic_model_command",
+        "dynamic_model": "RST_4011",
+        "value": 2.0
+      },
+      "t": 7.0
+    },
+    {
+      "command": {
+        "attribute": "U",
+        "command": "dynamic_model_command",
+        "dynamic_model": "RST_4012",
+        "value": 400.0
+      },
+      "t": 8.0
+    },
+    {
+      "command": {
+        "attribute": "U",
+        "command": "dynamic_model_command",
+        "dynamic_model": "RST_4012",
+        "value": 405.0
+      },
+      "t": 9.0
+    },
+    {
+      "command": {
+        "attribute": "U",
+        "command": "dynamic_model_command",
+        "dynamic_model": "RST_4012",
+        "value": 410.0
+      },
+      "t": 10.0
+    },
+    {
+      "command": {
+        "attribute": "U",
+        "command": "dynamic_model_command",
+        "dynamic_model": "RST_4011",
+        "value": 402.0
+      },
+      "t": 12.0
+    },
+    {
+      "command": {
+        "attribute": "U",
+        "command": "dynamic_model_command",
+        "dynamic_model": "RST_4012",
+        "value": 402.0
+      },
+      "t": 12.0
+    },
+    {
+      "command": {
+        "attribute": "U",
+        "command": "dynamic_model_scale_multiplier",
+        "dynamic_model": "RST_4011",
+        "multiplier_increase": 0.05
+      },
+      "t": 16.0
+    },
+    {
+      "command": {
+        "attribute": "U",
+        "command": "dynamic_model_scale_multiplier",
+        "dynamic_model": "RST_4011",
+        "multiplier_increase": 0.01
+      },
+      "t": 18.0
+    },
+    {
+      "command": {
+        "attribute": "U",
+        "command": "dynamic_model_scale_multiplier",
+        "dynamic_model": "RST_4012",
+        "multiplier_increase": 0.01
+      },
+      "t": 18.0
+    }
+  ]
+}

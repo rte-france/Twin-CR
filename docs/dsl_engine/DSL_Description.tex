@@ -1,0 +1,612 @@
+%
+% Build with: latexmk -pdf DSL_Description.tex
+%
+
+\documentclass[12pt]{article}
+
+\usepackage[margin=1in]{geometry}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage[T1]{fontenc}
+\usepackage[hidelinks]{hyperref}
+
+\definecolor{dslkeyword}{HTML}{0B5394}
+\definecolor{dsltype}{HTML}{6A3D9A}
+\definecolor{dslvar}{HTML}{B25000}
+\definecolor{dslcomment}{HTML}{5F7A5F}
+\definecolor{dslstring}{HTML}{8A1F11}
+
+% The language definition is generated from the grammar; see Orchestrator/DSL/tools/extract_keywords.py
+\input{dsl_keywords.tex}
+
+\lstset{
+  language=PowerEventDSL,
+  keywordstyle=\color{dslvar},
+  keywordstyle=[2]\color{dslkeyword}\bfseries,
+  keywordstyle=[3]\color{dsltype},
+  commentstyle=\color{dslcomment}\itshape,
+  stringstyle=\color{dslstring},
+  basicstyle=\ttfamily\small,
+  backgroundcolor=\color{black!7},
+  frame=single,
+  rulecolor=\color{black!45},
+  numbers=left,
+  numberstyle=\tiny,
+  numbersep=8pt,
+  breaklines=true,
+  breakatwhitespace=false,
+  showstringspaces=false,
+  columns=fixed,
+  keepspaces=true,
+}
+
+\title{\textbf{DSL Grammar Documentation for Simulation Sequencing}}
+\author{Frédéric Sabot, Sreejith P. Sajeev}
+\date{\date{}}
+
+\begin{document}
+\maketitle
+
+\section{Introduction}
+
+This document describes the Domain-Specific Language (DSL) used to sequence events in a running power system simulation. The reference grammar is \texttt{Orchestrator/\allowbreak DSL/\allowbreak PowerEventDSL.g4}; it is parsed with ANTLR and interpreted by \texttt{DSLEngine}, which runs inside the orchestrator process.
+
+A script is a sequence of statements. The one named by \texttt{input\_files.dsl\_file} in the orchestrator configuration is loaded when the engine starts, and further statements can be submitted over the HTTP interface while the simulation runs (e.g. via Argus). Both go through the same parser and the same validation. Key features include:
+
+\begin{itemize}
+  \item \textbf{Time-Based Events}: schedule an action at a time, or leave the time out to act at the next step.
+  \item \textbf{Ramps}: apply a percentage change or a setpoint change progressively over an interval.
+  \item \textbf{Condition-Based Events}: \texttt{when} and \texttt{when\_rearming} watch live measurements and fire when a boolean expression over them becomes true.
+  \item \textbf{Dependent Events}: \texttt{after "<tag>" is completed} links an action to earlier tagged work.
+  \item \textbf{Targeting}: one element, a list, or a cluster named or defined by regular expression.
+  \item \textbf{Network Actions}: \texttt{change network characteristics} on links and nodes, with \texttt{drop}, \texttt{delay} and \texttt{corruption} operators.
+  \item \textbf{Functions}: reusable templates with parameters bound at invocation, and \texttt{validate} to expand a call and check it without applying anything.
+\end{itemize}
+
+Every statement ends with a semicolon (\texttt{;}). A \texttt{//} starts a comment that runs to end of line.
+
+\section{Script Structure}
+
+\subsection{Statements}
+
+A script contains three kinds of top-level statement, in any order:
+
+\begin{lstlisting}
+func <NAME>(<PARAM>, ...) { ... }        // function definition
+def <TYPE> cluster "<ID>" <DEFINITION>;  // cluster definition
+after 5 seconds, open switch "S1";          // event definition
+\end{lstlisting}
+
+\textbf{Description:} Statements are applied one at a time, in order. A statement that fails validation aborts the load and is reported, but the statements before it have already been applied and stay applied, the way a Python script leaves behind whatever ran before the line that raised. Re-submitting a corrected script therefore re-applies its leading statements a second time.
+
+\subsection{Time Expressions}
+
+\textbf{Syntax:}
+\begin{lstlisting}
+after 30 seconds, ...     // an offset
+at 30 seconds, ...        // an absolute simulation time
+
+<TIME_EXPR> ::= <NUMBER> <TIME_UNIT> | $<PARAM> [<TIME_UNIT>]
+<TIME_UNIT> ::= seconds | second | s | minutes | minute | min | hours | hour | h
+\end{lstlisting}
+
+\textbf{Description:} A time is introduced by one of two anchors:
+
+\begin{itemize}
+  \item \texttt{after <TIME\_EXPR>} is an offset. From when the statement is submitted, or, inside a function body, from the invocation (see section~\ref{sec:relative_timing}).
+  \item \texttt{at <TIME\_EXPR>} is an absolute simulation time. \texttt{at 300 seconds} is 300 seconds into the run whenever the statement is submitted. A time already past is rejected when the statement is loaded. \texttt{at} statements inside a function body are rejected to allow the function to be called at any time.
+\end{itemize}
+
+For a script loaded at the start of a run, \texttt{after} and \texttt{at} are equivalent. However, it is strongly recommended to prefer \texttt{after} as it works in a larger set of situations (allows the script to be launched after the start time, and works inside function bodies). \texttt{at} should be reserved for single commands launched from the terminal. A literal always carries a unit: \texttt{after 30} is a syntax error. A \texttt{\$parameter} may carry one, and counts as seconds without.
+
+\section{Event Definitions}
+
+\subsection{Point-in-Time Event}
+
+\textbf{Syntax:}
+\begin{lstlisting}
+after <TIME_EXPR>, <EXECUTABLE> [tagged "<TAG>"];   // offset from submission
+at    <TIME_EXPR>, <EXECUTABLE> [tagged "<TAG>"];   // absolute simulation time
+\end{lstlisting}
+
+\textbf{Example:}
+\begin{lstlisting}
+after 2 seconds, open switch "01_1_breaker" tagged "load_1_isolated";
+after 10 s, set load "02_1" input "P" to 250;
+at 300 seconds, open line "01_2";
+\end{lstlisting}
+
+\subsection{Immediate Event}
+
+\textbf{Syntax:}
+\begin{lstlisting}
+<EXECUTABLE> [tagged "<TAG>"];
+\end{lstlisting}
+
+\textbf{Description:} With the anchor omitted the action is applied at the next tick, which is the same as writing \texttt{after 0 seconds}.
+
+\subsection{Interval Event (Ramp)}
+
+\textbf{Syntax:}
+\begin{lstlisting}
+after [<TIME_EXPR>, <TIME_EXPR>] [with law linear], <RAMPABLE_ACTION> [tagged "<TAG>"];
+at    [<TIME_EXPR>, <TIME_EXPR>] [with law linear], <RAMPABLE_ACTION> [tagged "<TAG>"];
+\end{lstlisting}
+
+\textbf{Example:}
+\begin{lstlisting}
+after [2 seconds, 6 seconds] with law linear, decrease load "01_1" input "P" by 20%;
+after [10 seconds, 14 seconds] with law linear, set load "02_1" input "P" from 100 to 300;
+\end{lstlisting}
+
+\textbf{Description:} Only two actions are rampable: the percentage adjustment and the \texttt{from ... to} setpoint change. \texttt{with law} is optional and \texttt{linear} is the only law implemented, so any other name is rejected. The ramp is advanced once per tick between its bounds; see section~\ref{sec:ramps} for what each kind writes.
+
+\subsection{Condition-Based Events}
+
+\textbf{Syntax:}
+\begin{lstlisting}
+when <CONDITION>, <EXECUTABLE> [tagged "<TAG>"];
+when_rearming <CONDITION>, <EXECUTABLE> [tagged "<TAG>"];
+\end{lstlisting}
+
+\textbf{Example:}
+\begin{lstlisting}
+when load "01_1" output "P" > 200, open switch "01_1_breaker" tagged "overload_trip";
+when_rearming load "02_1" output "P" > 150, decrease load "02_1" input "P" by 5%;
+\end{lstlisting}
+
+\textbf{Description:} The condition is evaluated once per tick against the last value measured for each output it reads, see section~\ref{sec:conditions}. A \texttt{when} fires the first time the condition holds and is then completed. A \texttt{when\_rearming} fires the same way but re-arms once the condition has gone false again, so it can fire
+repeatedly.
+
+\subsection{Dependent Event}
+
+\textbf{Syntax:}
+\begin{lstlisting}
+after "<TAG>" is completed, <EXECUTABLE> [tagged "<TAG>"];
+\end{lstlisting}
+
+\textbf{Example:}
+\begin{lstlisting}
+after "load_1_isolated" is completed, increase load "05_1" input "P" by 10%;
+\end{lstlisting}
+
+\textbf{Description:} Fires on the first tick at which every event carrying that tag has completed. A tag whose owner was deleted never completes.
+
+\subsection{Tags}
+
+\textbf{Description:}
+\begin{itemize}
+  \item \texttt{tagged "<TAG>"} names the events a statement created, so later statements can wait on them.
+  \item One statement can create several events, e.g. a function call. The tag then covers all of them and completes only once they all have.
+\end{itemize}
+
+\section{Action Types}
+
+\subsection{Switch Actions}
+
+\textbf{Syntax:}
+\begin{lstlisting}
+open switch "<SWITCH_ID>";
+close switch "<SWITCH_ID>";
+\end{lstlisting}
+
+\textbf{Description:} Writes the \texttt{state} attribute of the switch, \texttt{1} to open and \texttt{2} to close. The identifier is an IIDM id and must appear in the game master input mapping, otherwise the statement is rejected.
+
+\subsection{Line Actions}
+
+\textbf{Syntax:}
+\begin{lstlisting}
+open line "<LINE_ID>";
+close line "<LINE_ID>";
+\end{lstlisting}
+
+\textbf{Description:} As above, on a line: \texttt{state} is set to \texttt{1} to open and \texttt{2} to close. Note that such line action is meant to represent faults. It works by setting the line state to 'open' (2) in Dynawo which indirectly leads to the opening of the breakers on both sides of the line. The breakers cannot be manually reclosed without a "close line" action.
+
+\subsection{Transformer Actions}
+
+\textbf{Syntax:}
+\begin{lstlisting}
+open transformer "<TRANSFORMER_ID>";
+close transformer "<TRANSFORMER_ID>";
+\end{lstlisting}
+
+\textbf{Description:} As above, on a transformer. Works both on \texttt{2\_windings\_transformer} and \texttt{3\_windings\_transformer}.
+
+\subsection{Percentage Adjustment}
+
+\textbf{Syntax:}
+\begin{lstlisting}
+increase <TARGET> input "<INPUT>" by <NUMBER>%;
+decrease <TARGET> input "<INPUT>" by <NUMBER>%;
+\end{lstlisting}
+
+\textbf{Example:}
+\begin{lstlisting}
+after 15 s, decrease load ["03_1", "04_1"] input "P" by 5%;
+\end{lstlisting}
+
+\textbf{Description:} Scales the element's input multiplier rather than writing a setpoint, so the change is relative to whatever the model is currently producing. \texttt{decrease ... by 5\%} multiplies by 0.95.
+
+\subsection{Absolute Setpoint}
+
+\textbf{Syntax:}
+\begin{lstlisting}
+set <TARGET> input "<INPUT>" to <SIGNED_NUMBER>;
+\end{lstlisting}
+
+\textbf{Example:}
+\begin{lstlisting}
+after 6 seconds, set load cluster "spares" ["11_1", "12_1"] input "P" to 120;
+\end{lstlisting}
+
+\textbf{Description:} Writes the value directly.
+
+\subsection{Ramps}
+\label{sec:ramps}
+
+\textbf{Syntax:}
+\begin{lstlisting}
+after [<T1>, <T2>] [with law linear], increase <TARGET> input "<INPUT>" by <NUMBER>%;
+after [<T1>, <T2>] [with law linear], set <TARGET> input "<INPUT>" [from <SIGNED_NUMBER>] to <SIGNED_NUMBER>;
+\end{lstlisting}
+
+\textbf{Example:}
+\begin{lstlisting}
+after [5 seconds, 9 seconds], set load "02_1" input "P" from 200 to 300;
+after [5 seconds, 9 seconds], set load "02_1" input "P" to 300;
+\end{lstlisting}
+
+\textbf{Description:}
+\begin{itemize}
+  \item The percentage form is a \emph{multiplier} ramp.
+  \item The \texttt{to} form is a \emph{value} ramp. With \texttt{from} it starts from the number written; without, it starts from the element's current measured value. Omitting it needs the element to publish a measurement for that input, which is checked when the statement is loaded, so a ramp that could never start is refused rather than failing silently later.
+  \item Two ramps may not overlap in time on the same element and input. The second one is rejected when it is loaded.
+  \item A zero-length interval applies the whole change in one tick.
+\end{itemize}
+
+\subsection{Network Actions}
+
+These modify the communication network carrying measurements and controls.
+
+\textbf{General Syntax}
+
+\begin{lstlisting}
+change network characteristics
+   link from "<SRC>" to "<DST>" [, link from "<SRC>" to "<DST>"]*
+   [, node "<NODE>"]*
+   [, <OPERATOR>]* ;
+
+change network characteristics
+   node "<NODE>" [, node "<NODE>"]*
+   [, <OPERATOR>]* ;
+\end{lstlisting}
+
+At least one link or node clause is required, and clauses are separated by commas. Several operators can be composed in one statement.
+
+\textbf{Operators}
+
+\begin{itemize}
+  \item \texttt{drop}: lose information passing through the link or node.
+\begin{lstlisting}
+drop fixed <true|false>  // Drop everything or nothing
+drop random <PROBABILITY>  // Drop with a probability (between 0 and 1)
+\end{lstlisting}
+
+  \item \texttt{delay}: latency injection
+\begin{lstlisting}
+delay fixed <NUMBER> <TIME_UNIT>
+delay gauss mean <NUMBER> <TIME_UNIT> stddev <NUMBER> <TIME_UNIT>
+\end{lstlisting}
+
+  \item \texttt{corruption}: data corruption
+\begin{lstlisting}
+corruption none [likelihood <PROBABILITY>]
+corruption random_noise_measurement [likelihood <PROBABILITY>] range <LOW> to <HIGH>
+corruption random_noise_control [likelihood <PROBABILITY>] range <LOW> to <HIGH>
+corruption zero_out_measurement [likelihood <PROBABILITY>] [value <NUMBER>]
+corruption shift_measurement [likelihood <PROBABILITY>] by <NUMBER>
+corruption invert_control [likelihood <PROBABILITY>] [by <NUMBER>]
+\end{lstlisting}
+\end{itemize}
+
+\textbf{Example}
+\begin{lstlisting}
+after 1 seconds, change network characteristics
+  link from "CC" to "substation_1",
+  drop fixed true
+  tagged "CC_to_substation_1";
+
+after "CC_to_substation_1" is completed, change network characteristics
+  link from "CC" to "substation_2", link from "CC" to "substation_3", node "substation_2",
+  delay fixed 0.15 seconds;
+
+after 8 seconds, change network characteristics
+  link from "CC" to "substation_2", node "substation_2",
+  corruption shift_measurement likelihood 0.2 by 0.02;
+\end{lstlisting}
+
+\section{Target Specifications}
+
+\subsection{Element Types}
+
+Every target names an element type first. The accepted types follow pypowsybl nomenclature:
+
+\begin{lstlisting}
+2_windings_transformer   phase_tap_changer
+3_windings_transformer   ratio_tap_changer
+battery                  shunt_compensator
+dangling_line            static_var_compensator
+generator                substation
+hvdc_line                switch
+lcc_converter_station    tie_line
+line                     voltage_level
+load                     vsc_converter_station
+\end{lstlisting}
+
+These are reserved keywords, so none of them can be used as a function or parameter name. The same applies to every other quoted literal in the grammar, \texttt{second} and \texttt{line} included.
+
+\subsection{Single Element and Lists}
+
+\textbf{Syntax:} \texttt{<TYPE> "<ID>"} \quad or \quad \texttt{<TYPE> ["<ID>", "<ID>", ...]}
+
+\textbf{Example:}
+\begin{lstlisting}
+after 15 s, decrease load ["03_1", "04_1"] input "P" by 5%;
+\end{lstlisting}
+
+\textbf{Description:} A list is one action on several elements, exactly like the anonymous cluster below, so the statement is a single event however many elements it names. Cancelling it cancels the whole statement.
+
+\subsection{Clusters}
+
+\textbf{Syntax:}
+\begin{lstlisting}
+def <TYPE> cluster "<NAME>" <DEFINITION>;      // named, reusable
+<TYPE> cluster "<NAME>"                        // use a named cluster
+<TYPE> cluster "<NAME>" <DEFINITION>           // define and use in one statement
+<TYPE> cluster <DEFINITION>                    // anonymous
+
+<DEFINITION> ::= ["<ID>", "<ID>", ...] | regex "<PATTERN>" on <TYPE>
+\end{lstlisting}
+
+\textbf{Example:}
+\begin{lstlisting}
+def load cluster "feeders" ["01_1", "02_1", "03_1"];
+
+after 3 seconds, decrease load cluster "feeders" input "P" by 10%;
+after 6 seconds, set load cluster "spares" ["11_1", "12_1"] input "P" to 120;
+after 9 seconds, increase load cluster regex "^4[0-9]_1$" on load input "P" by 5%;
+\end{lstlisting}
+
+\textbf{Description:} A regular expression is matched against the ids of the network's elements of that type using search semantics, so anchor it with \texttt{\^{}} and \texttt{\$} to require a full match.
+
+\subsection{Dynamic Models}
+
+\textbf{Syntax:} \texttt{"<MODEL\_LIBRARY>" "<MODEL>"}
+
+\textbf{Example:}
+\begin{lstlisting}
+after 2 seconds, set "DYNModelRST" "RST_VL_A_225" input "U" to 400;
+after 5 seconds, decrease "DYNModelRST" "RST_VL_A_225" input "deltaU" by 10%;
+\end{lstlisting}
+
+\textbf{Description:} Some Dynawo models are purely dynamic and are not attached to an IIDM element. Those are named by their model type and model id instead (e.g. "DYNModelRST" "RST\_VL\_A\_225" instead of line "L1").
+
+Apart from this, they work the same, e.g. in cluster, regexes, function calls, etc.
+
+\begin{lstlisting}
+after 12 seconds, set "DYNModelRST" ["RST_VL_A_225", "RST_VL_B_225"] input "U" to 402;
+def "DYNModelRST" cluster "regulators" regex "^RST_" on "DYNModelRST";
+after 18 seconds, increase "DYNModelRST" cluster "regulators" input "U" by 1%;
+when "DYNModelOmegaRef" "OmegaRef" output "OmegaRef" < 49.8,
+     set "DYNModelRST" "RST_VL_A_225" input "deltaU" to 2;
+\end{lstlisting}
+
+\section{Dynamic Conditions}
+\label{sec:conditions}
+
+\subsection{Reading a Measurement}
+
+\textbf{Syntax:}
+\begin{lstlisting}
+<TYPE> "<ELEMENT_ID>" output "<ATTRIBUTE>"
+"<MODEL_LIBRARY>" "<MODEL>" output "<ATTRIBUTE>"   // purely dynamic model
+\end{lstlisting}
+
+\subsection{Expressions}
+
+\textbf{Syntax:}
+\begin{lstlisting}
+<CONDITION>  ::= <TERM> (or <TERM>)*
+<TERM>       ::= <FACTOR> (and <FACTOR>)*
+<FACTOR>     ::= <COMPARISON> | true | false | ( <CONDITION> )
+<COMPARISON> ::= <ARITHMETIC> (< | > | <= | >= | == | !=) <ARITHMETIC>
+<ARITHMETIC> ::= <NUMBER> | $<PARAM> | <MEASUREMENT> | arithmetic with + - * / and parentheses
+\end{lstlisting}
+
+\textbf{Example:}
+\begin{lstlisting}
+when load "01_1" output "P" > 200, open switch "01_1_breaker";
+when (load "01_1" output "P" + load "02_1" output "P") > 400 and voltage_level "01" output "U" < 0.95,
+     open line "01_2";
+\end{lstlisting}
+
+\section{Functions}
+
+\subsection{Function Definition}
+
+\textbf{Syntax:}
+\begin{lstlisting}
+func <NAME>(<PARAM>, <PARAM>, ...) {
+   <CLUSTER_DEFINITION_OR_EVENT>
+   ...
+}
+\end{lstlisting}
+
+\textbf{Example:}
+\begin{lstlisting}
+func isolateFeeder(breaker, feeder) {
+  after 0 seconds, open switch $breaker tagged "breaker_opened";
+  after 3 seconds, decrease load $feeder input "P" by 15%;
+  after "breaker_opened" is completed, set load $feeder input "P" to 80;
+}
+\end{lstlisting}
+
+\textbf{Description:}
+\begin{itemize}
+  \item A function body can contain any list of statements, including cluster definitions, \texttt{when} and \texttt{after} statements, and calls to other functions.
+  \item Recursive function calls are not allowed.
+  \item A parameter is referenced as \texttt{\$name}. It holds a plain value, a string, a number or a boolean.
+  \item Definitions live for the rest of the session.
+\end{itemize}
+
+\subsection{Function Invocation}
+
+\textbf{Syntax:}
+\begin{lstlisting}
+<NAME>(<ARG>, ...);
+<NAME>(<PARAM>: <ARG>, ...);
+validate(<NAME>(<ARG>, ...));
+\end{lstlisting}
+
+\textbf{Example:}
+\begin{lstlisting}
+after 5 seconds, isolateFeeder("01_1_breaker", "01_1");
+after 20 seconds, isolateFeeder(breaker: "02_1_breaker", feeder: "02_1");
+\end{lstlisting}
+
+\textbf{Description:}
+\begin{itemize}
+  \item Arguments may be positional or named, in any order. Named ones bind by parameter name.
+\end{itemize}
+
+\subsection{Relative Timing}
+\label{sec:relative_timing}
+
+\textbf{Example:}
+\begin{lstlisting}
+func stagedIsolation(breaker, feeder) {
+  after 6 seconds, open switch $breaker tagged "breaker_opened";
+  after 8 seconds, decrease load $feeder input "P" by 10%;
+  after "breaker_opened" is completed, set load $feeder input "P" to 60;
+}
+
+after 3 seconds, stagedIsolation("01_1_breaker", "01_1");
+\end{lstlisting}
+
+\textbf{Description:} Times inside a body are relative to the invocation. Above, the switch opens at 9 seconds and the adjustment lands at 11. Nesting composes: a call made \texttt{after 5 seconds} inside a body invoked at 3 seconds has its own body counted from 8.
+
+A function body accepts \texttt{after} only. \texttt{at} is rejected when the call is loaded, because a function is a template invoked at an arbitrary time and an absolute time in its body would pin it to one moment and make it unusable anywhere else.
+
+\subsection{Verification with validate}
+
+\textbf{Syntax:}
+\begin{lstlisting}
+validate(<FUNCTION_CALL>);
+\end{lstlisting}
+
+\textbf{Description:} Expands the call and validates every event it would create in the current scope. Nothing is scheduled nor applied. An error is reported exactly as
+it would have been for the real call, which makes it a dry run for a sequence that is expensive to undo.
+
+\section{Errors and Validation}
+
+\subsection{Syntax Errors}
+
+Missing semicolons, unknown keywords, or a reserved keyword used as an identifier. Reported by ANTLR with the line and the offending token.
+
+\subsection{Validation Errors}
+
+Raised while a statement is being loaded: an element or attribute that is not in the game master mapping, an unknown cluster, function or tag, a ramp overlapping an existing one on the same element and input, a ramp law other than \texttt{linear}, a call argument that would be ignored, or a parameter used where its value has the wrong type. The message carries the line number and the source text of the statement that failed.
+
+\subsection{Runtime Behaviour}
+
+A regular expression that matches nothing yields an empty cluster and a statement that does nothing. A condition over an output that has not been measured yet is false rather than an error.
+
+\section{ANTLR Implementation}
+
+The DSL is powered by ANTLR:
+\begin{itemize}
+  \item \textbf{Grammar File}: \texttt{Orchestrator/DSL/PowerEventDSL.g4}
+  \item \textbf{Generated Classes}: Lexer (\texttt{PowerEventDSLLexer}), Parser (\texttt{PowerEventDSLParser}), Visitor (\texttt{PowerEventDSLVisitor}), generated into \texttt{Orchestrator/DSL/generated/} at build time.
+  \item \textbf{Interpretation}: \texttt{DSLProgramVisitor} walks the parse tree and produces \texttt{DSLEvent} objects, which \texttt{DSLEngine} schedules and evaluates.
+\end{itemize}
+
+\section{Example Scripts}
+
+Each of these is a case in \texttt{Orchestrator/DSL/tests/cases}, run by the regression suite against the Nordic example network. Other examples are included in this test suite.
+
+\subsection{Point Actions}
+
+\begin{lstlisting}
+after 2 seconds, open switch "01_1_breaker" tagged "load_1_isolated";
+after 5 seconds, close switch "01_1_breaker";
+after 10 s, set load "02_1" input "P" to 250;
+after 15 s, decrease load ["03_1", "04_1"] input "P" by 5%;
+after "load_1_isolated" is completed, increase load "05_1" input "P" by 10%;
+\end{lstlisting}
+
+\subsection{Clusters}
+
+\begin{lstlisting}
+def load cluster "feeders" ["01_1", "02_1", "03_1"];
+
+after 3 seconds, decrease load cluster "feeders" input "P" by 10%;
+after 6 seconds, set load cluster "spares" ["11_1", "12_1"] input "P" to 120;
+after 9 seconds, increase load cluster regex "^4[0-9]_1$" on load input "P" by 5%;
+\end{lstlisting}
+
+\subsection{Ramps}
+
+\begin{lstlisting}
+after [2 seconds, 6 seconds] with law linear, decrease load "01_1" input "P" by 20%;
+after [10 seconds, 14 seconds] with law linear, set load "02_1" input "P" from 100 to 300;
+\end{lstlisting}
+
+\subsection{Conditional Triggers}
+
+\begin{lstlisting}
+when load "01_1" output "P" > 200, open switch "01_1_breaker" tagged "overload_trip";
+when_rearming load "02_1" output "P" > 150, decrease load "02_1" input "P" by 5%;
+\end{lstlisting}
+
+\subsection{Functions}
+
+\begin{lstlisting}
+func isolateFeeder(breaker, feeder) {
+  after 0 seconds, open switch $breaker tagged "breaker_opened";
+  after 3 seconds, decrease load $feeder input "P" by 15%;
+  after "breaker_opened" is completed, set load $feeder input "P" to 80;
+}
+
+func trimGeneration(feeder, amount) {
+  after [0 seconds, 4 seconds] with law linear, decrease load $feeder input "P" by $amount%;
+}
+
+after 5 seconds, isolateFeeder("01_1_breaker", "01_1");
+after 20 seconds, isolateFeeder(breaker: "02_1_breaker", feeder: "02_1");
+after 30 seconds, trimGeneration("03_1", 12);
+\end{lstlisting}
+
+\subsection{Parameters of Every Kind}
+
+\begin{lstlisting}
+func openOne(breaker) {
+  after 0 seconds, open switch $breaker;
+}
+
+func openPair(left, right) {
+  openOne($left);
+  openOne($right);
+}
+
+func trim(group, attribute, amount) {
+  after 0 seconds, decrease load cluster $group input $attribute by $amount%;
+}
+
+def load cluster "feeders" ["01_1", "02_1"];
+
+after 2 seconds, openOne("01_1_breaker");
+after 5 seconds, openPair("02_1_breaker", "03_1_breaker");
+after 8 seconds, trim("feeders", "P", 10);
+\end{lstlisting}
+
+\end{document}

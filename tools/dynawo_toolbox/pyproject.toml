@@ -1,0 +1,31 @@
+#
+# Copyright (c) 2025-2026, RTE (https://www.rte-france.com)
+# See AUTHORS.md
+# SPDX-License-Identifier: MPL-2.0
+# This file is part of Twin-CR, a platform for real-time cyber-physical
+# co-simulation of power systems.
+#
+
+[project]
+name = "dynawo-toolbox"
+version = "0.1.0"
+license = "MPL-2.0"
+description = "Add your description here"
+readme = "README.md"
+authors = [
+    { name = "mjothy", email = "mario.jothy@artelys.com" }
+]
+requires-python = ">=3.14"
+dependencies = [
+    "colorlog~=6.9.0",
+    "lxml>=6.1.1",
+    "pandas==2.3.3",
+    "pypowsybl>=1.15.0",
+    "pyyaml>=6.0.3",
+    "pyzmq>=27.1.0",
+    "shortuuid>=1.0.13",
+    "zstandard>=0.23.0",
+]
+
+[project.scripts]
+dynawo-toolbox = "src.main_configure:main"

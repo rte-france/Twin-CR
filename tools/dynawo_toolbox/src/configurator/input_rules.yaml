@@ -1,0 +1,388 @@
+#
+# Copyright (c) 2025-2026, RTE (https://www.rte-france.com)
+# See AUTHORS.md
+# SPDX-License-Identifier: MPL-2.0
+# This file is part of Twin-CR, a platform for real-time cyber-physical
+# co-simulation of power systems.
+#
+
+# =================================================================================================================#
+# Rules for generating mappings list for the generation of configuration files (dynawo_input, extra DYNModelUpdatables, ...)
+# -----
+#  Rules can be read as a dictionary (iidm_class, dynawo model) : {mapping: pattern, factor: float, type: "continuous" | "integer" | "boolean" | "discrete"}
+#  The type refers to the type of the Dynawo connector necessary to connect the input (defaults to "continuous", except for "state" variables for which
+#  it defaults to "integer")
+#  Dynawo models can be defined:
+#    1. in the IIDM, and not redefined in DYD file -> default Component model in Model NETWORK
+#    2. in the IIDM, and be redefined in DYD (through static_id)
+#    3. in the DYD only
+#  Rules should be considered in order:
+#    - if model only defined in IIDM (case 1): look for rule (iidm_class, null)
+#    - if model defined in DYD (case 2, 3):
+#       1. look for rule matching (null, dynawo_model)
+#       2. look for a mapping in dynamic model var list matching pattern in (iidm_class, "default")
+#  The dynawo model key is either an exact library name or a glob pattern (fnmatch, e.g. "HvdcVsc*"): an exact key
+#    takes precedence over the patterns, and among the matching patterns the most specific (longest) one wins
+#    (see Configurator.find_rules)
+#  A key can reference other keys to share rules (see Configurator._resolve_lib_rules):
+#    - alias:        GeneratorAlphaBeta: GeneratorPQ
+#    - inheritance:  GeneratorPQ: {extends: "Generator*SignalN*", deltaP: {...}}, the other entries adding or
+#                    overriding rules by kind, a null entry removing the kind (e.g. "Q: null")
+#    A reference is a key of the same section (exact key, even for a pattern key such as "Generator*SignalN*"), or
+#    "section:key" for another section, "null" standing for the null section or key (e.g. "generator:null").
+#    References can be chained, cycles and unknown keys are reported as errors
+#  The rules of models outside the public Dynawo library (e.g. RTE's private models) are defined in an extra
+#    input_rules.yaml (Configurator extra_rules_dir, main_configure --extra_rules_dir), merged by section over this one
+# =================================================================================================================#
+
+# Dynawo models (with or without static ID -> will be search first)
+null:
+  PhaseShifterI: []
+  DYNModelOmegaRef: []
+  StaticVarCompensatorPVProp:
+    U:
+      mapping: "regex:.*URefPu"
+      factor: "iidm:vNom"
+  StaticVarCompensatorPVPropModeHandling: "static_var_compensator:default"  # URef (in kV): the mode handling models do not expose URefPu
+  StaticVarCompensatorPVPropRemoteModeHandling: "static_var_compensator:default"  # URef of the remote regulated bus, in kV
+  StaticVarCompensatorPVPropRemote: []
+    # U:
+    #   mapping: "regex:.*URefPu"
+    #   factor: "SVarC_UNomRemote"  # Parameter does not exist --> Not possible to find remote UNom
+  StaticVarCompensatorPV:
+    U:
+      mapping: "regex:.*URefPu$"  # In pu (base UNom)
+      factor: "iidm:vNom"
+  StaticVarCompensatorPVRemote: []  # URefPu is in pu of the remote bus nominal voltage, which is not available
+
+  # Simplified generators (Dynawo.Electrical.Machines.OmegaRef)
+  GeneratorPQ:
+    P:
+      mapping: "generator_PGen0Pu"
+      factor: 100
+    Q:
+      mapping: "generator_QGen0Pu"
+      factor: 100
+  GeneratorPTanPhi:  # Q follows from the tan(phi) set point
+    extends: GeneratorPQ
+    Q: null
+  GeneratorPV:
+    extends: GeneratorPTanPhi
+    U:
+      mapping: "regex:(?!.*[dD]elta).*URefPu.*"  # Not DeltaURefPu
+      factor: "iidm:vNom"
+  GeneratorAlphaBeta: GeneratorPQ
+  GeneratorPVFixed: GeneratorPTanPhi
+  GeneratorPVDiagramPQ: GeneratorPV
+
+  # Simplified generators participating in the frequency regulation through the signal N (Dynawo.Electrical.Machines.SignalN)
+  "Generator*SignalN*":
+    P:
+      mapping: "generator_PRefPu"
+      factor: -100  # Receptor convention in Dynawo
+  "GeneratorPVSignalN*":
+    extends: "Generator*SignalN*"
+    U:
+      mapping: "generator_URefPu"  # In pu (base UNom)
+      factor: "iidm:vNom"
+  "GeneratorPVPropSignalN*": "GeneratorPVSignalN*"
+  "GeneratorPVDiagram*SignalN*": "GeneratorPVSignalN*"
+  "GeneratorPVDiagramPQRpcl*SignalN": "Generator*SignalN*"  # No U input for RPCL variants
+  "GeneratorPVRemote*SignalN*":
+    extends: "Generator*SignalN*"
+    U:
+      mapping: "generator_URef"  # Voltage set point of the remote regulated bus, in kV
+      factor: 1
+
+  # C++ models without external variables, controllable through their parameters when these are used in the model equations
+  DYNModelLoadRestorativeWithLimits:
+    P:
+      mapping: "load_P0Pu"
+      factor: 100
+    Q:
+      mapping: "load_Q0Pu"
+      factor: 100
+
+  # Inverter based generation and storage: set points in pu (base SNom, generator convention) and voltage set points in pu (base UNom)
+  "PhotovoltaicsWecc*":
+    P:
+      mapping: "photovoltaics_PRefPu"
+      factor: "photovoltaics_SNom"
+    Q:
+      mapping: "photovoltaics_QRefPu"
+      factor: "photovoltaics_SNom"
+    U:
+      mapping: "photovoltaics_URefPu"
+      factor: "iidm:vNom"
+  "PhotovoltaicsWecc*NoPlantControl":
+    P:
+      mapping: "photovoltaics_PConvRefPu"
+      factor: "photovoltaics_SNom"
+    Q:
+      mapping: "photovoltaics_QConvRefPu"
+      factor: "photovoltaics_SNom"
+  WTG4AWeccCurrentSource:
+    P:
+      mapping: "WTG4A_PRefPu"
+      factor: "WTG4A_SNom"
+    Q:
+      mapping: "WTG4A_QRefPu"
+      factor: "WTG4A_SNom"
+    U:
+      mapping: "WTG4A_URefPu"
+      factor: "iidm:vNom"
+  WTG4BWeccCurrentSource:
+    P:
+      mapping: "WTG4B_PRefPu"
+      factor: "WTG4B_SNom"
+    Q:
+      mapping: "WTG4B_QRefPu"
+      factor: "WTG4B_SNom"
+    U:
+      mapping: "WTG4B_URefPu"
+      factor: "iidm:vNom"
+  "WTG3WeccCurrentSource*":
+    P:
+      mapping: "WTG3_PRefPu"
+      factor: "WTG3_SNom"
+    Q:
+      mapping: "WTG3_QRefPu"
+      factor: "WTG3_SNom"
+    U:
+      mapping: "WTG3_URefPu"
+      factor: "iidm:vNom"
+  WT4AWeccCurrentSource:
+    P:
+      mapping: "WT4A_PConvRefPu"
+      factor: "WT4A_SNom"
+    Q:
+      mapping: "WT4A_QConvRefPu"
+      factor: "WT4A_SNom"
+  WT4BWeccCurrentSource:
+    P:
+      mapping: "WT4B_PConvRefPu"
+      factor: "WT4B_SNom"
+    Q:
+      mapping: "WT4B_QConvRefPu"
+      factor: "WT4B_SNom"
+  "WeccWT3CurrentSource*":
+    P:
+      mapping: "WT3_PConvRefPu"
+      factor: "WT3_SNom"
+    Q:
+      mapping: "WT3_QConvRefPu"
+      factor: "WT3_SNom"
+  BESSWeccCurrentSource:
+    P:
+      mapping: "BESS_PRefPu"
+      factor: "BESS_SNom"
+    Q:
+      mapping: "BESS_QRefPu"
+      factor: "BESS_SNom"
+    U:
+      mapping: "BESS_URefPu"
+      factor: "iidm:vNom"
+  BESSWeccCurrentSourceNoPlantControl:
+    P:
+      mapping: "BESS_PConvRefPu"
+      factor: "BESS_SNom"
+    Q:
+      mapping: "BESS_QConvRefPu"
+      factor: "BESS_SNom"
+  "IECWPP4*2015":
+    P:
+      mapping: "WPP_PWPRefPu"
+      factor: "WPP_SNom"
+    Q:
+      mapping: "WPP_QWPRefPu"
+      factor: "WPP_SNom"
+    U:
+      mapping: "WPP_UWPRefPu"
+      factor: "iidm:vNom"
+  "IECWPP4*2020":  # xWPRefPu is either a Q or a U set point depending on the control mode
+    P:
+      mapping: "WPP_PWPRefPu"
+      factor: "WPP_SNom"
+  "IECWT4*":  # xWTRefPu is either a Q or a U set point depending on the control mode
+    P:
+      mapping: "WT_PWTRefPu"
+      factor: "WT_SNom"
+  "DERa*":
+    P:
+      mapping: "ibg_PRefPu"
+      factor: "ibg_SNom"
+    Q:
+      mapping: "ibg_QRefPu"
+      factor: "ibg_SNom"
+  "*IBG":  # GenericIBG and AggregatedIBG. iQrefPu is a reactive current set point
+    P:
+      mapping: "ibg_PextPu"
+      factor: "ibg_SNom"
+  "GridFormingConverter*":  # UFilterRefPu is the voltage at the converter filter
+    P:
+      mapping: "control_PRefPu"
+      factor: "converter_SNom"
+    Q:
+      mapping: "control_QRefPu"
+      factor: "converter_SNom"
+  GridFormingConverterMatchingControl: []  # No power set point
+  GridFormingEpri:
+    P:
+      mapping: "gfm_PRefPu"
+      factor: "gfm_SNom"
+    Q:
+      mapping: "gfm_QRefPu"
+      factor: "gfm_SNom"
+    U:
+      mapping: "gfm_URefPu"
+      factor: "iidm:vNom"
+  InjectorBG: []  # Controlled through its admittance
+
+  # HVDC models not following the standard Dynawo HVDC variable names (see hvdc_line default)
+  "HvdcVsc*": []  # PRefPu is in pu (base SNom) in generator convention, cannot be expressed as a factor
+  "Hvdc*Emulation*":  # AC emulation: raw active power set point (external variable for the VariableK variants,
+                      #   parameter otherwise), in pu (base SnRef), receptor convention at side 1
+    P:
+      mapping: "regex:^acemulation_PRefSet0?Pu$"
+      factor: 100
+  "HvdcVscEmulation*": []  # Base SNom and generator convention, as for the other HvdcVsc* models
+
+  # Dynamic models of network components, events, faults, automatons and signal sources
+  "Line*": []
+  NetworkTransformer: []
+  "Transformer*": []
+  LoadShedding: []
+  "Bus*": []
+  "InfiniteBus*": []
+  InfiniteBus:
+    U:
+      mapping: "infiniteBus_UPu"
+      factor: ["infiniteBus_UNom", 1]  # UNom defaults to 1 in the model
+    angle:
+      mapping: "infiniteBus_UPhase"
+      factor: 57.29577951308232  # Rad to degrees
+  InertialGrid: []
+  Measurements: []
+  "CurrentLimitAutomaton*": []
+  "DistanceProtectionLine*": []
+  HVRT: []
+  "LVRT*": []
+  LackOfVoltageRelay: []
+  LossOfSynchronismProtection: []
+  OverVoltageAutomaton: []
+  UnderVoltageAutomaton: []
+  SpeedProtection: []
+  "UFLS*": []
+  PhaseShifterBlockingI: []
+  PhaseShifterP:
+    P:
+      mapping: "phaseShifter_PTarget"
+      factor: 100
+  TapChangerAutomaton:
+    U:
+      mapping: "tapChanger_UTarget"
+      factor: ["tapChanger_UNom", 1]  # UNom defaults to 1 in the model
+  "TapChangerBlockingAutomaton*": []
+  SecondaryFrequencyRegulation: []
+  "SecondaryVoltageControl*": []
+  VRRemote: []
+  PowerTransferHVDCEmulation: []
+  GenericAutomaton: []
+  SignalN: []
+  DYNModelAreaShedding: []
+  DYNModelCentralizedShuntsSectionControl: []
+  DYNModelSecondaryVoltageControlSimplified: []
+  DYNModelVariationArea: []
+  DYNModelVoltageMeasurementsUtilities: []
+  DYNModelVoltageSetPointChange: []
+  "Event*": []
+  "*Fault": []
+  "*Table": []
+  "*Step": []
+  ConditionalForward: []
+  DiscreteIntegrator: []
+  Ramp: []
+  SetPoint: []
+  SineWave: []
+  WeightedDifference: []
+
+# Models existing in IIDM
+generator:
+  default:
+    P:
+      mapping: "regex:(?!.*(?:[dD]elta|[dD]er)).*PmRefPu"  # Never a delta (e.g. deltaPmRefPu) or a derivative (derPmRefPu)
+      factor: ["generator_PNomTurb", "generator_PNom"]
+    U:
+      mapping: "regex:(?!.*(?:[dD]elta|Der)).*U[s]?RefPu"  # Never a delta (e.g. deltaUsRefPu) or a derivative
+      factor: ["generator_UNom", "generator1_UNom", "iidm:vNom"]
+  null:
+    P:
+      mapping: "@ID@_Pc_value"
+      factor: 1
+      type: "discrete"
+    Q:
+      mapping: "@ID@_Qc_value"
+      factor: 1
+      type: "discrete"
+    state:  # TODO: temporary, Dynawo does not reconnect a generator when its breaker is closed (1: open, 2: closed)
+      mapping: "@ID@_state_value"
+      factor: 1
+load:
+  default:
+    P:
+      mapping: "regex:.*PRefPu"
+      factor: 100
+    Q:
+      mapping: "regex:.*QRefPu"
+      factor: 100
+  null:
+    P:
+      mapping: "@ID@_PRefPu_value"  # Only exists if load_isSettable == true in NETWORK par file
+      factor: 100
+      type: "discrete"
+    Q:
+      mapping: "@ID@_QRefPu_value"  # Only exists if load_isSettable == true in NETWORK par file
+      factor: 100
+      type: "discrete"
+2_windings_transformer:
+  null:
+    extends: "line:null"
+    lock:
+      mapping: "@ID@_TAP_CHANGER_locked_value"
+      type: "boolean"
+      factor: 1
+line:
+  null:
+    state:
+      mapping: "@ID@_state_value"
+      factor: 1
+static_var_compensator:
+  default:
+    U:
+      mapping: "regex:.*URef$"
+      factor: 1
+  null: []
+hvdc_line:
+  default:  # Standard Dynawo HVDC models (Dynawo.Electrical.HVDC), see null section for the other ones
+    P:
+      mapping: "hvdc_P1RefPu"  # In pu (base SnRef), receptor convention at side 1 (positive from side 1 to side 2)
+      factor: 100
+  null: []
+battery:
+  default:
+    P:
+      mapping: "regex:.*PInjRefPu"
+      factor: "BESScb_SNom"
+    Q:
+      mapping: "regex:.*QInjRefPu"
+      factor: "BESScb_SNom"
+  null: generator:null
+bus:
+  null: []
+busbar_section:
+  null: bus:null
+shunt_compensator:
+  default: []
+  null: []
+switch:
+  null: line:null

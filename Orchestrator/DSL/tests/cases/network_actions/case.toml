@@ -1,0 +1,18 @@
+#
+# Copyright (c) 2025-2026, RTE (https://www.rte-france.com)
+# See AUTHORS.md
+# SPDX-License-Identifier: MPL-2.0
+# This file is part of Twin-CR, a platform for real-time cyber-physical
+# co-simulation of power systems.
+#
+
+duration = 8
+period = 1.0
+
+completions = [
+  "after 2 seconds, change network characteristics node \"",            # every node
+  "after 2 seconds, change network characteristics link from \"",       # idem, any node can be a source
+  "after 2 seconds, change network characteristics link from \"CC\" to \"",            # only what CC links to
+  "after 2 seconds, change network characteristics link from \"substation_1\" to \"",  # idem, a leaf
+  "after 2 seconds, change network characteristics link from \"CC\" to \"SCADA\", link from \"substation_2\" to \"",  # the nearest 'from' governs
+]

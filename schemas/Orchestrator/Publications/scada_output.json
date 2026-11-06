@@ -1,0 +1,95 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "HMIPublication",
+  "description": "Publication of SCADA measurements and controls on topic 'HMI.<location>.<subtopic>', tase2 extension will be present for a given output if the tase2 field has been specified in the scada_outputs.json mapping, else it will be based on scada_output_info.json. <location> is to be replaced by the name of the cyber node at which the measurement is received",
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "Identifier of the published signal"
+    },
+    "value": {
+      "type": ["boolean", "integer", "number"],
+      "description": "Raw value of the signal"
+    },
+    "time_sent": {
+      "type": "number",
+      "description": "Simulation time at which the signal was sent"
+    },
+    "time_received": {
+      "type": "number",
+      "description": "Simulation time at which the signal was received"
+    },
+    "tase2": {
+      "description": "Optional TASE.2 extension, present for TS and TM signalisation types",
+      "oneOf": [
+        { "$ref": "#/definitions/Tase2TSExtension" },
+        { "$ref": "#/definitions/Tase2TMExtension" }
+      ]
+    }
+  },
+  "required": ["id", "value", "time_sent", "time_received"],
+  "definitions": {
+    "Tase2Common": {
+      "type": "object",
+      "properties": {
+        "tase2_id": {
+          "type": "string",
+          "description": "TASE.2 data type identifier"
+        },
+        "cause": {
+          "type": "integer",
+          "description": "Cause of transmission code (see LF Energy Cause of Transmission specification)"
+        },
+        "validity": {
+          "type": "integer",
+          "description": "Validity state code"
+        },
+        "operatorBlocked": {
+          "type": "boolean",
+          "description": "Indicates whether the signal is operator-blocked"
+        },
+        "ts": {
+          "type": "integer",
+          "description": "Whole seconds since epoch (IEC 61850 timestamp)"
+        },
+        "tfos": {
+          "type": "string",
+          "description": "24-bit binary fractional second offset",
+          "pattern": "^[01]{24}$"
+        }
+      },
+      "required": ["tase2_id", "cause", "validity", "operatorBlocked", "ts", "tfos"]
+    },
+    "Tase2TSExtension": {
+      "allOf": [
+        { "$ref": "#/definitions/Tase2Common" },
+        {
+          "type": "object",
+          "properties": {
+            "stVal": {
+              "type": ["boolean", "integer", "number"],
+              "description": "Status value (TODO: one bit for single point, two bits for double point)"
+            }
+          },
+          "required": ["stVal"]
+        }
+      ]
+    },
+    "Tase2TMExtension": {
+      "allOf": [
+        { "$ref": "#/definitions/Tase2Common" },
+        {
+          "type": "object",
+          "properties": {
+            "value": {
+              "type": "number",
+              "description": "Measured numerical value (voltage, current, power, etc.)"
+            }
+          },
+          "required": ["value"]
+        }
+      ]
+    }
+  }
+}

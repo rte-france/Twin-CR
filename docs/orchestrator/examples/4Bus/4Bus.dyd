@@ -1,0 +1,25 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<dyn:dynamicModelsArchitecture xmlns:dyn="http://www.rte-france.com/dynawo">
+  <dyn:blackBoxModel id="G1" lib="GeneratorSynchronousThreeWindingsProportionalRegulations" parFile="4Bus.par" parId="G1" staticId="G1"/>
+  <dyn:blackBoxModel id="G2" lib="GeneratorSynchronousFourWindingsProportionalRegulations" parFile="4Bus.par" parId="G2" staticId="G2"/>
+  <dyn:blackBoxModel id="G3" lib="GeneratorSynchronousFourWindingsProportionalRegulations" parFile="4Bus.par" parId="G3" staticId="G3"/>
+  <dyn:blackBoxModel id="G4" lib="GeneratorSynchronousFourWindingsProportionalRegulations" parFile="4Bus.par" parId="G4" staticId="G4"/>
+  <dyn:blackBoxModel id="OMEGA_REF" lib="DYNModelOmegaRef" parFile="4Bus.par" parId="OmegaRef"/>
+  <dyn:macroConnector id="Generator-NodeConnector">
+    <dyn:connect var1="generator_terminal" var2="@STATIC_ID@@NODE@_ACPIN"/>
+    <dyn:connect var1="generator_switchOffSignal1" var2="@STATIC_ID@@NODE@_switchOff_value"/>
+  </dyn:macroConnector>
+  <dyn:macroConnector id="Generator-OmegaConnector">
+    <dyn:connect var1="omega_grp_@INDEX@_value" var2="generator_omegaPu"/>
+    <dyn:connect var1="omegaRef_grp_@INDEX@_value" var2="generator_omegaRefPu"/>
+    <dyn:connect var1="running_grp_@INDEX@_value" var2="generator_running"/>
+  </dyn:macroConnector>
+  <dyn:macroConnect connector="Generator-OmegaConnector" id1="OMEGA_REF" index1="0" id2="G1"/>
+  <dyn:macroConnect connector="Generator-NodeConnector" id1="G1" id2="NETWORK" name2="B1"/>
+  <dyn:macroConnect connector="Generator-OmegaConnector" id1="OMEGA_REF" index1="1" id2="G2"/>
+  <dyn:macroConnect connector="Generator-NodeConnector" id1="G2" id2="NETWORK" name2="B2"/>
+  <dyn:macroConnect connector="Generator-OmegaConnector" id1="OMEGA_REF" index1="2" id2="G3"/>
+  <dyn:macroConnect connector="Generator-NodeConnector" id1="G3" id2="NETWORK" name2="B3"/>
+  <dyn:macroConnect connector="Generator-OmegaConnector" id1="OMEGA_REF" index1="3" id2="G4"/>
+  <dyn:macroConnect connector="Generator-NodeConnector" id1="G4" id2="NETWORK" name2="B4"/>
+</dyn:dynamicModelsArchitecture>

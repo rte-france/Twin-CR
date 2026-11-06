@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<curvesInput xmlns="http://www.rte-france.com/dynawo">
+  <!--Curves for scenario-->
+  <curve model="L2" variable="load_deltaP"/>
+  <curve model="NETWORK" variable="B1_Upu_value"/>
+  <curve model="NETWORK" variable="B1bis_Upu_value"/>
+  <curve model="NETWORK" variable="B2_Upu_value"/>
+  <curve model="NETWORK" variable="B3_Upu_value"/>
+  <curve model="NETWORK" variable="B4_Upu_value"/>
+  <curve model="OMEGA_REF" variable="omegaRef_grp_0"/>
+  <curve model="NETWORK" variable="PL1_state"/>
+</curvesInput>

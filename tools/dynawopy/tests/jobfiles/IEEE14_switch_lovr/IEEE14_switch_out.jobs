@@ -1,0 +1,20 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<dyn:jobs xmlns:dyn="http://www.rte-france.com/dynawo">
+  <dyn:job name="IEEE14 - Cascading line trippings">
+    <dyn:solver lib="dynawo_SolverSIM" parFile="IEEE14.par" parId="SimplifiedSolver"/>
+    <dyn:modeler compileDir="outputs/compilation">
+      <dyn:network iidmFile="IEEE14.iidm" parFile="IEEE14.par" parId="Network"/>
+      <dyn:dynModels dydFile="IEEE14.dyd"/>
+      <dyn:precompiledModels useStandardModels="true"/>
+      <dyn:modelicaModels useStandardModels="true"/>
+    </dyn:modeler>
+    <dyn:simulation startTime="0" stopTime="500"/>
+    <dyn:outputs directory="outputs">
+      <dyn:timeline exportMode="TXT" filter="true"/>
+      <dyn:curves inputFile="IEEE14.crv" exportMode="CSV"/>
+      <dyn:logs>
+        <dyn:appender tag="" file="dynawo.log" lvlFilter="INFO"/>
+      </dyn:logs>
+    </dyn:outputs>
+  </dyn:job>
+</dyn:jobs>

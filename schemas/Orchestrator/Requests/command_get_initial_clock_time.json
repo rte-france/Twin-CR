@@ -1,0 +1,13 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "GetInitialClockTimeCommandRequest",
+  "description": "Command to get the time since epoch in seconds at the start of the simulation, must be published on topic 'GameMasterControl.<source>' or 'HMIControl.<source>'",
+  "type": "object",
+  "properties": {
+    "command":{
+      "type": "string",
+      "const": "get_initial_clock_time"
+    }
+  },
+  "required": ["command"]
+}

@@ -1,0 +1,4 @@
+{
+  "applied": [],
+  "load_error": "trip: argument breaker given twice (line 7: \"after 2 seconds, trip(breaker: \"01_1_breaker\", breaker: \"02_1_breaker\");\")"
+}

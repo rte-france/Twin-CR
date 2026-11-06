@@ -1,0 +1,9 @@
+{
+    "scada_inputs": [
+        {
+            "id": "TCB_lock",
+            "destination": "SCADA",
+            "simulator": "automaton"
+        }
+    ]
+}

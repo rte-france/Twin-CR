@@ -1,0 +1,139 @@
+{
+    "delay_function": {
+        "fixed": {
+            "description": "Fixed delay in seconds.",
+            "parameters": {
+                "delay": {
+                    "type": "double",
+                    "description": "Delay in seconds."
+                }
+            }
+        },
+        "gauss": {
+            "description": "Gaussian delay.",
+            "parameters": {
+                "mean": {
+                    "type": "double",
+                    "description": "Mean of the gaussian distribution."
+                },
+                "stddev": {
+                    "type": "double",
+                    "description": "Standard deviation of the gaussian distribution."
+                }
+            }
+        }
+    },
+    "drop_function": {
+        "fixed": {
+            "description": "Either always drops or never drops.",
+            "parameters": {
+                "value": {
+                    "type": "bool",
+                    "description": "true to always drop, false to never drop."
+                }
+            }
+        },
+        "random": {
+            "description": "Drops randomly with a given probability.",
+            "parameters": {
+                "value": {
+                    "type": "double",
+                    "description": "Probability of dropping the message, between 0.0 and 1.0."
+                }
+            }
+        }
+    },
+    "corruption_function": {
+        "NoCorruption": {
+            "description": "Applies no corruption to the data.",
+            "parameters": {
+                "likelihood": {
+                    "type": "double",
+                    "description": "Probability that this corruption will be applied (default: 1.0).",
+                    "default": 1.0
+                }
+            }
+        },
+        "RandomNoiseMeasurementCorruption": {
+            "description": "Adds uniform noise to measurement values.",
+            "parameters": {
+                "likelihood": {
+                    "type": "double",
+                    "description": "Probability that this corruption will be applied (default: 1.0).",
+                    "default": 1.0
+                },
+                "noise_min": {
+                    "type": "double",
+                    "description": "Minimum value of the uniform noise range"
+                },
+                "noise_max": {
+                    "type": "double",
+                    "description": "Maximum value of the uniform noise range"
+                }
+            }
+        },
+        "RandomNoiseControlCorruption": {
+            "description": "Adds uniform noise to control signals.",
+            "parameters": {
+                "likelihood": {
+                    "type": "double",
+                    "description": "Probability that this corruption will be applied (default: 1.0).",
+                    "default": 1.0
+                },
+                "noise_min": {
+                    "type": "double",
+                    "description": "Minimum value of the uniform noise range"
+                },
+                "noise_max": {
+                    "type": "double",
+                    "description": "Maximum value of the uniform noise range"
+                }
+            }
+        },
+        "ZeroOutMeasurementCorruption": {
+            "description": "Zeroes out the measurement value.",
+            "parameters": {
+                "likelihood": {
+                    "type": "double",
+                    "description": "Probability that this corruption will be applied (default: 1.0).",
+                    "default": 1.0
+                },
+                "zero_value": {
+                    "type": "double",
+                    "description": "The value to replace the measurement with (default: 0).",
+                    "default": 0
+                }
+            }
+        },
+        "ShiftMeasurementCorruption": {
+            "description": "Shifts measurement values by a constant.",
+            "parameters": {
+                "likelihood": {
+                    "type": "double",
+                    "description": "Probability that this corruption will be applied (default: 1.0).",
+                    "default": 1.0
+                },
+                "shift_value": {
+                    "type": "double",
+                    "description": "Amount to shift the value (default: 0).",
+                    "default": 0
+                }
+            }
+        },
+        "InvertControlCorruption": {
+            "description": "Multiplies control values by a factor.",
+            "parameters": {
+                "likelihood": {
+                    "type": "double",
+                    "description": "Probability that this corruption will be applied (default: 1.0).",
+                    "default": 1.0
+                },
+                "invert_factor": {
+                    "type": "double",
+                    "description": "Factor to multiply control values with (default: -1).",
+                    "default": -1
+                }
+            }
+        }
+    }
+}

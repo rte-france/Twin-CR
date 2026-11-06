@@ -1,0 +1,47 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "DTWin Simulation Config Schema",
+  "type": "object",
+  "properties": {
+    "simulationName": { "type": "string" },
+    "startTime": { "type": "number" },
+    "endTime": { "type": "number" },
+    "timeStep": { "type": "number" },
+    "currentStep": { "type": "number" },
+    "actions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "timestamp": { "type": "number" },
+          "actionType": {
+            "type": "string",
+            "enum": [
+              "open",
+              "close",
+              "increase",
+              "decrease",
+              "apply_fault",
+              "clear_fault",
+              "change_network_characteristics",
+              "print"
+            ]
+          },
+          "details": {
+            "type": "object",
+            "description": "Minimal validation: any object allowed for action details.",
+            "additionalProperties": true
+          },
+          "interval_start": { "type": ["number", "null"] },
+          "interval_end": { "type": ["number", "null"] },
+          "law": { "type": ["string", "null"] },
+          "metadata": { "type": ["object", "null"] }
+        },
+        "required": ["timestamp", "actionType", "details"],
+        "additionalProperties": false
+      }
+    }
+  },
+  "required": ["simulationName", "startTime", "endTime", "timeStep", "currentStep", "actions"],
+  "additionalProperties": false
+}

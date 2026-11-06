@@ -1,0 +1,15 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "GetLinkCharacteristicsCommandRequest",
+  "type": "object",
+  "properties": {
+    "command": {
+      "type": "string",
+      "const": "get_link_characteristics"
+    },
+    "link": {
+      "$ref": "link.json"
+    }
+  },
+  "required": ["command", "link"]
+}

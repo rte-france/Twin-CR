@@ -1,0 +1,34 @@
+#
+# Copyright (c) 2025-2026, RTE (https://www.rte-france.com)
+# See AUTHORS.md
+# SPDX-License-Identifier: MPL-2.0
+# This file is part of Twin-CR, a platform for real-time cyber-physical
+# co-simulation of power systems.
+#
+
+services:
+  session-manager:
+    container_name: session_manager
+    build:
+      context: ..
+      dockerfile: session-manager/Dockerfile-no-uv
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8090/status" ]
+      interval: 1s
+      timeout: 0.5s
+    environment:
+      - DB_URL=sqlite:////data/database.db
+      - CONFIGURATOR_CLIENT_ENDPOINT=http://${CONFIGURATOR_HOST}:${CONFIGURATOR_PORT}
+    env_file:
+      - ../.env  # Root .env (session-manager/.env is only for native dev runs)
+    volumes:
+      - ./backend:/home/session-manager/backend
+      - ../tools/dynawo_toolbox:/home/tools/dynawo_toolbox
+      - type: bind
+        source: ./session-manager-db
+        target: /data
+        bind:
+          create_host_path: true
+    ports:
+      - "${SESSION_MANAGER_EXPOSED_PORT}:8090"
+    command: ["/bin/bash", "-c", "unset http_proxy https_proxy ftp_proxy no_proxy HTTP_PROXY HTTPS_PROXY FTP_PROXY NO_PROXY && fastapi run backend/main.py --port 8090 --host 0.0.0.0"]

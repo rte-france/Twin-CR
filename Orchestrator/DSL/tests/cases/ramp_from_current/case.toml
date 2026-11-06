@@ -1,0 +1,36 @@
+#
+# Copyright (c) 2025-2026, RTE (https://www.rte-france.com)
+# See AUTHORS.md
+# SPDX-License-Identifier: MPL-2.0
+# This file is part of Twin-CR, a platform for real-time cyber-physical
+# co-simulation of power systems.
+#
+
+duration = 20
+period = 1.0
+
+# Dumped and reloaded at 6, with one ramp that has already read its starting value and one that has not.
+reload_at = 6.0
+
+# 02_1 is measured before its ramp starts, so the ramp has a starting value from its first tick.
+[[measurements]]
+time = 4.5
+iidm_id = "02_1"
+attribute = "P"
+value = 200.0
+
+# A second reading of 02_1, after the reload. The ramp has its start already and must ignore this one: ramping
+# from 500 instead of 200 would give 400 at t=7 rather than 250.
+[[measurements]]
+time = 6.5
+iidm_id = "02_1"
+attribute = "P"
+value = 500.0
+
+# 03_1 is only measured after its ramp has started, and after the reload, so the subscription has to have been
+# re-registered by postLoadFixup for the ramp to ever start.
+[[measurements]]
+time = 6.5
+iidm_id = "03_1"
+attribute = "P"
+value = 100.0

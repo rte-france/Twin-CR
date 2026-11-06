@@ -1,0 +1,17 @@
+#
+# Copyright (c) 2025-2026, RTE (https://www.rte-france.com)
+# See AUTHORS.md
+# SPDX-License-Identifier: MPL-2.0
+# This file is part of Twin-CR, a platform for real-time cyber-physical
+# co-simulation of power systems.
+#
+
+# Usage:
+# $ docker compose up
+# OR to also launch ARGUS
+# $ docker compose --profile argus up
+include:
+  - docker-compose-core.yaml
+  - docker-compose-argus-backends.yaml
+  - docker-compose-argus.yaml # Use Profile "argus" to activate
+  - docker-compose-hmi.yaml # Use profile "hmi" to activate

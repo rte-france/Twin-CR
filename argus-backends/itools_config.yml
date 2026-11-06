@@ -1,0 +1,26 @@
+#
+# Copyright (c) 2025-2026, RTE (https://www.rte-france.com)
+# See AUTHORS.md
+# SPDX-License-Identifier: MPL-2.0
+# This file is part of Twin-CR, a platform for real-time cyber-physical
+# co-simulation of power systems.
+#
+
+load-flow-default-parameters:
+  default-impl-name: OpenLoadFlow
+  voltageInitMode: DC_VALUES
+
+load-flow:
+    default-impl-name: OpenLoadFlow
+
+estim:
+    homeDir: /app/estim-V6.9.2.6
+    debug: true
+
+import-export-parameters-default-value:
+  DIE_iidm.die.with-extensions: all
+
+# Pour estim
+import-export-parameters-default-value:
+  iidm.die.with-cvg-properties: true
+  iidm.die.included-extensions: all

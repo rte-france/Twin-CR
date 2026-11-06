@@ -1,0 +1,362 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<iidm:network xmlns:iidm="http://www.powsybl.org/schema/iidm/1_4" xmlns:reft="http://www.powsybl.org/schema/iidm/ext/reference_terminals/1_0" xmlns:slt="http://www.powsybl.org/schema/iidm/ext/slack_terminal/1_1" id="ieee14bus" caseDate="2017-06-09T10:14:24.146+02:00" forecastDistance="0" sourceFormat="CIM1">
+    <iidm:substation id="_BUS___10_SS" name="BUS   10_SS" country="AF" geographicalTags="_SGR_01">
+        <iidm:voltageLevel id="_BUS___10_VL" name="BUS   10_VL" nominalV="13.8" topologyKind="NODE_BREAKER">
+            <iidm:nodeBreakerTopology>
+                <iidm:busbarSection id="_BUS___10_TN" node="0"/>
+                <iidm:switch id="_LOAD__10_EC_disconnector" kind="DISCONNECTOR" retained="false" open="false" node1="0" node2="1"/>
+                <iidm:switch id="_LOAD__10_EC_breaker" kind="BREAKER" retained="true" open="false" node1="1" node2="2"/>
+                <iidm:switch id="_BUS___10-BUS___11-1_AC_disconnector1" kind="DISCONNECTOR" retained="false" open="false" node1="0" node2="3"/>
+                <iidm:switch id="_BUS___10-BUS___11-1_AC_breaker1" kind="BREAKER" retained="true" open="false" node1="3" node2="4"/>
+                <iidm:switch id="_BUS____9-BUS___10-1_AC_disconnector2" kind="DISCONNECTOR" retained="false" open="false" node1="0" node2="5"/>
+                <iidm:switch id="_BUS____9-BUS___10-1_AC_breaker2" kind="BREAKER" retained="true" open="false" node1="5" node2="6"/>
+                <iidm:bus v="14.503629467101579" angle="-4.78453875253177" nodes="0,1,2,3,4,5,6"/>
+            </iidm:nodeBreakerTopology>
+            <iidm:load id="_LOAD__10_EC" name="LOAD  10" loadType="UNDEFINED" p0="9.0" q0="5.8" node="2" p="9.0" q="5.8"/>
+        </iidm:voltageLevel>
+    </iidm:substation>
+    <iidm:substation id="_BUS___11_SS" name="BUS   11_SS" country="AF" geographicalTags="_SGR_01">
+        <iidm:voltageLevel id="_BUS___11_VL" name="BUS   11_VL" nominalV="13.8" topologyKind="NODE_BREAKER">
+            <iidm:nodeBreakerTopology>
+                <iidm:busbarSection id="_BUS___11_TN" node="0"/>
+                <iidm:switch id="_LOAD__11_EC_disconnector" kind="DISCONNECTOR" retained="false" open="false" node1="0" node2="1"/>
+                <iidm:switch id="_LOAD__11_EC_breaker" kind="BREAKER" retained="true" open="false" node1="1" node2="2"/>
+                <iidm:switch id="_BUS___10-BUS___11-1_AC_disconnector2" kind="DISCONNECTOR" retained="false" open="false" node1="0" node2="3"/>
+                <iidm:switch id="_BUS___10-BUS___11-1_AC_breaker2" kind="BREAKER" retained="true" open="false" node1="3" node2="4"/>
+                <iidm:switch id="_BUS____6-BUS___11-1_AC_disconnector2" kind="DISCONNECTOR" retained="false" open="false" node1="0" node2="5"/>
+                <iidm:switch id="_BUS____6-BUS___11-1_AC_breaker2" kind="BREAKER" retained="true" open="false" node1="5" node2="6"/>
+                <iidm:bus v="14.585331955869169" angle="-4.477950619122338" nodes="0,1,2,3,4,5,6"/>
+            </iidm:nodeBreakerTopology>
+            <iidm:load id="_LOAD__11_EC" name="LOAD  11" loadType="UNDEFINED" p0="3.5" q0="1.8" node="2" p="3.5" q="1.8"/>
+        </iidm:voltageLevel>
+    </iidm:substation>
+    <iidm:substation id="_BUS___12_SS" name="BUS   12_SS" country="AF" geographicalTags="_SGR_01">
+        <iidm:voltageLevel id="_BUS___12_VL" name="BUS   12_VL" nominalV="13.8" topologyKind="NODE_BREAKER">
+            <iidm:nodeBreakerTopology>
+                <iidm:busbarSection id="_BUS___12_TN" node="0"/>
+                <iidm:switch id="_LOAD__12_EC_disconnector" kind="DISCONNECTOR" retained="false" open="false" node1="0" node2="1"/>
+                <iidm:switch id="_LOAD__12_EC_breaker" kind="BREAKER" retained="true" open="false" node1="1" node2="2"/>
+                <iidm:switch id="_BUS___12-BUS___13-1_AC_disconnector1" kind="DISCONNECTOR" retained="false" open="false" node1="0" node2="3"/>
+                <iidm:switch id="_BUS___12-BUS___13-1_AC_breaker1" kind="BREAKER" retained="true" open="false" node1="3" node2="4"/>
+                <iidm:switch id="_BUS____6-BUS___12-1_AC_disconnector2" kind="DISCONNECTOR" retained="false" open="false" node1="0" node2="5"/>
+                <iidm:switch id="_BUS____6-BUS___12-1_AC_breaker2" kind="BREAKER" retained="true" open="false" node1="5" node2="6"/>
+                <iidm:bus v="14.56160535420882" angle="-4.762975140070409" nodes="0,1,2,3,4,5,6"/>
+            </iidm:nodeBreakerTopology>
+            <iidm:load id="_LOAD__12_EC" name="LOAD  12" loadType="UNDEFINED" p0="6.1" q0="1.6" node="2" p="6.1" q="1.6"/>
+        </iidm:voltageLevel>
+    </iidm:substation>
+    <iidm:substation id="_BUS___13_SS" name="BUS   13_SS" country="AF" geographicalTags="_SGR_01">
+        <iidm:voltageLevel id="_BUS___13_VL" name="BUS   13_VL" nominalV="13.8" topologyKind="NODE_BREAKER">
+            <iidm:nodeBreakerTopology>
+                <iidm:busbarSection id="_BUS___13_TN" node="0"/>
+                <iidm:switch id="_LOAD__13_EC_disconnector" kind="DISCONNECTOR" retained="false" open="false" node1="0" node2="1"/>
+                <iidm:switch id="_LOAD__13_EC_breaker" kind="BREAKER" retained="true" open="false" node1="1" node2="2"/>
+                <iidm:switch id="_BUS___12-BUS___13-1_AC_disconnector2" kind="DISCONNECTOR" retained="false" open="false" node1="0" node2="3"/>
+                <iidm:switch id="_BUS___12-BUS___13-1_AC_breaker2" kind="BREAKER" retained="true" open="false" node1="3" node2="4"/>
+                <iidm:switch id="_BUS___13-BUS___14-1_AC_disconnector1" kind="DISCONNECTOR" retained="false" open="false" node1="0" node2="5"/>
+                <iidm:switch id="_BUS___13-BUS___14-1_AC_breaker1" kind="BREAKER" retained="true" open="false" node1="5" node2="6"/>
+                <iidm:switch id="_BUS____6-BUS___13-1_AC_disconnector2" kind="DISCONNECTOR" retained="false" open="false" node1="0" node2="7"/>
+                <iidm:switch id="_BUS____6-BUS___13-1_AC_breaker2" kind="BREAKER" retained="true" open="false" node1="7" node2="8"/>
+                <iidm:bus v="14.495275675362878" angle="-4.843655873361463" nodes="0,1,2,3,4,5,6,7,8"/>
+            </iidm:nodeBreakerTopology>
+            <iidm:load id="_LOAD__13_EC" name="LOAD  13" loadType="UNDEFINED" p0="13.5" q0="5.8" node="2" p="13.5" q="5.8"/>
+        </iidm:voltageLevel>
+    </iidm:substation>
+    <iidm:substation id="_BUS___14_SS" name="BUS   14_SS" country="AF" geographicalTags="_SGR_01">
+        <iidm:voltageLevel id="_BUS___14_VL" name="BUS   14_VL" nominalV="13.8" topologyKind="NODE_BREAKER">
+            <iidm:nodeBreakerTopology>
+                <iidm:busbarSection id="_BUS___14_TN" node="0"/>
+                <iidm:switch id="_LOAD__14_EC_disconnector" kind="DISCONNECTOR" retained="false" open="false" node1="0" node2="1"/>
+                <iidm:switch id="_LOAD__14_EC_breaker" kind="BREAKER" retained="true" open="false" node1="1" node2="2"/>
+                <iidm:switch id="_BUS___13-BUS___14-1_AC_disconnector2" kind="DISCONNECTOR" retained="false" open="false" node1="0" node2="3"/>
+                <iidm:switch id="_BUS___13-BUS___14-1_AC_breaker2" kind="BREAKER" retained="true" open="false" node1="3" node2="4"/>
+                <iidm:switch id="_BUS____9-BUS___14-1_AC_disconnector2" kind="DISCONNECTOR" retained="false" open="false" node1="0" node2="5"/>
+                <iidm:switch id="_BUS____9-BUS___14-1_AC_breaker2" kind="BREAKER" retained="true" open="false" node1="5" node2="6"/>
+                <iidm:bus v="14.290345499137928" angle="-5.720928260576433" nodes="0,1,2,3,4,5,6"/>
+            </iidm:nodeBreakerTopology>
+            <iidm:load id="_LOAD__14_EC" name="LOAD  14" loadType="UNDEFINED" p0="14.9" q0="5.0" node="2" p="14.9" q="5.0"/>
+        </iidm:voltageLevel>
+    </iidm:substation>
+    <iidm:substation id="_BUS____1_SS" name="BUS    1_SS" country="AF" geographicalTags="_SGR_01">
+        <iidm:voltageLevel id="_BUS____1_VL" name="BUS    1_VL" nominalV="69.0" topologyKind="NODE_BREAKER">
+            <iidm:nodeBreakerTopology>
+                <iidm:busbarSection id="_BUS____1_TN" node="0"/>
+                <iidm:switch id="_GEN____1_SM_disconnector" kind="DISCONNECTOR" retained="false" open="false" node1="0" node2="1"/>
+                <iidm:switch id="_GEN____1_SM_breaker" kind="BREAKER" retained="true" open="false" node1="1" node2="2"/>
+                <iidm:switch id="_BUS____1-BUS____2-1_AC_disconnector1" kind="DISCONNECTOR" retained="false" open="false" node1="0" node2="3"/>
+                <iidm:switch id="_BUS____1-BUS____2-1_AC_breaker1" kind="BREAKER" retained="true" open="false" node1="3" node2="4"/>
+                <iidm:switch id="_BUS____1-BUS____5-1_AC_disconnector1" kind="DISCONNECTOR" retained="false" open="false" node1="0" node2="5"/>
+                <iidm:switch id="_BUS____1-BUS____5-1_AC_breaker1" kind="BREAKER" retained="true" open="false" node1="5" node2="6"/>
+                <iidm:bus v="73.14" angle="10.310506992821722" nodes="0,1,2,3,4,5,6"/>
+            </iidm:nodeBreakerTopology>
+            <iidm:generator id="_GEN____1_SM" name="GEN    1" energySource="OTHER" minP="-9999.0" maxP="9999.0" voltageRegulatorOn="true" targetP="232.3463" targetV="73.14" targetQ="-16.759" node="2" p="-232.34630000000004" q="16.54311255829824">
+                <iidm:minMaxReactiveLimits minQ="-999.0" maxQ="999.0"/>
+            </iidm:generator>
+        </iidm:voltageLevel>
+    </iidm:substation>
+    <iidm:substation id="_BUS____2_SS" name="BUS    2_SS" country="AF" geographicalTags="_SGR_01">
+        <iidm:voltageLevel id="_BUS____2_VL" name="BUS    2_VL" nominalV="69.0" topologyKind="NODE_BREAKER">
+            <iidm:nodeBreakerTopology>
+                <iidm:busbarSection id="_BUS____2_TN" node="0"/>
+                <iidm:switch id="_GEN____2_SM_disconnector" kind="DISCONNECTOR" retained="false" open="false" node1="0" node2="1"/>
+                <iidm:switch id="_GEN____2_SM_breaker" kind="BREAKER" retained="true" open="false" node1="1" node2="2"/>
+                <iidm:switch id="_LOAD___2_EC_disconnector" kind="DISCONNECTOR" retained="false" open="false" node1="0" node2="3"/>
+                <iidm:switch id="_LOAD___2_EC_breaker" kind="BREAKER" retained="true" open="false" node1="3" node2="4"/>
+                <iidm:switch id="_BUS____1-BUS____2-1_AC_disconnector2" kind="DISCONNECTOR" retained="false" open="false" node1="0" node2="5"/>
+                <iidm:switch id="_BUS____1-BUS____2-1_AC_breaker2" kind="BREAKER" retained="true" open="false" node1="5" node2="6"/>
+                <iidm:switch id="_BUS____2-BUS____3-1_AC_disconnector1" kind="DISCONNECTOR" retained="false" open="false" node1="0" node2="7"/>
+                <iidm:switch id="_BUS____2-BUS____3-1_AC_breaker1" kind="BREAKER" retained="true" open="false" node1="7" node2="8"/>
+                <iidm:switch id="_BUS____2-BUS____4-1_AC_disconnector1" kind="DISCONNECTOR" retained="false" open="false" node1="0" node2="9"/>
+                <iidm:switch id="_BUS____2-BUS____4-1_AC_breaker1" kind="BREAKER" retained="true" open="false" node1="9" node2="10"/>
+                <iidm:switch id="_BUS____2-BUS____5-1_AC_disconnector1" kind="DISCONNECTOR" retained="false" open="false" node1="0" node2="11"/>
+                <iidm:switch id="_BUS____2-BUS____5-1_AC_breaker1" kind="BREAKER" retained="true" open="false" node1="11" node2="12"/>
+                <iidm:bus v="72.105" angle="5.328970151800855" nodes="0,1,2,3,4,5,6,7,8,9,10,11,12"/>
+            </iidm:nodeBreakerTopology>
+            <iidm:generator id="_GEN____2_SM" name="GEN    2" energySource="OTHER" minP="-9999.0" maxP="9999.0" voltageRegulatorOn="true" targetP="40.0" targetV="72.105" targetQ="42.4" node="2" p="-40.0" q="-43.54338234008841">
+                <iidm:minMaxReactiveLimits minQ="-40.0" maxQ="50.0"/>
+            </iidm:generator>
+            <iidm:load id="_LOAD___2_EC" name="LOAD   2" loadType="UNDEFINED" p0="21.7" q0="12.7" node="4" p="21.7" q="12.7"/>
+        </iidm:voltageLevel>
+    </iidm:substation>
+    <iidm:substation id="_BUS____3_SS" name="BUS    3_SS" country="AF" geographicalTags="_SGR_01">
+        <iidm:voltageLevel id="_BUS____3_VL" name="BUS    3_VL" nominalV="69.0" topologyKind="NODE_BREAKER">
+            <iidm:nodeBreakerTopology>
+                <iidm:busbarSection id="_BUS____3_TN" node="0"/>
+                <iidm:switch id="_GEN____3_SM_disconnector" kind="DISCONNECTOR" retained="false" open="false" node1="0" node2="1"/>
+                <iidm:switch id="_GEN____3_SM_breaker" kind="BREAKER" retained="true" open="false" node1="1" node2="2"/>
+                <iidm:switch id="_LOAD___3_EC_disconnector" kind="DISCONNECTOR" retained="false" open="false" node1="0" node2="3"/>
+                <iidm:switch id="_LOAD___3_EC_breaker" kind="BREAKER" retained="true" open="false" node1="3" node2="4"/>
+                <iidm:switch id="_BUS____2-BUS____3-1_AC_disconnector2" kind="DISCONNECTOR" retained="false" open="false" node1="0" node2="5"/>
+                <iidm:switch id="_BUS____2-BUS____3-1_AC_breaker2" kind="BREAKER" retained="true" open="false" node1="5" node2="6"/>
+                <iidm:switch id="_BUS____3-BUS____4-1_AC_disconnector1" kind="DISCONNECTOR" retained="false" open="false" node1="0" node2="7"/>
+                <iidm:switch id="_BUS____3-BUS____4-1_AC_breaker1" kind="BREAKER" retained="true" open="false" node1="7" node2="8"/>
+                <iidm:bus v="69.69" angle="-2.4127596119702037" nodes="0,1,2,3,4,5,6,7,8"/>
+            </iidm:nodeBreakerTopology>
+            <iidm:generator id="_GEN____3_SM" name="GEN    3" energySource="OTHER" minP="-9999.0" maxP="9999.0" voltageRegulatorOn="true" targetP="0.0" targetV="69.69" targetQ="23.4" node="2" p="-0.0" q="-25.071431896553133">
+                <iidm:minMaxReactiveLimits minQ="0.0" maxQ="40.0"/>
+            </iidm:generator>
+            <iidm:load id="_LOAD___3_EC" name="LOAD   3" loadType="UNDEFINED" p0="94.2" q0="19.0" node="4" p="94.2" q="19.0"/>
+        </iidm:voltageLevel>
+    </iidm:substation>
+    <iidm:substation id="_BUS____4_SS" name="BUS    4_SS" country="AF" geographicalTags="_SGR_01">
+        <iidm:voltageLevel id="_BUS____9_VL" name="BUS    9_VL" nominalV="13.8" topologyKind="NODE_BREAKER">
+            <iidm:nodeBreakerTopology>
+                <iidm:busbarSection id="_BUS____9_TN" node="0"/>
+                <iidm:switch id="_LOAD___9_EC_disconnector" kind="DISCONNECTOR" retained="false" open="false" node1="0" node2="1"/>
+                <iidm:switch id="_LOAD___9_EC_breaker" kind="BREAKER" retained="true" open="false" node1="1" node2="2"/>
+                <iidm:switch id="_BANK___9_SC_disconnector" kind="DISCONNECTOR" retained="false" open="false" node1="0" node2="3"/>
+                <iidm:switch id="_BANK___9_SC_breaker" kind="BREAKER" retained="true" open="false" node1="3" node2="4"/>
+                <iidm:switch id="_BUS____4-BUS____9-1_PT_disconnector2" kind="DISCONNECTOR" retained="false" open="false" node1="0" node2="5"/>
+                <iidm:switch id="_BUS____4-BUS____9-1_PT_breaker2" kind="BREAKER" retained="true" open="false" node1="5" node2="6"/>
+                <iidm:switch id="_BUS____7-BUS____9-1_AC_disconnector2" kind="DISCONNECTOR" retained="false" open="false" node1="0" node2="7"/>
+                <iidm:switch id="_BUS____7-BUS____9-1_AC_breaker2" kind="BREAKER" retained="true" open="false" node1="7" node2="8"/>
+                <iidm:switch id="_BUS____9-BUS___10-1_AC_disconnector1" kind="DISCONNECTOR" retained="false" open="false" node1="0" node2="9"/>
+                <iidm:switch id="_BUS____9-BUS___10-1_AC_breaker1" kind="BREAKER" retained="true" open="false" node1="9" node2="10"/>
+                <iidm:switch id="_BUS____9-BUS___14-1_AC_disconnector1" kind="DISCONNECTOR" retained="false" open="false" node1="0" node2="11"/>
+                <iidm:switch id="_BUS____9-BUS___14-1_AC_breaker1" kind="BREAKER" retained="true" open="false" node1="11" node2="12"/>
+                <iidm:bus v="14.571907243873406" angle="-4.6257376869430695" nodes="0,1,2,3,4,5,6,7,8,9,10,11,12"/>
+            </iidm:nodeBreakerTopology>
+            <iidm:load id="_LOAD___9_EC" name="LOAD   9" loadType="UNDEFINED" p0="29.5" q0="16.6" node="2" p="29.5" q="16.6"/>
+            <iidm:shunt id="_BANK___9_SC" name="BANK   9" sectionCount="1" voltageRegulatorOn="false" node="4" q="-21.184997421357767">
+                <iidm:shuntLinearModel bPerSection="0.099769" maximumSectionCount="1"/>
+            </iidm:shunt>
+        </iidm:voltageLevel>
+        <iidm:voltageLevel id="_BUS____7_VL" name="BUS    7_VL" nominalV="13.8" topologyKind="NODE_BREAKER">
+            <iidm:nodeBreakerTopology>
+                <iidm:busbarSection id="_BUS____7_TN" node="0"/>
+                <iidm:switch id="_BUS____4-BUS____7-1_PT_disconnector2" kind="DISCONNECTOR" retained="false" open="false" node1="0" node2="1"/>
+                <iidm:switch id="_BUS____4-BUS____7-1_PT_breaker2" kind="BREAKER" retained="true" open="false" node1="1" node2="2"/>
+                <iidm:switch id="_BUS____7-BUS____8-1_AC_disconnector1" kind="DISCONNECTOR" retained="false" open="false" node1="0" node2="3"/>
+                <iidm:switch id="_BUS____7-BUS____8-1_AC_breaker1" kind="BREAKER" retained="true" open="false" node1="3" node2="4"/>
+                <iidm:switch id="_BUS____7-BUS____9-1_AC_disconnector1" kind="DISCONNECTOR" retained="false" open="false" node1="0" node2="5"/>
+                <iidm:switch id="_BUS____7-BUS____9-1_AC_breaker1" kind="BREAKER" retained="true" open="false" node1="5" node2="6"/>
+                <iidm:bus v="14.649016291739038" angle="-3.046799967527542" nodes="0,1,2,3,4,5,6"/>
+            </iidm:nodeBreakerTopology>
+        </iidm:voltageLevel>
+        <iidm:voltageLevel id="_BUS____4_VL" name="BUS    4_VL" nominalV="69.0" topologyKind="NODE_BREAKER">
+            <iidm:nodeBreakerTopology>
+                <iidm:busbarSection id="_BUS____4_TN" node="0"/>
+                <iidm:switch id="_LOAD___4_EC_disconnector" kind="DISCONNECTOR" retained="false" open="false" node1="0" node2="1"/>
+                <iidm:switch id="_LOAD___4_EC_breaker" kind="BREAKER" retained="true" open="false" node1="1" node2="2"/>
+                <iidm:switch id="_BUS____4-BUS____9-1_PT_disconnector1" kind="DISCONNECTOR" retained="false" open="false" node1="0" node2="3"/>
+                <iidm:switch id="_BUS____4-BUS____9-1_PT_breaker1" kind="BREAKER" retained="true" open="false" node1="3" node2="4"/>
+                <iidm:switch id="_BUS____4-BUS____7-1_PT_disconnector1" kind="DISCONNECTOR" retained="false" open="false" node1="0" node2="5"/>
+                <iidm:switch id="_BUS____4-BUS____7-1_PT_breaker1" kind="BREAKER" retained="true" open="false" node1="5" node2="6"/>
+                <iidm:switch id="_BUS____2-BUS____4-1_AC_disconnector2" kind="DISCONNECTOR" retained="false" open="false" node1="0" node2="7"/>
+                <iidm:switch id="_BUS____2-BUS____4-1_AC_breaker2" kind="BREAKER" retained="true" open="false" node1="7" node2="8"/>
+                <iidm:switch id="_BUS____3-BUS____4-1_AC_disconnector2" kind="DISCONNECTOR" retained="false" open="false" node1="0" node2="9"/>
+                <iidm:switch id="_BUS____3-BUS____4-1_AC_breaker2" kind="BREAKER" retained="true" open="false" node1="9" node2="10"/>
+                <iidm:switch id="_BUS____4-BUS____5-1_AC_disconnector1" kind="DISCONNECTOR" retained="false" open="false" node1="0" node2="11"/>
+                <iidm:switch id="_BUS____4-BUS____5-1_AC_breaker1" kind="BREAKER" retained="true" open="false" node1="11" node2="12"/>
+                <iidm:bus v="70.21977781318262" angle="0.0" nodes="0,1,2,3,4,5,6,7,8,9,10,11,12"/>
+            </iidm:nodeBreakerTopology>
+            <iidm:load id="_LOAD___4_EC" name="LOAD   4" loadType="UNDEFINED" p0="47.8" q0="-3.9" node="2" p="47.8" q="-3.9"/>
+        </iidm:voltageLevel>
+        <iidm:twoWindingsTransformer id="_BUS____4-BUS____9-1_PT" name="BUS    4-BUS    9-1" r="0.0" x="1.0591881" g="0.0" b="0.0" ratedU1="69.0" ratedU2="13.8" voltageLevelId1="_BUS____4_VL" node1="4" voltageLevelId2="_BUS____9_VL" node2="6" p1="16.080347572525476" q1="-0.4268843995845229" p2="-16.080347572525476" q2="1.7316683667485389">
+            <iidm:ratioTapChanger lowTapPosition="1" tapPosition="4" loadTapChangingCapabilities="false">
+                <iidm:step r="0.0" x="0.0" g="0.0" b="0.0" rho="1.1111112"/>
+                <iidm:step r="0.0" x="0.0" g="0.0" b="0.0" rho="1.0834236"/>
+                <iidm:step r="0.0" x="0.0" g="0.0" b="0.0" rho="1.0570825"/>
+                <iidm:step r="0.0" x="0.0" g="0.0" b="0.0" rho="1.0319917"/>
+                <iidm:step r="0.0" x="0.0" g="0.0" b="0.0" rho="1.015744"/>
+                <iidm:step r="0.0" x="0.0" g="0.0" b="0.0" rho="1.0"/>
+                <iidm:step r="0.0" x="0.0" g="0.0" b="0.0" rho="0.9803922"/>
+                <iidm:step r="0.0" x="0.0" g="0.0" b="0.0" rho="0.9615385"/>
+                <iidm:step r="0.0" x="0.0" g="0.0" b="0.0" rho="0.9433963"/>
+                <iidm:step r="0.0" x="0.0" g="0.0" b="0.0" rho="0.9259259"/>
+                <iidm:step r="0.0" x="0.0" g="0.0" b="0.0" rho="0.9090909"/>
+            </iidm:ratioTapChanger>
+            <iidm:currentLimits1 permanentLimit="836.74"/>
+            <iidm:currentLimits2 permanentLimit="4183.7"/>
+        </iidm:twoWindingsTransformer>
+        <iidm:twoWindingsTransformer id="_BUS____4-BUS____7-1_PT" name="BUS    4-BUS    7-1" r="0.0" x="0.39824802" g="0.0" b="0.0" ratedU1="69.0" ratedU2="13.8" voltageLevelId1="_BUS____4_VL" node1="6" voltageLevelId2="_BUS____7_VL" node2="2" p1="28.07514460593114" q1="-9.679221116102354" p2="-28.075144605931147" q2="11.382447529821068">
+            <iidm:ratioTapChanger lowTapPosition="1" tapPosition="5" loadTapChangingCapabilities="false">
+                <iidm:step r="0.0" x="0.0" g="0.0" b="0.0" rho="1.1111112"/>
+                <iidm:step r="0.0" x="0.0" g="0.0" b="0.0" rho="1.0875476"/>
+                <iidm:step r="0.0" x="0.0" g="0.0" b="0.0" rho="1.0649627"/>
+                <iidm:step r="0.0" x="0.0" g="0.0" b="0.0" rho="1.0432966"/>
+                <iidm:step r="0.0" x="0.0" g="0.0" b="0.0" rho="1.0224948"/>
+                <iidm:step r="0.0" x="0.0" g="0.0" b="0.0" rho="1.0"/>
+                <iidm:step r="0.0" x="0.0" g="0.0" b="0.0" rho="0.98039216"/>
+                <iidm:step r="0.0" x="0.0" g="0.0" b="0.0" rho="0.9615385"/>
+                <iidm:step r="0.0" x="0.0" g="0.0" b="0.0" rho="0.9433963"/>
+                <iidm:step r="0.0" x="0.0" g="0.0" b="0.0" rho="0.9259259"/>
+                <iidm:step r="0.0" x="0.0" g="0.0" b="0.0" rho="0.9090909"/>
+            </iidm:ratioTapChanger>
+            <iidm:currentLimits1 permanentLimit="836.74"/>
+            <iidm:currentLimits2 permanentLimit="4183.7"/>
+        </iidm:twoWindingsTransformer>
+    </iidm:substation>
+    <iidm:substation id="_BUS____5_SS" name="BUS    5_SS" country="AF" geographicalTags="_SGR_01">
+        <iidm:voltageLevel id="_BUS____6_VL" name="BUS    6_VL" nominalV="13.8" topologyKind="NODE_BREAKER">
+            <iidm:nodeBreakerTopology>
+                <iidm:busbarSection id="_BUS____6_TN" node="0"/>
+                <iidm:switch id="_GEN____6_SM_disconnector" kind="DISCONNECTOR" retained="false" open="false" node1="0" node2="1"/>
+                <iidm:switch id="_GEN____6_SM_breaker" kind="BREAKER" retained="true" open="false" node1="1" node2="2"/>
+                <iidm:switch id="_LOAD___6_EC_disconnector" kind="DISCONNECTOR" retained="false" open="false" node1="0" node2="3"/>
+                <iidm:switch id="_LOAD___6_EC_breaker" kind="BREAKER" retained="true" open="false" node1="3" node2="4"/>
+                <iidm:switch id="_BUS____5-BUS____6-1_PT_disconnector2" kind="DISCONNECTOR" retained="false" open="false" node1="0" node2="5"/>
+                <iidm:switch id="_BUS____5-BUS____6-1_PT_breaker2" kind="BREAKER" retained="true" open="false" node1="5" node2="6"/>
+                <iidm:switch id="_BUS____6-BUS___11-1_AC_disconnector1" kind="DISCONNECTOR" retained="false" open="false" node1="0" node2="7"/>
+                <iidm:switch id="_BUS____6-BUS___11-1_AC_breaker1" kind="BREAKER" retained="true" open="false" node1="7" node2="8"/>
+                <iidm:switch id="_BUS____6-BUS___12-1_AC_disconnector1" kind="DISCONNECTOR" retained="false" open="false" node1="0" node2="9"/>
+                <iidm:switch id="_BUS____6-BUS___12-1_AC_breaker1" kind="BREAKER" retained="true" open="false" node1="9" node2="10"/>
+                <iidm:switch id="_BUS____6-BUS___13-1_AC_disconnector1" kind="DISCONNECTOR" retained="false" open="false" node1="0" node2="11"/>
+                <iidm:switch id="_BUS____6-BUS___13-1_AC_breaker1" kind="BREAKER" retained="true" open="false" node1="11" node2="12"/>
+                <iidm:bus v="14.765999999999998" angle="-3.9083525822171583" nodes="0,1,2,3,4,5,6,7,8,9,10,11,12"/>
+            </iidm:nodeBreakerTopology>
+            <iidm:generator id="_GEN____6_SM" name="GEN    6" energySource="OTHER" minP="-9999.0" maxP="9999.0" voltageRegulatorOn="true" targetP="0.0" targetV="14.766" targetQ="12.2" node="2" p="-0.0" q="-12.727752634641721">
+                <iidm:minMaxReactiveLimits minQ="-6.0" maxQ="24.0"/>
+            </iidm:generator>
+            <iidm:load id="_LOAD___6_EC" name="LOAD   6" loadType="UNDEFINED" p0="11.2" q0="7.5" node="4" p="11.2" q="7.5"/>
+        </iidm:voltageLevel>
+        <iidm:voltageLevel id="_BUS____5_VL" name="BUS    5_VL" nominalV="69.0" topologyKind="NODE_BREAKER">
+            <iidm:nodeBreakerTopology>
+                <iidm:busbarSection id="_BUS____5_TN" node="0"/>
+                <iidm:switch id="_LOAD___5_EC_disconnector" kind="DISCONNECTOR" retained="false" open="false" node1="0" node2="1"/>
+                <iidm:switch id="_LOAD___5_EC_breaker" kind="BREAKER" retained="true" open="false" node1="1" node2="2"/>
+                <iidm:switch id="_BUS____5-BUS____6-1_PT_disconnector1" kind="DISCONNECTOR" retained="false" open="false" node1="0" node2="3"/>
+                <iidm:switch id="_BUS____5-BUS____6-1_PT_breaker1" kind="BREAKER" retained="true" open="false" node1="3" node2="4"/>
+                <iidm:switch id="_BUS____1-BUS____5-1_AC_disconnector2" kind="DISCONNECTOR" retained="false" open="false" node1="0" node2="5"/>
+                <iidm:switch id="_BUS____1-BUS____5-1_AC_breaker2" kind="BREAKER" retained="true" open="false" node1="5" node2="6"/>
+                <iidm:switch id="_BUS____2-BUS____5-1_AC_disconnector2" kind="DISCONNECTOR" retained="false" open="false" node1="0" node2="7"/>
+                <iidm:switch id="_BUS____2-BUS____5-1_AC_breaker2" kind="BREAKER" retained="true" open="false" node1="7" node2="8"/>
+                <iidm:switch id="_BUS____4-BUS____5-1_AC_disconnector2" kind="DISCONNECTOR" retained="false" open="false" node1="0" node2="9"/>
+                <iidm:switch id="_BUS____4-BUS____5-1_AC_breaker2" kind="BREAKER" retained="true" open="false" node1="9" node2="10"/>
+                <iidm:bus v="70.34681647123733" angle="1.5385282579874697" nodes="0,1,2,3,4,5,6,7,8,9,10"/>
+            </iidm:nodeBreakerTopology>
+            <iidm:load id="_LOAD___5_EC" name="LOAD   5" loadType="UNDEFINED" p0="7.6" q0="1.6" node="2" p="7.6" q="1.6"/>
+        </iidm:voltageLevel>
+        <iidm:twoWindingsTransformer id="_BUS____5-BUS____6-1_PT" name="BUS    5-BUS    6-1" r="0.0" x="0.47994804" g="0.0" b="0.0" ratedU1="69.0" ratedU2="13.8" voltageLevelId1="_BUS____5_VL" node1="4" voltageLevelId2="_BUS____6_VL" node2="6" p1="44.08573335357272" q1="12.472993720464236" p2="-44.08573335357273" q2="-8.05204021906559">
+            <iidm:ratioTapChanger lowTapPosition="1" tapPosition="3" loadTapChangingCapabilities="false">
+                <iidm:step r="0.0" x="0.0" g="0.0" b="0.0" rho="1.1111112"/>
+                <iidm:step r="0.0" x="0.0" g="0.0" b="0.0" rho="1.0917031"/>
+                <iidm:step r="0.0" x="0.0" g="0.0" b="0.0" rho="1.0729614"/>
+                <iidm:step r="0.0" x="0.0" g="0.0" b="0.0" rho="1.047486"/>
+                <iidm:step r="0.0" x="0.0" g="0.0" b="0.0" rho="1.0231924"/>
+                <iidm:step r="0.0" x="0.0" g="0.0" b="0.0" rho="1.0"/>
+                <iidm:step r="0.0" x="0.0" g="0.0" b="0.0" rho="0.9803922"/>
+                <iidm:step r="0.0" x="0.0" g="0.0" b="0.0" rho="0.9615385"/>
+                <iidm:step r="0.0" x="0.0" g="0.0" b="0.0" rho="0.9433963"/>
+                <iidm:step r="0.0" x="0.0" g="0.0" b="0.0" rho="0.9259259"/>
+                <iidm:step r="0.0" x="0.0" g="0.0" b="0.0" rho="0.9090909"/>
+            </iidm:ratioTapChanger>
+            <iidm:currentLimits1 permanentLimit="836.74"/>
+            <iidm:currentLimits2 permanentLimit="4183.7"/>
+        </iidm:twoWindingsTransformer>
+    </iidm:substation>
+    <iidm:substation id="_BUS____8_SS" name="BUS    8_SS" country="AF" geographicalTags="_SGR_01">
+        <iidm:voltageLevel id="_BUS____8_VL" name="BUS    8_VL" nominalV="13.8" topologyKind="NODE_BREAKER">
+            <iidm:nodeBreakerTopology>
+                <iidm:busbarSection id="_BUS____8_TN" node="0"/>
+                <iidm:switch id="_GEN____8_SM_disconnector" kind="DISCONNECTOR" retained="false" open="false" node1="0" node2="1"/>
+                <iidm:switch id="_GEN____8_SM_breaker" kind="BREAKER" retained="true" open="false" node1="1" node2="2"/>
+                <iidm:switch id="_BUS____7-BUS____8-1_AC_disconnector2" kind="DISCONNECTOR" retained="false" open="false" node1="0" node2="3"/>
+                <iidm:switch id="_BUS____7-BUS____8-1_AC_breaker2" kind="BREAKER" retained="true" open="false" node1="3" node2="4"/>
+                <iidm:bus v="15.041999999999998" angle="-3.046799967527542" nodes="0,1,2,3,4"/>
+            </iidm:nodeBreakerTopology>
+            <iidm:generator id="_GEN____8_SM" name="GEN    8" energySource="OTHER" minP="-9999.0" maxP="9999.0" voltageRegulatorOn="true" targetP="0.0" targetV="15.042" targetQ="17.4" node="2" p="-0.0" q="-17.6213585514261">
+                <iidm:minMaxReactiveLimits minQ="-6.0" maxQ="24.0"/>
+            </iidm:generator>
+        </iidm:voltageLevel>
+    </iidm:substation>
+    <iidm:line id="_BUS___10-BUS___11-1_AC" name="BUS   10-BUS   11-1" r="0.156256" x="0.365778" g1="0.0" b1="0.0" g2="0.0" b2="0.0" voltageLevelId1="_BUS___10_VL" node1="4" voltageLevelId2="_BUS___11_VL" node2="4" p1="-3.7843901283205694" q1="-1.6146965125736399" p2="3.796965211210912" q2="1.6441333896819916">
+        <iidm:currentLimits1 permanentLimit="4183.7"/>
+    </iidm:line>
+    <iidm:line id="_BUS___12-BUS___13-1_AC" name="BUS   12-BUS   13-1" r="0.42072" x="0.380651" g1="0.0" b1="0.0" g2="0.0" b2="0.0" voltageLevelId1="_BUS___12_VL" node1="4" voltageLevelId2="_BUS___13_VL" node2="4" p1="1.6141191763742426" q1="0.7539285419412473" p2="-1.6078219009314159" q2="-0.7482310134315463">
+        <iidm:currentLimits1 permanentLimit="4183.7"/>
+    </iidm:line>
+    <iidm:line id="_BUS___13-BUS___14-1_AC" name="BUS   13-BUS   14-1" r="0.325519" x="0.662769" g1="0.0" b1="0.0" g2="0.0" b2="0.0" voltageLevelId1="_BUS___13_VL" node1="6" voltageLevelId2="_BUS___14_VL" node2="4" p1="5.643231474793637" q1="1.7469444871973672" p2="-5.58916570564671" q2="-1.6368645356377707">
+        <iidm:currentLimits1 permanentLimit="4183.7"/>
+    </iidm:line>
+    <iidm:line id="_BUS____1-BUS____2-1_AC" name="BUS    1-BUS    2-1" r="0.922682" x="2.81708" g1="0.0" b1="5.54505E-4" g2="0.0" b2="5.54505E-4" voltageLevelId1="_BUS____1_VL" node1="4" voltageLevelId2="_BUS____2_VL" node2="6" p1="156.8512480384554" q1="-20.39694582898632" p2="-152.5554032179586" q2="27.663527710439066">
+        <iidm:currentLimits1 permanentLimit="836.74"/>
+    </iidm:line>
+    <iidm:line id="_BUS____1-BUS____5-1_AC" name="BUS    1-BUS    5-1" r="2.57237" x="10.6189" g1="0.0" b1="5.167E-4" g2="0.0" b2="5.167E-4" voltageLevelId1="_BUS____1_VL" node1="6" voltageLevelId2="_BUS____5_VL" node2="6" p1="75.49505571858737" q1="3.85383327068808" p2="-72.73330148696333" q2="2.2258104349270442">
+        <iidm:currentLimits1 permanentLimit="836.74"/>
+    </iidm:line>
+    <iidm:line id="_BUS____2-BUS____3-1_AC" name="BUS    2-BUS    3-1" r="2.23719" x="9.42535" g1="0.0" b1="4.599875E-4" g2="0.0" b2="4.599875E-4" voltageLevelId1="_BUS____2_VL" node1="8" voltageLevelId2="_BUS____3_VL" node2="6" p1="73.23055929813496" q1="3.560921002393068" p2="-70.90773276727319" q2="1.5996635457000012">
+        <iidm:currentLimits1 permanentLimit="836.74"/>
+    </iidm:line>
+    <iidm:line id="_BUS____2-BUS____4-1_AC" name="BUS    2-BUS    4-1" r="2.76662" x="8.3946" g1="0.0" b1="3.57068E-4" g2="0.0" b2="3.57068E-4" voltageLevelId1="_BUS____2_VL" node1="10" voltageLevelId2="_BUS____4_VL" node2="8" p1="56.117494059506555" q1="-1.5512494711468052" p2="-54.441671111127135" q2="3.0190247639628907">
+        <iidm:currentLimits1 permanentLimit="836.74"/>
+    </iidm:line>
+    <iidm:line id="_BUS____2-BUS____5-1_AC" name="BUS    2-BUS    5-1" r="2.71139" x="8.27843" g1="0.0" b1="3.63369E-4" g2="0.0" b2="3.63369E-4" voltageLevelId1="_BUS____2_VL" node1="12" voltageLevelId2="_BUS____5_VL" node2="8" p1="41.50735922760261" q1="1.1701830984030706" p2="-40.60399174213848" q2="-2.099414787666755">
+        <iidm:currentLimits1 permanentLimit="836.74"/>
+    </iidm:line>
+    <iidm:line id="_BUS____3-BUS____4-1_AC" name="BUS    3-BUS    4-1" r="3.19035" x="8.14274" g1="0.0" b1="1.344255E-4" g2="0.0" b2="1.344255E-4" voltageLevelId1="_BUS____3_VL" node1="8" voltageLevelId2="_BUS____4_VL" node2="10" p1="-23.292263532750457" q1="4.4717683508531305" p2="23.665900999505446" q2="-4.833823677614833">
+        <iidm:currentLimits1 permanentLimit="836.74"/>
+    </iidm:line>
+    <iidm:line id="_BUS____4-BUS____5-1_AC" name="BUS    4-BUS    5-1" r="0.635593" x="2.00486" g1="0.0" b1="0.0" g2="0.0" b2="0.0" voltageLevelId1="_BUS____4_VL" node1="12" voltageLevelId2="_BUS____5_VL" node2="10" p1="-61.1375000293336" q1="15.820922134412207" p2="61.65157416229272" q2="-14.199370817446322">
+        <iidm:currentLimits1 permanentLimit="836.74"/>
+    </iidm:line>
+    <iidm:line id="_BUS____6-BUS___11-1_AC" name="BUS    6-BUS   11-1" r="0.18088" x="0.378785" g1="0.0" b1="0.0" g2="0.0" b2="0.0" voltageLevelId1="_BUS____6_VL" node1="8" voltageLevelId2="_BUS___11_VL" node2="6" p1="7.352324124115979" q1="3.560062559357796" p2="-7.296964822541701" q2="-3.444133362946853">
+        <iidm:currentLimits1 permanentLimit="4183.7"/>
+    </iidm:line>
+    <iidm:line id="_BUS____6-BUS___12-1_AC" name="BUS    6-BUS   12-1" r="0.23407" x="0.487165" g1="0.0" b1="0.0" g2="0.0" b2="0.0" voltageLevelId1="_BUS____6_VL" node1="10" voltageLevelId2="_BUS___12_VL" node2="6" p1="7.7859259148887014" q1="2.5033784396794916" p2="-7.714119161822701" q2="-2.3539285449584093">
+        <iidm:currentLimits1 permanentLimit="4183.7"/>
+    </iidm:line>
+    <iidm:line id="_BUS____6-BUS___13-1_AC" name="BUS    6-BUS   13-1" r="0.125976" x="0.248086" g1="0.0" b1="0.0" g2="0.0" b2="0.0" voltageLevelId1="_BUS____6_VL" node1="12" voltageLevelId2="_BUS___13_VL" node2="8" p1="17.74748265046823" q1="7.216351854670025" p2="-17.535409355986577" q2="-6.798713452634902">
+        <iidm:currentLimits1 permanentLimit="4183.7"/>
+    </iidm:line>
+    <iidm:line id="_BUS____7-BUS____8-1_AC" name="BUS    7-BUS    8-1" r="0.0" x="0.33546" g1="0.0" b1="0.0" g2="0.0" b2="0.0" voltageLevelId1="_BUS____7_VL" node1="4" voltageLevelId2="_BUS____8_VL" node2="4" p1="0.0" q1="-17.16098713617976" p2="0.0" q2="17.6213585514261">
+        <iidm:currentLimits1 permanentLimit="4183.7"/>
+    </iidm:line>
+    <iidm:line id="_BUS____7-BUS____9-1_AC" name="BUS    7-BUS    9-1" r="0.0" x="0.209503" g1="0.0" b1="0.0" g2="0.0" b2="0.0" voltageLevelId1="_BUS____7_VL" node1="6" voltageLevelId2="_BUS____9_VL" node2="8" p1="28.075145185806672" q1="5.7785403053337365" p2="-28.075145185806676" q2="-4.976425454514902">
+        <iidm:currentLimits1 permanentLimit="4183.7"/>
+    </iidm:line>
+    <iidm:line id="_BUS____9-BUS___10-1_AC" name="BUS    9-BUS   10-1" r="0.060579" x="0.160922" g1="0.0" b1="0.0" g2="0.0" b2="0.0" voltageLevelId1="_BUS____9_VL" node1="10" voltageLevelId2="_BUS___10_VL" node2="6" p1="5.228488263897224" q1="4.219513760030905" p2="-5.215609796226226" q2="-4.185303410329793">
+        <iidm:currentLimits1 permanentLimit="4183.7"/>
+    </iidm:line>
+    <iidm:line id="_BUS____9-BUS___14-1_AC" name="BUS    9-BUS   14-1" r="0.242068" x="0.514912" g1="0.0" b1="0.0" g2="0.0" b2="0.0" voltageLevelId1="_BUS____9_VL" node1="12" voltageLevelId2="_BUS___14_VL" node2="6" p1="9.427002654320628" q1="3.6102417187135636" p2="-9.310834189642257" q2="-3.3631353829547">
+        <iidm:currentLimits1 permanentLimit="4183.7"/>
+    </iidm:line>
+    <iidm:extension id="ieee14bus">
+        <reft:referenceTerminals>
+            <reft:referenceTerminal id="_BUS____4_TN"/>
+        </reft:referenceTerminals>
+    </iidm:extension>
+    <iidm:extension id="_BUS____4_VL">
+        <slt:slackTerminal id="_BUS____4_TN"/>
+    </iidm:extension>
+</iidm:network>

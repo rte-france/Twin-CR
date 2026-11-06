@@ -1,0 +1,14 @@
+{
+  "line": {
+    "open": 1,
+    "close": 2,
+    "close1": 3,
+    "close2": 4,
+    "close3": 5,
+    "undefined": 6
+  },
+  "switch": {
+    "open": 1,
+    "close": 2
+  }
+}

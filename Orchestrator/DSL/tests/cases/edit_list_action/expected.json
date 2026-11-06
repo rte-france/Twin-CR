@@ -1,0 +1,27 @@
+{
+  "applied": [
+    {
+      "command": {
+        "attribute": "P",
+        "command": "scale_multiplier",
+        "iidm_id": "03_1",
+        "multiplier_increase": -0.2
+      },
+      "t": 10.0
+    },
+    {
+      "command": {
+        "attribute": "P",
+        "command": "scale_multiplier",
+        "iidm_id": "04_1",
+        "multiplier_increase": -0.2
+      },
+      "t": 10.0
+    }
+  ],
+  "replacement": {
+    "kind": "action",
+    "match": "03_1",
+    "replaced": true
+  }
+}

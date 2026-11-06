@@ -1,0 +1,12 @@
+*
+!pom.xml
+!common
+!gm
+!scada
+!utils
+!jars-powsybl-rte-5.5.0.tar
+!estim-V6.9.2.6-linux.tar.gz
+!itools_config.yml
+!set_mvn_opts.sh
+!unset_mvn_opts.sh
+**/target/

@@ -1,0 +1,221 @@
+/*
+Copyright (c) 2026, RTE (https://www.rte-france.com)
+See AUTHORS.md
+SPDX-License-Identifier: MPL-2.0
+This file is part of Twin-CR, a platform for real-time cyber-physical
+co-simulation of power systems.
+*/
+
+.sld-disconnected {
+    --sld-vl-color: #808080;
+}
+.sld-vl300to500.sld-bus-0 {
+    --sld-vl-color: #ff0000;
+}
+.sld-vl300to500.sld-bus-1 {
+    --sld-vl-color: #7f6c00;
+}
+.sld-vl300to500.sld-bus-2 {
+    --sld-vl-color: #f6b2ff;
+}
+.sld-vl300to500.sld-bus-3 {
+    --sld-vl-color: #996700;
+}
+.sld-vl300to500.sld-bus-4 {
+    --sld-vl-color: #ff85eb;
+}
+.sld-vl300to500.sld-bus-5 {
+    --sld-vl-color: #b25b00;
+}
+.sld-vl300to500.sld-bus-6 {
+    --sld-vl-color: #ff59b5;
+}
+.sld-vl300to500.sld-bus-7 {
+    --sld-vl-color: #cc4400;
+}
+.sld-vl300to500.sld-bus-8 {
+    --sld-vl-color: #ff2c67;
+}
+.sld-vl300to500.sld-bus-9 {
+    --sld-vl-color: #e52600;
+}
+.sld-vl180to300.sld-bus-0 {
+    --sld-vl-color: #218b21;
+}
+.sld-vl180to300.sld-bus-1 {
+    --sld-vl-color: #0d4940;
+}
+.sld-vl180to300.sld-bus-2 {
+    --sld-vl-color: #dfdab9;
+}
+.sld-vl180to300.sld-bus-3 {
+    --sld-vl-color: #105640;
+}
+.sld-vl180to300.sld-bus-4 {
+    --sld-vl-color: #c2cb92;
+}
+.sld-vl180to300.sld-bus-5 {
+    --sld-vl-color: #14643c;
+}
+.sld-vl180to300.sld-bus-6 {
+    --sld-vl-color: #95b66b;
+}
+.sld-vl180to300.sld-bus-7 {
+    --sld-vl-color: #187036;
+}
+.sld-vl180to300.sld-bus-8 {
+    --sld-vl-color: #5fa046;
+}
+.sld-vl180to300.sld-bus-9 {
+    --sld-vl-color: #1c7e2d;
+}
+.sld-vl120to180.sld-bus-0 {
+    --sld-vl-color: #00afae;
+}
+.sld-vl120to180.sld-bus-1 {
+    --sld-vl-color: #000d58;
+}
+.sld-vl120to180.sld-bus-2 {
+    --sld-vl-color: #b8e7b2;
+}
+.sld-vl120to180.sld-bus-3 {
+    --sld-vl-color: #002169;
+}
+.sld-vl120to180.sld-bus-4 {
+    --sld-vl-color: #85d993;
+}
+.sld-vl120to180.sld-bus-5 {
+    --sld-vl-color: #003c7b;
+}
+.sld-vl120to180.sld-bus-6 {
+    --sld-vl-color: #59cb8b;
+}
+.sld-vl120to180.sld-bus-7 {
+    --sld-vl-color: #005c8c;
+}
+.sld-vl120to180.sld-bus-8 {
+    --sld-vl-color: #2cbd94;
+}
+.sld-vl120to180.sld-bus-9 {
+    --sld-vl-color: #00839e;
+}
+.sld-vl70to120.sld-bus-0 {
+    --sld-vl-color: #cc5500;
+}
+.sld-vl70to120.sld-bus-1 {
+    --sld-vl-color: #4a6600;
+}
+.sld-vl70to120.sld-bus-2 {
+    --sld-vl-color: #efb2dd;
+}
+.sld-vl70to120.sld-bus-3 {
+    --sld-vl-color: #6e7a00;
+}
+.sld-vl70to120.sld-bus-4 {
+    --sld-vl-color: #e685ae;
+}
+.sld-vl70to120.sld-bus-5 {
+    --sld-vl-color: #8e8400;
+}
+.sld-vl70to120.sld-bus-6 {
+    --sld-vl-color: #dd596b;
+}
+.sld-vl70to120.sld-bus-7 {
+    --sld-vl-color: #a37b00;
+}
+.sld-vl70to120.sld-bus-8 {
+    --sld-vl-color: #d4432c;
+}
+.sld-vl70to120.sld-bus-9 {
+    --sld-vl-color: #b76b00;
+}
+.sld-vl50to70.sld-bus-0 {
+    --sld-vl-color: #a020ef;
+}
+.sld-vl50to70.sld-bus-1 {
+    --sld-vl-color: #7f0848;
+}
+.sld-vl50to70.sld-bus-2 {
+    --sld-vl-color: #b7dbfe;
+}
+.sld-vl50to70.sld-bus-3 {
+    --sld-vl-color: #960c6d;
+}
+.sld-vl50to70.sld-bus-4 {
+    --sld-vl-color: #8da6fe;
+}
+.sld-vl50to70.sld-bus-5 {
+    --sld-vl-color: #ad109a;
+}
+.sld-vl50to70.sld-bus-6 {
+    --sld-vl-color: #6f66fb;
+}
+.sld-vl50to70.sld-bus-7 {
+    --sld-vl-color: #bc14c4;
+}
+.sld-vl50to70.sld-bus-8 {
+    --sld-vl-color: #7f42f6;
+}
+.sld-vl50to70.sld-bus-9 {
+    --sld-vl-color: #b11ad9;
+}
+.sld-vl30to50.sld-bus-0 {
+    --sld-vl-color: #ff8290;
+}
+.sld-vl30to50.sld-bus-1 {
+    --sld-vl-color: #7f6f41;
+}
+.sld-vl30to50.sld-bus-2 {
+    --sld-vl-color: #f6d9ff;
+}
+.sld-vl30to50.sld-bus-3 {
+    --sld-vl-color: #99784e;
+}
+.sld-vl30to50.sld-bus-4 {
+    --sld-vl-color: #ffc3fb;
+}
+.sld-vl30to50.sld-bus-5 {
+    --sld-vl-color: #b27d5b;
+}
+.sld-vl30to50.sld-bus-6 {
+    --sld-vl-color: #ffade3;
+}
+.sld-vl30to50.sld-bus-7 {
+    --sld-vl-color: #cc7e68;
+}
+.sld-vl30to50.sld-bus-8 {
+    --sld-vl-color: #ff97bf;
+}
+.sld-vl30to50.sld-bus-9 {
+    --sld-vl-color: #e57b75;
+}
+.sld-vl0to30.sld-bus-0 {
+    --sld-vl-color: #aaae27;
+}
+.sld-vl0to30.sld-bus-1 {
+    --sld-vl-color: #195b0f;
+}
+.sld-vl0to30.sld-bus-2 {
+    --sld-vl-color: #eababe;
+}
+.sld-vl0to30.sld-bus-3 {
+    --sld-vl-color: #2d6c13;
+}
+.sld-vl0to30.sld-bus-4 {
+    --sld-vl-color: #dda193;
+}
+.sld-vl0to30.sld-bus-5 {
+    --sld-vl-color: #477d17;
+}
+.sld-vl0to30.sld-bus-6 {
+    --sld-vl-color: #ce9a6e;
+}
+.sld-vl0to30.sld-bus-7 {
+    --sld-vl-color: #648d1c;
+}
+.sld-vl0to30.sld-bus-8 {
+    --sld-vl-color: #bea04a;
+}
+.sld-vl0to30.sld-bus-9 {
+    --sld-vl-color: #869d22;
+}

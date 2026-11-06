@@ -1,0 +1,10 @@
+*.log
+
+curves.xml
+cyber_config_fake.json
+game_master_inputs.json
+game_master_outputs.json
+dynawo_scada_inputs_no_map.json
+scada_outputs_no_map.json
+RTConnectors.dyd
+scada_inputs_no_map.json

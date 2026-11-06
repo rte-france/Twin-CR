@@ -1,0 +1,27 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Command",
+  "description": "Commands in common between GameMasterControl.<source> and HMIControl.<source>",
+  "oneOf": [
+    { "$ref": "command_pause.json" },
+    { "$ref": "command_stop.json" },
+    { "$ref": "command_resume.json" },
+    { "$ref": "command_fast_forward.json" },
+    { "$ref": "command_change_network_characteristics.json" },
+    { "$ref": "command_get_simulation_name.json" },
+    { "$ref": "command_add_dsl_subscription.json" },
+    { "$ref": "command_add_dsl_subscription_from_iidm.json" },
+    { "$ref": "command_remove_dsl_subscription.json" },
+    { "$ref": "command_remove_dsl_subscription_from_iidm.json" },
+    { "$ref": "command_get_initial_clock_time.json" },
+    { "$ref": "command_get_node_characteristics.json" },
+    { "$ref": "command_get_link_characteristics.json" },
+    { "$ref": "command_get_path_characteristics.json" },
+    { "$ref": "command_command_injection.json" },
+    { "$ref": "command_command_injection_received.json" },
+    { "$ref": "command_command_injection_game_master.json" },
+    { "$ref": "command_iidm_command.json" },
+    { "$ref": "command_scale_multiplier.json" },
+    { "$ref": "command_manual_actuator_scada.json" }
+  ]
+}

@@ -1,0 +1,74 @@
+#
+# Copyright (c) 2025-2026, RTE (https://www.rte-france.com)
+# See AUTHORS.md
+# SPDX-License-Identifier: MPL-2.0
+# This file is part of Twin-CR, a platform for real-time cyber-physical
+# co-simulation of power systems.
+#
+
+name: Configurator and mapping schemas
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+    # Don't run on draft PR's
+    types: [ opened, synchronize, reopened, ready_for_review ]
+
+jobs:
+  configure-examples:
+    if: github.event.pull_request.draft == false
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # The configurator reads the model descriptions in simulators/dynawo/ddb (and the xsd in its deploy dir)
+      - name: Download simulators
+        uses: robinraju/release-downloader@v1
+        with:
+          tag: "dynawo1.8.0RT1"
+          fileName: "simulators.zip"
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract simulators
+        run: |
+          mkdir -p simulators
+          extract_dir=$(mktemp -d)
+          unzip -q simulators.zip -d "$extract_dir"
+          if [ -d "$extract_dir/simulators" ]; then
+            mv "$extract_dir"/simulators/* simulators/
+          else
+            mv "$extract_dir"/* simulators/
+          fi
+          rm -rf "$extract_dir" simulators.zip
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+          cache-dependency-path: tools/dynawo_toolbox/requirements.txt
+
+      # Regenerate the mapping files of every example that has a cfg.sh (they are not committed).
+      # config.sh creates the tools/dynawo_toolbox/venv it runs in on first use.
+      - name: Run the configurator on the examples
+        run: |
+          for example in Nordic 4Bus IEEE14; do
+            echo "::group::$example"
+            (cd docs/orchestrator/examples/$example && ./cfg.sh)
+            echo "::endgroup::"
+          done
+
+      - name: Validate the mapping files against the schemas
+        run: |
+          tools/dynawo_toolbox/venv/bin/pip install jsonschema
+          tools/dynawo_toolbox/venv/bin/python schemas/validator.py
+
+      - name: Check the DSL test resources match the Nordic example
+        run: python Orchestrator/DSL/tests/resources/check_resources.py

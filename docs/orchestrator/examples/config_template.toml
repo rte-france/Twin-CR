@@ -1,0 +1,57 @@
+#
+# Copyright (c) 2025-2026, RTE (https://www.rte-france.com)
+# See AUTHORS.md
+# SPDX-License-Identifier: MPL-2.0
+# This file is part of Twin-CR, a platform for real-time cyber-physical
+# co-simulation of power systems.
+#
+
+
+##################################################################################
+####                     Configuration template to fill in                    ####
+##################################################################################
+
+
+# Level of information to log, use standard Python level DEBUG, INFO, WARNING...
+log_level = "INFO"
+automata_commands = []  # List of bash commands used to launch the automata
+
+[master]
+period = 1
+dump_period = 60
+speedup = 5
+myEnvDynawo_path = "/opt/haulogy/dynawo/dynawo/myEnvDynawo.sh"
+log_all_events = true
+# publishing_ifl_nodes = [".*"]  # List of regex patterns
+
+[input_files]
+# scenario_file = "scenarios.json"  # Optional
+# dsl_file = "4Bus.dsl"  # Optional
+job_file = "4Bus.jobs"
+dyd_file = "RTConnectors.dyd"  # dyd must be included in the .jobs file
+iidm_file = "4Bus.iidm"
+par_file = "Events.par"
+game_master_outputs_file = "game_master_outputs.json"
+scada_outputs_file = "scada_outputs.json"
+cyber_config_file = "cyber_config.json"
+# extra_io_file = "extra_io.json"  # Optional, entries added to the generated game master/SCADA io files
+
+[hmi]
+location = "CC"
+line_button_ids = []
+bool_button_ids = ["PL1_state"]
+subscribed_substations = [">"]
+
+[hmi.plot_data]
+Voltages = ["U_B1", "U_B2", "U_B3", "U_B4"]
+
+[hmi.outputs_destination]
+PL1_state = "substation_1"
+
+[game_master]
+line_button_ids = []
+bool_button_ids = ["PL1_state"]
+subscribed_substations = [">"]
+
+[game_master.plot_data]
+Voltages = ["U_B1", "U_B2", "U_B3", "U_B4"]

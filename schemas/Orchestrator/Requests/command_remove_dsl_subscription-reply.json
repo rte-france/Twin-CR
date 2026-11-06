@@ -1,0 +1,7 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "oneOf": [
+    {"$ref": "error_response.json"},
+    {"$ref": "ok_response.json"}
+  ]
+}

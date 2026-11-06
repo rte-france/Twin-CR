@@ -1,0 +1,27 @@
+{
+  "applied": [
+    {
+      "command": {
+        "attribute": "state",
+        "command": "iidm_command",
+        "iidm_id": "01_1_breaker",
+        "value": 1.0
+      },
+      "t": 10.0
+    },
+    {
+      "command": {
+        "attribute": "P",
+        "command": "iidm_command",
+        "iidm_id": "01_1",
+        "value": 60.0
+      },
+      "t": 10.0
+    }
+  ],
+  "replacement": {
+    "kind": "action",
+    "match": "open switch",
+    "replaced": true
+  }
+}

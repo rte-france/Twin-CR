@@ -1,0 +1,21 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "StartPrepareResponse",
+  "type": "object",
+  "oneOf": [
+    {
+      "title": "StartReady",
+      "properties": {
+        "status": {
+          "type": "string",
+          "const": "READY",
+          "description": "Indicates the simulation is prepared and ready to start"
+        }
+      },
+      "required": ["status"]
+    },
+    {
+      "$ref": "error_response.json"
+    }
+  ]
+}

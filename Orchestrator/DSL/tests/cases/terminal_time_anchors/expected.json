@@ -1,0 +1,23 @@
+{
+  "applied": [
+    {
+      "command": {
+        "attribute": "state",
+        "command": "iidm_command",
+        "iidm_id": "01_1_breaker",
+        "value": 1.0
+      },
+      "t": 15.0
+    },
+    {
+      "command": {
+        "attribute": "state",
+        "command": "iidm_command",
+        "iidm_id": "01_1_breaker",
+        "value": 2.0
+      },
+      "t": 20.0
+    }
+  ],
+  "command_error": "'at 4 seconds' is in the past, the simulation is already at 10 seconds; use 'after' for a time relative to now (line 3: \"at 4 seconds, open switch \"02_1_breaker\";\")"
+}

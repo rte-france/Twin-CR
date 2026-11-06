@@ -1,0 +1,44 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "GetNodeCharacteristicsCommandResponse",
+  "type": "object",
+  "oneOf": [
+    {
+      "$ref": "error_response.json"
+    },
+    {
+      "type": "object",
+      "properties": {
+        "status": {
+          "type": "string",
+          "const": "OK"
+        },
+        "reply": {
+          "type": "object",
+          "properties": {
+            "links_configs": {
+              "type": "array",
+              "items": {
+                "$ref": "cyber_characteristics.json"
+              }
+            },
+            "node_configs": {
+              "type": "array",
+              "items": {
+                "$ref": "cyber_characteristics.json"
+              }
+            },
+            "node_names": {
+              "type": "array",
+              "items": {
+                "$ref": "node.json"
+              }
+            }
+          },
+          "required": ["links_configs", "node_configs", "node_names"]
+        }
+      },
+      "required": ["status", "reply"]
+    }
+  ]
+}
