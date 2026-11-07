@@ -199,6 +199,9 @@ step_proxy() {
     local test_url="https://www.google.com" proxy=""
     if [ -n "$http_proxy" ] || [ -n "$https_proxy" ] || [ -n "$HTTP_PROXY" ] || [ -n "$HTTPS_PROXY" ]; then
         proxy="${https_proxy:-${HTTPS_PROXY:-${http_proxy:-$HTTP_PROXY}}}"
+        if [ -z "$no_proxy" ] && [ -z "$NO_PROXY"]; then
+            warn "HTTP/HTTPS proxy is configured, but no_proxy is not set. Internal addresses may fail to resolve."
+        fi
     fi
     if curl -Is --max-time 5 "$test_url" > /dev/null 2>&1; then
         log "Internet access OK${proxy:+ through the proxy $proxy}"
