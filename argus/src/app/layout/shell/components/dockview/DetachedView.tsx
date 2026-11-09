@@ -31,7 +31,7 @@ export const DetachedView = (props: { windowLabel: string }) => {
         />
       ) : (
         <div class="flex items-center justify-center h-full">
-          Chargement de l'outil...
+          Loading tool...
         </div>
       )}
     </div>

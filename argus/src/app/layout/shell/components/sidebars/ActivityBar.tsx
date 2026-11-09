@@ -8,7 +8,7 @@ co-simulation of power systems.
 
 import { type JSX } from "solid-js";
 import { Tooltip } from "@kobalte/core/tooltip";
-import { openInCentral } from "@/utils/openInCentral";
+import { openInBottomLeft, openInBottomRight } from "@/utils/openInCentral";
 
 export const ADD_CENTRAL_EVENT = "argus:add-central";
 
@@ -29,11 +29,19 @@ export function ActivityBar(props: ActivityBarProps) {
     const target = targetPanel();
 
     if (target === "bottom") {
-      openInCentral({
-        id: props.id,
-        title: props.title || props.id,
-        elementTag: props.elementTag || props.id,
-      });
+      if (props.side === "left") {
+        openInBottomLeft({
+          id: props.id,
+          title: props.title || props.id,
+          elementTag: props.elementTag || props.id,
+        });
+      } else {
+        openInBottomRight({
+          id: props.id,
+          title: props.title || props.id,
+          elementTag: props.elementTag || props.id,
+        });
+      }
     } else {
       window.dispatchEvent(
         new CustomEvent("argus:toggle-tool", {
@@ -52,7 +60,6 @@ export function ActivityBar(props: ActivityBarProps) {
       <Tooltip.Trigger
         as="button"
         onClick={handleClick}
-        draggable={true}
         onDragStart={(e: any) => {
           if (e.dataTransfer) {
             e.dataTransfer.setData("argus/tool-id", props.id);

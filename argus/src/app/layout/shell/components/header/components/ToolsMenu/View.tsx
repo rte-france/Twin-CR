@@ -98,9 +98,7 @@ export const View: Component = () => {
               <Menubar.SubContent class={contentClass}>
                 <Menubar.RadioGroup
                   value={theme()}
-                  onChange={(value) =>
-                    setTheme(value as "light" | "dark" | "system")
-                  }
+                  onChange={(value) => setTheme(value as any)}
                 >
                   <For each={THEME_OPTIONS}>
                     {(t) => (

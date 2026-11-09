@@ -6,7 +6,14 @@ This file is part of Twin-CR, a platform for real-time cyber-physical
 co-simulation of power systems.
 */
 
-import { createEffect, createSignal, For, onCleanup, onMount } from "solid-js";
+import {
+  createEffect,
+  createSignal,
+  For,
+  onCleanup,
+  onMount,
+  on,
+} from "solid-js";
 import { useLayout } from "../../providers/LayoutProvider";
 import { useAppMode } from "@/hooks/useAppMode";
 import { layoutConfigs } from "@/config/layouts";
@@ -14,6 +21,8 @@ import { ActivityBar } from "../sidebars/ActivityBar";
 import { Sidebar } from "../sidebars/Sidebar";
 import { IconResolver } from "../IconResolver";
 import { Separator } from "@kobalte/core/separator";
+import { activeBottomLeftId } from "./BottomPanel";
+import { ADD_BOTTOM_LEFT_EVENT } from "@/utils/openInCentral";
 
 export const LeftPanel = () => {
   const layout = useLayout();
@@ -26,25 +35,71 @@ export const LeftPanel = () => {
   const panels = () => config().leftSidebarPanels || [];
   const tools = () => config().leftSidebarTools || [];
 
-  createEffect(() => {
-    const topSaved = localStorage.getItem(`argus-left-top-${mode()}`);
-    const bottomSaved = localStorage.getItem(`argus-left-bottom-${mode()}`);
+  createEffect(
+    on(mode, (currentMode) => {
+      const topSaved = localStorage.getItem(`argus-left-top-${currentMode}`);
+      const bottomSaved = localStorage.getItem(
+        `argus-left-bottom-${currentMode}`,
+      );
+      const toolSaved = localStorage.getItem(
+        `argus-left-bottom-tool-${currentMode}`,
+      );
 
-    if (topSaved) setActiveTopId(topSaved);
-    if (bottomSaved) setActiveBottomId(bottomSaved);
+      if (topSaved) setActiveTopId(topSaved);
+      if (bottomSaved) setActiveBottomId(bottomSaved);
 
-    if ((topSaved || bottomSaved) && !layout.isOpen("left")) {
-      layout.toggle("left");
-    }
-  });
+      if ((topSaved || bottomSaved) && !layout.isOpen("left")) {
+        layout.toggle("left");
+      }
+
+      if (toolSaved) {
+        const tool = tools().find((t) => t.id === toolSaved);
+        if (tool && activeBottomLeftId() !== tool.id) {
+          window.dispatchEvent(
+            new CustomEvent(ADD_BOTTOM_LEFT_EVENT, {
+              detail: {
+                id: tool.id,
+                title: tool.label || tool.id,
+                iconId: tool.iconId,
+                elementTag: tool.elementTag,
+              },
+            }),
+          );
+        }
+      } else {
+        const currentOpenInThisMode = tools().find(
+          (t) => t.id === activeBottomLeftId(),
+        );
+        if (activeBottomLeftId() && !currentOpenInThisMode) {
+          window.dispatchEvent(
+            new CustomEvent("argus:toggle-left-bottom-panel"),
+          );
+        }
+      }
+    }),
+  );
 
   createEffect(() => {
     activeTopId()
       ? localStorage.setItem(`argus-left-top-${mode()}`, activeTopId()!)
       : localStorage.removeItem(`argus-left-top-${mode()}`);
+
     activeBottomId()
       ? localStorage.setItem(`argus-left-bottom-${mode()}`, activeBottomId()!)
       : localStorage.removeItem(`argus-left-bottom-${mode()}`);
+
+    activeBottomLeftId()
+      ? localStorage.setItem(
+          `argus-left-bottom-tool-${mode()}`,
+          activeBottomLeftId()!,
+        )
+      : localStorage.removeItem(`argus-left-bottom-tool-${mode()}`);
+  });
+
+  createEffect(() => {
+    if (activeBottomLeftId() && !layout.isOpen("bottom")) {
+      layout.toggle("bottom");
+    }
   });
 
   onMount(() => {
@@ -85,12 +140,31 @@ export const LeftPanel = () => {
       }
     };
 
+    const handleKeyboardToggle = () => {
+      if (!layout.isOpen("left")) {
+        if (!activeTopId() && !activeBottomId()) {
+          const firstPanel = panels().find(
+            (m) => (m.position || "top") === "top",
+          );
+          if (firstPanel) setActiveTopId(firstPanel.id);
+        }
+        layout.toggle("left");
+      } else {
+        layout.toggle("left");
+      }
+    };
+
     window.addEventListener("argus:toggle-tool", handleToggle);
     window.addEventListener("argus:remove-panel", handleRemove);
+    window.addEventListener("argus:toggle-left-panel", handleKeyboardToggle);
 
     onCleanup(() => {
       window.removeEventListener("argus:toggle-tool", handleToggle);
       window.removeEventListener("argus:remove-panel", handleRemove);
+      window.removeEventListener(
+        "argus:toggle-left-panel",
+        handleKeyboardToggle,
+      );
     });
   });
 
@@ -112,7 +186,7 @@ export const LeftPanel = () => {
               />
             )}
           </For>
-          <Separator class="w-6 mx-auto my-2 h-px bg-border opacity-50 shrink-0" />
+          <Separator class="w-6 mx-auto my-2 h-px bg-divider opacity-50 shrink-0" />
           <For each={panels().filter((m) => m.position === "bottom")}>
             {(panel) => (
               <ActivityBar
@@ -133,7 +207,7 @@ export const LeftPanel = () => {
                 id={tool.id}
                 side="left"
                 target="bottom"
-                isActive={false}
+                isActive={activeBottomLeftId() === tool.id}
                 title={tool.label || tool.id}
                 elementTag={tool.elementTag || tool.id}
                 icon={<IconResolver name={tool.iconId} />}

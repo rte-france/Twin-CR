@@ -10,7 +10,7 @@ import { createSignal, onMount, onCleanup, type Component } from "solid-js";
 import { FiMaximize, FiMinimize, FiExternalLink } from "solid-icons/fi";
 import type { DockviewGroupPanel, DockviewComponent } from "dockview-core";
 import { Effect } from "effect";
-import { systemRuntime } from "@/config/runtime";
+import { getSystemRuntime } from "@/utils/getSystemRuntime";
 import { WindowBootstrapper } from "@/services/window-bootstrap";
 
 interface RightHeaderActionsProps {
@@ -84,7 +84,7 @@ export const RightHeaderActions: Component<RightHeaderActionsProps> = (
       yield* wm.createChildFromCurrent(title, encodeURIComponent(targetRoute));
     });
 
-    systemRuntime
+    getSystemRuntime()
       .runPromise(program)
       .then(() => {
         activePanel.api.close();

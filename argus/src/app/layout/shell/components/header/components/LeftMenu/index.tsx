@@ -13,13 +13,13 @@ export const LeftMenu: Component<{
   onOpenMenus: () => void;
 }> = (props) => {
   return (
-    <div class="flex items-center gap-x-4 pl-1">
-      <div
-        class="text-[11px] text-fg/60 hover:bg-fg/10 hover:text-fg py-1 rounded cursor-pointer transition-colors outline-none focus:outline-none"
+    <div class="flex items-center gap-x-4">
+      <button
+        class="text-xs text-icons hover:text-fg hover:bg-media-bg px-1 py-1 rounded transition-colors cursor-pointer outline-none focus:ring-1 focus:ring-links"
         onClick={() => props.onOpenMenus()}
       >
         <FiMenu size={16} />
-      </div>
+      </button>
     </div>
   );
 };

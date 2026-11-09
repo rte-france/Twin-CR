@@ -8,7 +8,7 @@ co-simulation of power systems.
 
 import { Menubar } from "@kobalte/core/menubar";
 import { Effect } from "effect";
-import { systemRuntime } from "@/config/runtime";
+import { getSystemRuntime } from "@/utils/getSystemRuntime";
 import { WindowBootstrapper } from "@/services/window-bootstrap";
 import type { Component } from "solid-js";
 
@@ -18,7 +18,7 @@ export const File: Component = () => {
       Effect.flatMap((wb) => wb.createParent("Twin-CR", "/home")),
     );
 
-    systemRuntime.runPromise(program).catch(console.error);
+    getSystemRuntime().runPromise(program).catch(console.error);
   };
 
   const itemClass =
@@ -35,7 +35,7 @@ export const File: Component = () => {
       <Menubar.Portal>
         <Menubar.Content class={contentClass}>
           <Menubar.Item class={itemClass} onSelect={handleNewParent}>
-            New Workspace
+            Open Workspace
           </Menubar.Item>
         </Menubar.Content>
       </Menubar.Portal>

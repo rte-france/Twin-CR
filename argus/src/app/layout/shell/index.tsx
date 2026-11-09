@@ -7,40 +7,14 @@ co-simulation of power systems.
 */
 
 import { ShellProvider } from "./providers/ShellProvider";
-import { Header } from "./components/header";
-import { LeftPanel } from "./components/panels/LeftPanel";
-import { RightPanel } from "./components/panels/RightPanel";
-import { CentralPanel } from "./components/panels/CentralPanel";
-import { Footer } from "./components/footer";
 import { ThemeProvider } from "./providers/ThemeProvider";
 import { LayoutProvider } from "./providers/LayoutProvider";
+import { PlacementProvider } from "./providers/PlacementProvider";
+
+import { ShellLayout } from "./components/ShellLayout";
 
 import "./styles/shell.css";
 import "./styles/dockview.css";
-import { HeaderProvider } from "./providers/HeaderProvider";
-import { PlacementProvider } from "./providers/PlacementProvider";
-
-function ShellLayout() {
-  return (
-    <div class="h-screen w-screen flex flex-col bg-bg text-fg overflow-hidden">
-      <HeaderProvider>
-        <Header />
-      </HeaderProvider>
-
-      <div class="flex-1 flex overflow-hidden">
-        <LeftPanel />
-
-        <main class="flex-1 flex flex-col min-w-0 bg-bg">
-          <CentralPanel />
-        </main>
-
-        <RightPanel />
-      </div>
-
-      <Footer />
-    </div>
-  );
-}
 
 export function Shell(props: { windowLabel: string; themeSyncId: string }) {
   return (
