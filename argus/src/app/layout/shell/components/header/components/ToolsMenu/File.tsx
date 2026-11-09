@@ -11,14 +11,11 @@ import { Effect } from "effect";
 import { getSystemRuntime } from "@/utils/getSystemRuntime";
 import { WindowBootstrapper } from "@/services/window-bootstrap";
 import type { Component } from "solid-js";
-import { useNavigate } from "@solidjs/router";
 
 export const File: Component = () => {
-  const navigate = useNavigate();
-
   const handleNewParent = () => {
     const program = WindowBootstrapper.pipe(
-      Effect.flatMap((wb) => wb.createParent("TwinEU French Pilot", "/home")),
+      Effect.flatMap((wb) => wb.createParent("Twin-CR", "/home")),
     );
 
     getSystemRuntime().runPromise(program).catch(console.error);
@@ -37,9 +34,6 @@ export const File: Component = () => {
 
       <Menubar.Portal>
         <Menubar.Content class={contentClass}>
-          <Menubar.Item class={itemClass} onSelect={() => navigate("/project")}>
-            Edit Workspace
-          </Menubar.Item>
           <Menubar.Item class={itemClass} onSelect={handleNewParent}>
             Open Workspace
           </Menubar.Item>

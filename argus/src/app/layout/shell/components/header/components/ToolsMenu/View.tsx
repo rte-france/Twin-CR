@@ -15,7 +15,6 @@ import type { WebviewWindow } from "@tauri-apps/api/webviewWindow";
 import { useTheme } from "../../../../providers/ThemeProvider";
 import { useAppMode } from "@/hooks/useAppMode";
 import { Mode } from "@/services/app-mode";
-import { openInCentral } from "@/utils/openInCentral";
 
 const THEME_OPTIONS = [
   { value: "light", label: "Light" },
@@ -99,9 +98,7 @@ export const View: Component = () => {
               <Menubar.SubContent class={contentClass}>
                 <Menubar.RadioGroup
                   value={theme()}
-                  onChange={(value) =>
-                    setTheme(value as any)
-                  }
+                  onChange={(value) => setTheme(value as any)}
                 >
                   <For each={THEME_OPTIONS}>
                     {(t) => (
@@ -180,21 +177,6 @@ export const View: Component = () => {
               </Menubar.SubContent>
             </Menubar.Portal>
           </Menubar.Sub>
-
-          <Menubar.Separator class={separatorClass} />
-
-          <Menubar.Item
-            class={itemClass}
-            onSelect={() =>
-              openInCentral({
-                id: "extensions",
-                title: "Extensions",
-                elementTag: "panel-extensions",
-              })
-            }
-          >
-            Extensions <span class="text-fg/40 ml-4">⌘⇧X</span>
-          </Menubar.Item>
 
           <Menubar.Separator class={separatorClass} />
 

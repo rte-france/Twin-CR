@@ -43,22 +43,6 @@ export const Argus: Component = () => {
     });
   };
 
-  const handleExtensions = () => {
-    openInCentral({
-      id: "extensions",
-      title: "Extensions",
-      elementTag: "panel-extensions",
-    });
-  };
-
-  const handleKeymaps = () => {
-    openInCentral({
-      id: "keymaps",
-      title: "Keymaps",
-      elementTag: "panel-keymaps",
-    });
-  };
-
   const itemClass =
     "px-3 py-1.5 text-xs text-fg hover:bg-sidebar-active-bg hover:text-sidebar-active outline-none cursor-default flex justify-between items-center transition-colors";
   const separatorClass = "h-px bg-divider my-1 mx-2";
@@ -71,30 +55,18 @@ export const Argus: Component = () => {
 
       <Menubar.Portal>
         <Menubar.Content class="bg-popover-bg border border-popover-border min-w-40 py-1 shadow-lg z-50 animate-in fade-in zoom-in-95 duration-100">
-          <Menubar.Item class={itemClass}>
-            About Twin-CR
-          </Menubar.Item>
+          <Menubar.Item class={itemClass}>About Twin-CR</Menubar.Item>
 
           <Menubar.Item class={itemClass}>Check for Updates</Menubar.Item>
 
-          <Menubar.Item class={itemClass} onSelect={() => navigate("/")}>
-            Go to Workspace
+          <Menubar.Item class={itemClass} onSelect={() => navigate("/lobby")}>
+            Go to Lobby
           </Menubar.Item>
 
           <Menubar.Separator class={separatorClass} />
 
           <Menubar.Item class={itemClass} onSelect={handleSettings}>
             Settings
-          </Menubar.Item>
-
-          <Menubar.Item class={itemClass} onSelect={handleKeymaps}>
-            Keymaps
-          </Menubar.Item>
-
-          <Menubar.Separator class={separatorClass} />
-
-          <Menubar.Item class={itemClass} onSelect={handleExtensions}>
-            Extensions
           </Menubar.Item>
 
           <Menubar.Separator class={separatorClass} />
