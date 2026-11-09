@@ -181,13 +181,13 @@ struct ControlSent : public Information {
 };
 
 /**
- * General interrogation (CG, contrôle général) sent along 'path' to 'destination' (an RTU or ARP), which then resends the latest TSes it saved
+ * General interrogation (GI) sent along 'path' to 'destination' (an RTU or ARP), which then resends the latest TSes it saved
  */
 inline ControlSent makeGeneralInterrogation(double time_sent, const std::string& destination, const std::vector<graaf::vertex_id_t>& path, int64_t control_uid) {
-    return ControlSent("CG", 0, time_sent, destination, path, "CG",
+    return ControlSent("GI", 0, time_sent, destination, path, "GI",
         tase2::Tase2Extension(
-            "CG",
-            tase2::SignalisationType::CG,
+            "GI",
+            tase2::SignalisationType::GI,
             tase2::CAUSE_SPONTANEOUS,
             tase2::QUALITY_VALIDITY_GOOD,
             false

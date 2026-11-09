@@ -143,7 +143,7 @@ nlohmann::json ScenarioHandler::applyScenario(const nlohmann::json& scenario, Mo
             }
 
         } else if (scenario_type == "general_interrogation") {
-            // General interrogation (CG) sent through the information flow model, the RTU/ARP then resends its latest TSes
+            // General interrogation (GI) sent through the information flow model, the RTU/ARP then resends its latest TSes
             std::string destination = scenario["destination"];
             std::string source = scenario.value("source", scada_location_);
             std::string destination_type = information_flow_model_.getNodeType(destination);

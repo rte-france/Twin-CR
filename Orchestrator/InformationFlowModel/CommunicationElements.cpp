@@ -237,7 +237,7 @@ void MonitoredPath::updateAvailability() {
         }
     }
 
-    if (!available_ && all_available) {  // Send CG when path becomes available (and was unavailable before)
+    if (!available_ && all_available) {  // Send a GI when path becomes available (and was unavailable before)
         Orchestrator::get().emit(makeGeneralInterrogation(Orchestrator::get().getCurrentTime(), destination_, path_, network_graph_->nextControlUid()));
     }
     available_ = all_available;
