@@ -44,8 +44,8 @@ bool RTU::apply(ControlReceived& info) {
         return dropped;
     }
 
-    // Resend saved TSes when receives a CG
-    if (info.tase2_data.has_value() && info.tase2_data->signalisation_type == tase2::SignalisationType::CG && info.destination == name_) {
+    // Resend saved TSes when receives a GI
+    if (info.tase2_data.has_value() && info.tase2_data->signalisation_type == tase2::SignalisationType::GI && info.destination == name_) {
         for (const auto& [id, info] : saved_TSes_) {
             const auto& full_route = info.path;
             auto it = std::find(full_route.begin(), full_route.end(), vertex_id_);
@@ -66,6 +66,6 @@ bool RTU::apply(ControlReceived& info) {
 }
 
 bool RTU::apply(AcknowledgementReceived& info) {
-    // Acknowledgements simply cross the RTU (no CG handling)
+    // Acknowledgements simply cross the RTU (no GI handling)
     return CommunicationNode::apply(info);
 }

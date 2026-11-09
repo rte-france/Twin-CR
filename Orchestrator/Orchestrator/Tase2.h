@@ -31,7 +31,7 @@ enum class SignalisationType : int32_t {
     TC = 1,  // Télécommande : Transmission of control commands
     TVC = 2,  // Télécommande avec Validation et Contrôle : Secure commands requiring validation
     TM = 3,  // Télémesure : Transmission of numerical values (voltage, current, powers, etc.)
-    CG = 4  // Contrôle Général : Synchronisation command sent to RTUs
+    GI = 4  // General interrogation: synchronisation command sent to RTUs
 };
 
 inline std::string to_string(SignalisationType t) {
@@ -40,7 +40,7 @@ inline std::string to_string(SignalisationType t) {
         case SignalisationType::TC:  return "TC";
         case SignalisationType::TVC: return "TVC";
         case SignalisationType::TM:  return "TM";
-        case SignalisationType::CG:  return "CG";
+        case SignalisationType::GI:  return "GI";
         default: throw std::invalid_argument("Unknown SignalisationType: " + std::to_string(static_cast<int32_t>(t)));
     }
 }
@@ -56,7 +56,7 @@ inline SignalisationType parseSignalisationType(const nlohmann::json& j) {
         if (s == "TC")  return SignalisationType::TC;
         if (s == "TVC") return SignalisationType::TVC;
         if (s == "TM")  return SignalisationType::TM;
-        if (s == "CG")  return SignalisationType::CG;
+        if (s == "GI")  return SignalisationType::GI;
         throw std::invalid_argument("Unknown SignalisationType string: " + s);
     }
     throw std::invalid_argument("SignalisationType must be a string, got: " + j.dump());
@@ -123,8 +123,8 @@ inline void appendTase2Field(fmt::memory_buffer& buf, const std::string& tase2_i
             break;
         case SignalisationType::TC:
         case SignalisationType::TVC:
-        case SignalisationType::CG:
-            // TODO: handle TC, TVC, CG signalisation types
+        case SignalisationType::GI:
+            // TODO: handle TC, TVC, GI signalisation types
             break;
     }
 }
@@ -136,7 +136,7 @@ inline int getDefaultCause(const SignalisationType& type) {
         case SignalisationType::TS:
         case SignalisationType::TC:
         case SignalisationType::TVC:
-        case SignalisationType::CG:
+        case SignalisationType::GI:
             return CAUSE_SPONTANEOUS;
         default:
             throw;

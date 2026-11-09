@@ -1,7 +1,7 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "title": "GeneralInterrogationCommandRequest",
-  "description": "Send a general interrogation (CG, contrôle général) to an RTU or ARP, through the information flow model. The RTU/ARP then resends the latest TSes it saved",
+  "description": "Send a general interrogation (GI) to an RTU or ARP, through the information flow model. The RTU/ARP then resends the latest TSes it saved",
   "allOf": [
     {
       "$ref": "start_time.json"
