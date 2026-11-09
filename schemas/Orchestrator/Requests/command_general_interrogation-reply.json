@@ -1,0 +1,27 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "GeneralInterrogationCommandResponse",
+  "oneOf": [
+    {
+      "type": "object",
+      "properties": {
+        "status": {
+          "type": "string",
+          "const": "OK"
+        },
+        "control_uid": {
+          "type": "integer",
+          "description": "Unique identifier of the general interrogation, carried by its acknowledgement"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "control_uid"
+      ]
+    },
+    {
+      "$ref": "error_response.json"
+    }
+  ]
+}
