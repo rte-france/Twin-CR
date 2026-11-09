@@ -66,13 +66,13 @@ export const Argus: Component = () => {
   return (
     <Menubar.Menu>
       <Menubar.Trigger class="px-3 py-1 hover:bg-fg/10 rounded-sm outline-none cursor-default text-fg text-xs transition-colors">
-        TwinEU French Pilot
+        Twin-CR
       </Menubar.Trigger>
 
       <Menubar.Portal>
         <Menubar.Content class="bg-popover-bg border border-popover-border min-w-40 py-1 shadow-lg z-50 animate-in fade-in zoom-in-95 duration-100">
           <Menubar.Item class={itemClass}>
-            About TwinEU French Pilot
+            About Twin-CR
           </Menubar.Item>
 
           <Menubar.Item class={itemClass}>Check for Updates</Menubar.Item>
