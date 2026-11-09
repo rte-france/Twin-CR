@@ -41,6 +41,9 @@ enum class SerializableInfo {
     CycosimMeasurementReceived = 10,
     CycosimControlReceived = 11,
     RawDynawoCommand = 12,
+    AcknowledgementSent = 13,
+    AcknowledgementReceived = 14,
+    CycosimAcknowledgementReceived = 15,
 };
 
 const std::unordered_map<int, std::string> SERIALABLE_NAMES = {
@@ -57,6 +60,9 @@ const std::unordered_map<int, std::string> SERIALABLE_NAMES = {
     {10, "CycosimMeasurementReceived"},
     {11, "CycosimControlReceived"},
     {12, "RawDynawoCommand"},
+    {13, "AcknowledgementSent"},
+    {14, "AcknowledgementReceived"},
+    {15, "CycosimAcknowledgementReceived"},
 };
 
 struct Serializable {
@@ -82,6 +88,17 @@ struct Information : public Serializable {
     std::optional<tase2::Tase2Extension> tase2_data;
 
     virtual operator std::string () const = 0;
+};
+
+struct ControlFlags {
+    // Ask the receiving simulator (Dynawo) for an immediate return of the paired TS, instead of waiting for the next simulator time step
+    // Sent to the original sender of the control only (the other modules still get the TS at the next Dynawo step)
+    bool with_fast_TS = false;
+    // The acknowledgement of this control is computed by the IFL as soon as the control is sent (without
+    // going through the event queue) and returned directly to the caller, its delay incorporated in its
+    // time_received. The caller is responsible for applying that delay. The control itself still goes
+    // through the event queue.
+    bool real_time_critical = false;
 };
 
 struct MeasurementSent : public Information {
@@ -121,8 +138,13 @@ struct MeasurementSent : public Information {
 };
 
 struct ControlSent : public Information {
-    ControlSent(const std::string& id, const Value& value, double time_sent, const std::string& destination, const std::vector<graaf::vertex_id_t>& path, const std::string& topic, std::optional<tase2::Tase2Extension> tase2_data)
-        : Information(id, value, time_sent, destination, path, topic, std::move(tase2_data)) {};
+    ControlSent(const std::string& id, const Value& value, double time_sent, const std::string& destination, const std::vector<graaf::vertex_id_t>& path, const std::string& topic, std::optional<tase2::Tase2Extension> tase2_data, int64_t control_uid_, ControlFlags flags_ = {})
+        : Information(id, value, time_sent, destination, path, topic, std::move(tase2_data)), control_uid(control_uid_), flags(flags_) {};
+
+    // Unique identifier of the control (InformationFlowModel::nextControlUid()), carried by its ControlReceived and acknowledgements,
+    // so that a sender can match an acknowledgement to its control
+    int64_t control_uid;
+    ControlFlags flags;
 
     operator std::string () const override {
         std::stringstream ss;
@@ -140,7 +162,7 @@ struct ControlSent : public Information {
     double getTime() const override { return time_sent; }
 
     void serialize(ClickHouseBinaryBuffer& buf) const override {
-        ::serialize(buf, id, value, time_sent, destination, topic, tase2_data);
+        ::serialize(buf, id, value, time_sent, destination, topic, tase2_data, control_uid, flags.with_fast_TS, flags.real_time_critical);
     }
 
     static std::unique_ptr<Serializable> deserialize(ClickHouseBinaryReader& reader) {
@@ -151,8 +173,10 @@ struct ControlSent : public Information {
         std::vector<graaf::vertex_id_t> path = {};  // path is not serialized
         std::string topic;
         std::optional<tase2::Tase2Extension> tase2_data;
-        reader.deserialize(id, value, time_sent, destination, topic, tase2_data);
-        return std::make_unique<ControlSent>(id, value, time_sent, destination, path, topic, tase2_data);
+        int64_t control_uid;
+        ControlFlags flags;
+        reader.deserialize(id, value, time_sent, destination, topic, tase2_data, control_uid, flags.with_fast_TS, flags.real_time_critical);
+        return std::make_unique<ControlSent>(id, value, time_sent, destination, path, topic, tase2_data, control_uid, flags);
     }
 };
 
@@ -229,7 +253,11 @@ class ScenarioHandler;
 struct ControlReceived : public InformationReceived {
     // Constructor to initialize from ControlSent
     ControlReceived(const ControlSent& control, double time_received)
-        : InformationReceived(control.id, control.value, control.time_sent, control.destination, control.path, control.topic, control.tase2_data, time_received) {}
+        : InformationReceived(control.id, control.value, control.time_sent, control.destination, control.path, control.topic, control.tase2_data, time_received),
+          control_uid(control.control_uid), flags(control.flags) {}
+
+    int64_t control_uid;  // See ControlSent::control_uid
+    ControlFlags flags;
 
     operator std::string () const override {
         std::stringstream ss;
@@ -247,7 +275,7 @@ struct ControlReceived : public InformationReceived {
     double getTime() const override { return time_received; }
 
     void serialize(ClickHouseBinaryBuffer& buf) const override {
-        ::serialize(buf, id, value, time_sent, destination, topic, tase2_data, time_received);
+        ::serialize(buf, id, value, time_sent, destination, topic, tase2_data, time_received, control_uid, flags.with_fast_TS, flags.real_time_critical);
     }
 
     static std::unique_ptr<Serializable> deserialize(ClickHouseBinaryReader& reader) {
@@ -258,20 +286,23 @@ struct ControlReceived : public InformationReceived {
         std::string topic;
         std::optional<tase2::Tase2Extension> tase2_data;
         double time_received;
-        reader.deserialize(id, value, time_sent, destination, topic, tase2_data, time_received);
-        auto event = ControlReceived(id, value, time_sent, destination, topic, tase2_data, time_received);
+        int64_t control_uid;
+        ControlFlags flags;
+        reader.deserialize(id, value, time_sent, destination, topic, tase2_data, time_received, control_uid, flags.with_fast_TS, flags.real_time_critical);
+        auto event = ControlReceived(id, value, time_sent, destination, topic, tase2_data, time_received, control_uid);
+        event.flags = flags;
         return std::make_unique<ControlReceived>(event);
     }
 
     private:
         // Contructor to initialize directly (bypasses information flow model, to be used only in some scenarios)
-        ControlReceived(const std::string& id, const Value& value, double time_sent, const std::string& destination, const std::string& topic, std::optional<tase2::Tase2Extension> tase2_data)
-            : InformationReceived(id, value, time_sent, destination, {}, topic, tase2_data, time_sent) {}
+        ControlReceived(const std::string& id, const Value& value, double time_sent, const std::string& destination, const std::string& topic, std::optional<tase2::Tase2Extension> tase2_data, int64_t control_uid_)
+            : InformationReceived(id, value, time_sent, destination, {}, topic, tase2_data, time_sent), control_uid(control_uid_) {}
         friend ScenarioHandler;
 
         // Contructor to initialize directly (bypasses information flow model, meant to be used by the replayer (deserialisation))
-        ControlReceived(const std::string& id, const Value& value, double time_sent, const std::string& destination, const std::string& topic, std::optional<tase2::Tase2Extension> tase2_data, double time_received)
-        : InformationReceived(id, value, time_sent, destination, {}, topic, tase2_data, time_received) {}
+        ControlReceived(const std::string& id, const Value& value, double time_sent, const std::string& destination, const std::string& topic, std::optional<tase2::Tase2Extension> tase2_data, double time_received, int64_t control_uid_)
+        : InformationReceived(id, value, time_sent, destination, {}, topic, tase2_data, time_received), control_uid(control_uid_) {}
         friend Replay;
 };
 
@@ -283,6 +314,109 @@ struct CycosimControlReceived : public ControlReceived {
 
     int constexpr getType() const override {
         return static_cast<int>(SerializableInfo::CycosimControlReceived);
+    }
+
+    static std::unique_ptr<Serializable> deserialize(ClickHouseBinaryReader& reader) {
+        (void) reader;
+        throw std::runtime_error("Not implemented (Cycosim events not meant to be replayed)");
+    }
+};
+
+/**
+ * Acknowledgement of a control, automatically sent by the IFL from the control's destination back to its
+ * source when the control is received (ControlReceived).
+ * time_sent is the time the acknowledgement was sent (i.e. when associated control was received).
+ * control_time_sent is the time the associated control was sent.
+ * control_uid is the uid of the associated control.
+ */
+struct AcknowledgementSent : public ControlSent {
+    AcknowledgementSent(const std::string& id, const Value& value, double time_sent, const std::string& destination, const std::vector<graaf::vertex_id_t>& path, const std::string& topic, std::optional<tase2::Tase2Extension> tase2_data, int64_t control_uid, ControlFlags flags, double control_time_sent_)
+        : ControlSent(id, value, time_sent, destination, path, topic, std::move(tase2_data), control_uid, flags), control_time_sent(control_time_sent_) {}
+
+    double control_time_sent;
+
+    operator std::string () const override {
+        std::stringstream ss;
+        ss << "AcknowledgementSent" << ", " << id << ", " << value << ", " << time_sent << ", " << control_time_sent;
+        for (auto it : path) {
+            ss << ", " << it;
+        }
+        return ss.str();
+    }
+
+    int constexpr getType() const override {
+        return static_cast<int>(SerializableInfo::AcknowledgementSent);
+    }
+
+    void serialize(ClickHouseBinaryBuffer& buf) const override {
+        ::serialize(buf, id, value, time_sent, destination, topic, tase2_data, control_time_sent, control_uid, flags.with_fast_TS, flags.real_time_critical);
+    }
+
+    static std::unique_ptr<Serializable> deserialize(ClickHouseBinaryReader& reader) {
+        std::string id;
+        Value value;
+        double time_sent;
+        std::string destination;
+        std::string topic;
+        std::optional<tase2::Tase2Extension> tase2_data;
+        double control_time_sent;
+        int64_t control_uid;
+        ControlFlags flags;
+        reader.deserialize(id, value, time_sent, destination, topic, tase2_data, control_time_sent, control_uid, flags.with_fast_TS, flags.real_time_critical);
+        return std::make_unique<AcknowledgementSent>(id, value, time_sent, destination, std::vector<graaf::vertex_id_t>{}, topic, tase2_data,
+                                                     control_uid, flags, control_time_sent);
+    }
+};
+
+struct AcknowledgementReceived : public ControlReceived {
+    AcknowledgementReceived(const AcknowledgementSent& acknowledgement, double time_received)
+        : ControlReceived(acknowledgement, time_received), control_time_sent(acknowledgement.control_time_sent) {}
+
+    double control_time_sent;
+
+    operator std::string () const override {
+        std::stringstream ss;
+        ss << "AcknowledgementReceived" << ", " << id << ", " << value << ", " << time_sent << ", " << time_received << ", " << control_time_sent;
+        for (auto it : path) {
+            ss << ", " << it;
+        }
+        return ss.str();
+    }
+
+    int constexpr getType() const override {
+        return static_cast<int>(SerializableInfo::AcknowledgementReceived);
+    }
+
+    void serialize(ClickHouseBinaryBuffer& buf) const override {
+        ::serialize(buf, id, value, time_sent, destination, topic, tase2_data, time_received, control_time_sent, control_uid, flags.with_fast_TS, flags.real_time_critical);
+    }
+
+    static std::unique_ptr<Serializable> deserialize(ClickHouseBinaryReader& reader) {
+        std::string id;
+        Value value;
+        double time_sent;
+        std::string destination;
+        std::string topic;
+        std::optional<tase2::Tase2Extension> tase2_data;
+        double time_received;
+        double control_time_sent;
+        int64_t control_uid;
+        ControlFlags flags;
+        reader.deserialize(id, value, time_sent, destination, topic, tase2_data, time_received, control_time_sent, control_uid, flags.with_fast_TS, flags.real_time_critical);
+        auto sent = AcknowledgementSent(id, value, time_sent, destination, {}, topic, std::move(tase2_data),
+                                        control_uid, flags, control_time_sent);
+        return std::make_unique<AcknowledgementReceived>(sent, time_received);
+    }
+};
+
+struct CycosimAcknowledgementReceived : public AcknowledgementReceived {
+    CycosimAcknowledgementReceived(const std::string& source_, const AcknowledgementReceived& acknowledgement)
+        : AcknowledgementReceived(acknowledgement), source(source_) {}
+
+    std::string source;  // Where the acknowledgement has become a CycosimAcknowledgement
+
+    int constexpr getType() const override {
+        return static_cast<int>(SerializableInfo::CycosimAcknowledgementReceived);
     }
 
     static std::unique_ptr<Serializable> deserialize(ClickHouseBinaryReader& reader) {

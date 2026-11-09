@@ -69,6 +69,7 @@ void Broker::init() {
     Orchestrator::get().subscribeTo<ActualControl, &Broker::onActualControl>(this);
     Orchestrator::get().subscribeTo<MeasurementReceived, &Broker::onMeasurementReceived>(this);
     Orchestrator::get().subscribeTo<ControlReceived, &Broker::onControlReceived>(this);
+    Orchestrator::get().subscribeTo<AcknowledgementReceived, &Broker::onAcknowledgementReceived>(this);
 }
 
 Broker::~Broker() {
@@ -122,11 +123,21 @@ void Broker::onControlReceived(const ControlReceived& info) {
     sendInformationToPerformanceBroker(MessageType::ControlReceived, info.id, info.value, info.time_sent, info.destination, info.topic, info.tase2_data, info.time_received, std::nullopt);
 }
 
+void Broker::onAcknowledgementReceived(const AcknowledgementReceived& info) {
+    if (info.flags.real_time_critical) {
+        return;  // Already returned to the caller of the real-time critical control
+    }
+    sendInformationToPerformanceBroker(MessageType::AcknowledgementReceived, info.id, info.value, info.time_sent, info.destination, info.topic, info.tase2_data, info.time_received, std::nullopt, info.control_time_sent, info.control_uid);
+}
+
 void Broker::publishIntermediaryMeasurement(const MeasurementReceived& info, const std::string& location) {
     sendInformationToPerformanceBroker(MessageType::MeasurementReceived, info.id, info.value, info.time_sent, info.destination, info.topic, info.tase2_data, info.time_received, location);
 }
 void Broker::publishIntermediaryControl(const ControlReceived& info, const std::string& location) {
     sendInformationToPerformanceBroker(MessageType::ControlReceived, info.id, info.value, info.time_sent, info.destination, info.topic, info.tase2_data, info.time_received, location);
+}
+void Broker::publishIntermediaryAcknowledgement(const AcknowledgementReceived& info, const std::string& location) {
+    sendInformationToPerformanceBroker(MessageType::AcknowledgementReceived, info.id, info.value, info.time_sent, info.destination, info.topic, info.tase2_data, info.time_received, location, info.control_time_sent, info.control_uid);
 }
 
 void Broker::onTimeUpdate(const TimeUpdate& info) {
@@ -157,7 +168,7 @@ void Broker::subscribe(const std::string& topic, Handler handler) {
     }
 }
 
-void Broker::sendInformationToPerformanceBroker(MessageType type, const std::string& id, const Value& value, double time_sent, const std::string& destination, const std::string& topic, const std::optional<tase2::Tase2Extension>& tase2_data, double time_received, const std::optional<std::string>& location) {
+void Broker::sendInformationToPerformanceBroker(MessageType type, const std::string& id, const Value& value, double time_sent, const std::string& destination, const std::string& topic, const std::optional<tase2::Tase2Extension>& tase2_data, double time_received, const std::optional<std::string>& location, double control_time_sent, int64_t control_uid) {
     size_t head = ring_buffer_->head.load(std::memory_order_relaxed);
     size_t tail = ring_buffer_->tail.load(std::memory_order_acquire);
     size_t next_head = (head + 1) % RING_SIZE;
@@ -181,6 +192,8 @@ void Broker::sendInformationToPerformanceBroker(MessageType type, const std::str
     copy_string(msg.destination, destination);
     copy_string(msg.topic, topic);
     msg.time_received = time_received;
+    msg.control_time_sent = control_time_sent;
+    msg.control_uid = control_uid;
     // Tase2 extension
     msg.has_tase2 = tase2_data.has_value();
     if (tase2_data.has_value()) {

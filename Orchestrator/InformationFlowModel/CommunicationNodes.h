@@ -37,8 +37,16 @@ class CommunicationNode : public CommunicationElement {
          */
         bool apply(ControlReceived& info) override;
 
+        /**
+         * Apply the delay, drop, and corruption functions of this element to info.
+         * Returns 1 if the info is dropped, else 0.
+         * The information (value, and time_received) is modified in place.
+         */
+        bool apply(AcknowledgementReceived& info) override;
+
         void publishIntermediaryMeasurement(const MeasurementReceived& info);
         void publishIntermediaryControl(const ControlReceived& info);
+        void publishIntermediaryAcknowledgement(const AcknowledgementReceived& info);
 
         template<class Archive>
         void serialize(Archive& ar) {

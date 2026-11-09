@@ -47,6 +47,7 @@ class Broker {
 
         void publishIntermediaryMeasurement(const MeasurementReceived& info, const std::string& location);
         void publishIntermediaryControl(const ControlReceived& info, const std::string& location);
+        void publishIntermediaryAcknowledgement(const AcknowledgementReceived& info, const std::string& location);
 
     private:
         Broker();
@@ -54,13 +55,14 @@ class Broker {
 
         void onMeasurementReceived(const MeasurementReceived& info);
         void onControlReceived(const ControlReceived& info);
+        void onAcknowledgementReceived(const AcknowledgementReceived& info);
         void onActualMeasurement(const ActualMeasurement& info);
         void onActualControl(const ActualControl& info);
         void onTimeUpdate(const TimeUpdate& info);
         void onDynawoTimelineEvent(const DynawoTimelineEvent& info);
         void onDynawoConstraintEvent(const DynawoConstraintEvent& info);
 
-        void sendInformationToPerformanceBroker(MessageType type, const std::string& id, const Value& value, double time_sent, const std::string& destination, const std::string& topic, const std::optional<tase2::Tase2Extension>& tase2_data, double time_received, const std::optional<std::string>& location);
+        void sendInformationToPerformanceBroker(MessageType type, const std::string& id, const Value& value, double time_sent, const std::string& destination, const std::string& topic, const std::optional<tase2::Tase2Extension>& tase2_data, double time_received, const std::optional<std::string>& location, double control_time_sent = 0, int64_t control_uid = 0);
 
         void sendValueToPerformanceBroker(MessageType type, const std::string& id, const Value& value, double time, const std::string& topic);
 

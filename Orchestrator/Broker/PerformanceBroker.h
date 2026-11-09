@@ -16,7 +16,7 @@ co-simulation of power systems.
 #include <nats.h>
 
 /**
- * Broker that is run in a separate thread for performance reasons. Can only publish MeasurementReceived, ControlReceived (SCADA messages),
+ * Broker that is run in a separate thread for performance reasons. Can only publish MeasurementReceived, ControlReceived, AcknowledgementReceived (SCADA messages),
  * ActualMeasurement, and ActualControl (Game Master messages) (messages that are sent with a high frequency (particularly MeasurementReceived
  * and ActualMeasurement)). Cannot subscribe to messages.
  * Receives data from the Broker through a RingBuffer (Broker writes in the buffer, PerformanceBroker reads it), then formats it
@@ -35,6 +35,7 @@ class PerformanceBroker {
 
         void handleGameMasterMessage(const Message& message);
         void handleScadaMessage(const Message& message);
+        void handleAcknowledgementMessage(const Message& message);
 
         RingBuffer* ring_buffer_;
         natsConnection* nats_connection_;

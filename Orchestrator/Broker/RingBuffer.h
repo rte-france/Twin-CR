@@ -22,7 +22,8 @@ enum class MessageType {
     ActualMeasurement,
     ActualControl,
     MeasurementReceived,
-    ControlReceived
+    ControlReceived,
+    AcknowledgementReceived
 };
 
 struct Message {
@@ -33,6 +34,8 @@ struct Message {
     char destination[64];
     char topic[64];
     double time_received;
+    double control_time_sent;  // Only set for AcknowledgementReceived
+    int64_t control_uid;  // Only set for AcknowledgementReceived
 
     // Tase2 extension
     bool has_tase2;
