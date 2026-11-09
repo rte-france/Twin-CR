@@ -238,15 +238,7 @@ void MonitoredPath::updateAvailability() {
     }
 
     if (!available_ && all_available) {  // Send CG when path becomes available (and was unavailable before)
-        Orchestrator::get().emit(ControlSent("CG", 0, Orchestrator::get().getCurrentTime(), destination_, path_, "CG",
-            tase2::Tase2Extension(
-                "CG",
-                tase2::SignalisationType::CG,
-                tase2::CAUSE_SPONTANEOUS,
-                tase2::QUALITY_VALIDITY_GOOD,
-                false
-            ),
-            network_graph_->nextControlUid()));
+        Orchestrator::get().emit(makeGeneralInterrogation(Orchestrator::get().getCurrentTime(), destination_, path_, network_graph_->nextControlUid()));
     }
     available_ = all_available;
 }

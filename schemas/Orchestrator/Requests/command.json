@@ -20,6 +20,7 @@
     { "$ref": "command_command_injection.json" },
     { "$ref": "command_command_injection_received.json" },
     { "$ref": "command_command_injection_game_master.json" },
+    { "$ref": "command_general_interrogation.json" },
     { "$ref": "command_iidm_command.json" },
     { "$ref": "command_scale_multiplier.json" },
     { "$ref": "command_manual_actuator_scada.json" }

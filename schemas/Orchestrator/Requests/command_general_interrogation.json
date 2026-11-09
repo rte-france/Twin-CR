@@ -1,0 +1,31 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "GeneralInterrogationCommandRequest",
+  "description": "Send a general interrogation (CG, contrôle général) to an RTU or ARP, through the information flow model. The RTU/ARP then resends the latest TSes it saved",
+  "allOf": [
+    {
+      "$ref": "start_time.json"
+    },
+    {
+      "type": "object",
+      "properties": {
+        "command": {
+          "type": "string",
+          "const": "general_interrogation"
+        },
+        "destination": {
+          "$ref": "node.json",
+          "description": "RTU or ARP to interrogate"
+        },
+        "source": {
+          "$ref": "node.json",
+          "description": "Sender of the general interrogation, defaults to the SCADA ([hmi] location)"
+        }
+      },
+      "required": [
+        "command",
+        "destination"
+      ]
+    }
+  ]
+}
