@@ -1,12 +1,12 @@
 /*
-Copyright (c) 2025-2026, RTE (https://www.rte-france.com)
+Copyright (c) 2026, RTE (https://www.rte-france.com)
 See AUTHORS.md
 SPDX-License-Identifier: MPL-2.0
 This file is part of Twin-CR, a platform for real-time cyber-physical
 co-simulation of power systems.
 */
 
-import { createSignal, onMount, onCleanup } from "solid-js";
+import { onMount, onCleanup } from "solid-js";
 import { render } from "solid-js/web";
 import { DockviewComponent } from "dockview-core";
 import { MfeLoader } from "../MfeLoader";
@@ -49,7 +49,6 @@ export const DockviewCentral = () => {
         const containerDiv = document.createElement("div");
         containerDiv.className = "w-full h-full";
         let disposeSolid: (() => void) | null = null;
-        const [componentProps, setComponentProps] = createSignal<unknown>();
 
         return {
           element: containerDiv,
@@ -64,23 +63,17 @@ export const DockviewCentral = () => {
                 entryUrl: payload.entryUrl,
                 isLocalFile: payload.isLocalFile,
               };
-              setComponentProps(payload.params);
 
               disposeSolid = render(
                 () => (
                   <MfeLoader
                     manifest={manifest}
-                    componentProps={componentProps()}
+                    componentProps={payload.params}
                   />
                 ),
                 containerDiv,
               );
             }
-          },
-          // Reopening an already open panel updates its parameters instead of creating a new one
-          update: (event) => {
-            const payload = event.params as OpenCentralParams | undefined;
-            if (payload?.params) setComponentProps(payload.params);
           },
           dispose: () => disposeSolid?.(),
         };
@@ -185,8 +178,6 @@ export const DockviewCentral = () => {
 
       const existing = dockview.getGroupPanel(payload.id);
       if (existing) {
-        existing.update({ params: payload });
-        existing.api.setTitle(payload.title);
         existing.api.setActive();
         return;
       }
@@ -267,6 +258,40 @@ export const DockviewCentral = () => {
       }
     };
 
+    const handleCloseActivePanel = () => {
+      const activeGroup = dockview.activeGroup;
+      if (activeGroup && activeGroup.activePanel) {
+        activeGroup.activePanel.api.close();
+      }
+    };
+
+    const handleNextTab = () => {
+      const group = dockview.activeGroup;
+      if (!group || group.panels.length <= 1) return;
+
+      const currentIndex = group.panels.findIndex(
+        (p) => p === group.activePanel,
+      );
+
+      const nextIndex = (currentIndex + 1) % group.panels.length;
+
+      group.panels[nextIndex].api.setActive();
+    };
+
+    const handlePrevTab = () => {
+      const group = dockview.activeGroup;
+      if (!group || group.panels.length <= 1) return;
+
+      const currentIndex = group.panels.findIndex(
+        (p) => p === group.activePanel,
+      );
+
+      const prevIndex =
+        (currentIndex - 1 + group.panels.length) % group.panels.length;
+
+      group.panels[prevIndex].api.setActive();
+    };
+
     const unlistenReattachPromise = getCurrentWindow().listen(
       "argus:reattach-panel",
       (event: any) => {
@@ -281,12 +306,24 @@ export const DockviewCentral = () => {
     window.addEventListener("argus:focus-tool", handleFocusTool);
     window.addEventListener("keydown", handleKeyDown);
 
+    window.addEventListener("argus:close-active-panel", handleCloseActivePanel);
+    window.addEventListener("argus:next-tab", handleNextTab);
+    window.addEventListener("argus:prev-tab", handlePrevTab);
+
     onCleanup(() => {
       resizeObserver.disconnect();
       window.removeEventListener("argus:move-panel", onMovePanel);
       window.removeEventListener("argus:add-central", handleAdd);
       window.removeEventListener("argus:focus-tool", handleFocusTool);
       window.removeEventListener("keydown", handleKeyDown);
+
+      window.removeEventListener(
+        "argus:close-active-panel",
+        handleCloseActivePanel,
+      );
+      window.removeEventListener("argus:next-tab", handleNextTab);
+      window.removeEventListener("argus:prev-tab", handlePrevTab);
+
       unlistenReattachPromise.then((unlisten) => unlisten());
       dockview.dispose();
     });

@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2025-2026, RTE (https://www.rte-france.com)
+Copyright (c) 2026, RTE (https://www.rte-france.com)
 See AUTHORS.md
 SPDX-License-Identifier: MPL-2.0
 This file is part of Twin-CR, a platform for real-time cyber-physical
@@ -130,7 +130,7 @@ export function Sidebar(props: SidebarProps) {
               onMouseDown={startRowResizing}
               class="relative w-full h-px cursor-row-resize z-20 shrink-0
                      before:content-[''] before:absolute before:inset-0 before:bg-border before:transition-all before:duration-150
-                     hover:before:bg-sidebar-active hover:before:-top-[2px] hover:before:-bottom-[2px]
+                     hover:before:bg-sidebar-active hover:before:-top-0.5 hover:before:-bottom-0.5
                      after:content-[''] after:absolute after:-top-2 after:-bottom-2 after:left-0 after:right-0"
             />
           </Show>

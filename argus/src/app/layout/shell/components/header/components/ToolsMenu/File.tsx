@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2025-2026, RTE (https://www.rte-france.com)
+Copyright (c) 2026, RTE (https://www.rte-france.com)
 See AUTHORS.md
 SPDX-License-Identifier: MPL-2.0
 This file is part of Twin-CR, a platform for real-time cyber-physical
@@ -8,17 +8,20 @@ co-simulation of power systems.
 
 import { Menubar } from "@kobalte/core/menubar";
 import { Effect } from "effect";
-import { systemRuntime } from "@/config/runtime";
+import { getSystemRuntime } from "@/utils/getSystemRuntime";
 import { WindowBootstrapper } from "@/services/window-bootstrap";
 import type { Component } from "solid-js";
+import { useNavigate } from "@solidjs/router";
 
 export const File: Component = () => {
+  const navigate = useNavigate();
+
   const handleNewParent = () => {
     const program = WindowBootstrapper.pipe(
-      Effect.flatMap((wb) => wb.createParent("Twin-CR", "/home")),
+      Effect.flatMap((wb) => wb.createParent("TwinEU French Pilot", "/home")),
     );
 
-    systemRuntime.runPromise(program).catch(console.error);
+    getSystemRuntime().runPromise(program).catch(console.error);
   };
 
   const itemClass =
@@ -34,8 +37,11 @@ export const File: Component = () => {
 
       <Menubar.Portal>
         <Menubar.Content class={contentClass}>
+          <Menubar.Item class={itemClass} onSelect={() => navigate("/project")}>
+            Edit Workspace
+          </Menubar.Item>
           <Menubar.Item class={itemClass} onSelect={handleNewParent}>
-            New Workspace
+            Open Workspace
           </Menubar.Item>
         </Menubar.Content>
       </Menubar.Portal>

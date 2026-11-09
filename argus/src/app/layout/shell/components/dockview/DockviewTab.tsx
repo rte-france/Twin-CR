@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2025-2026, RTE (https://www.rte-france.com)
+Copyright (c) 2026, RTE (https://www.rte-france.com)
 See AUTHORS.md
 SPDX-License-Identifier: MPL-2.0
 This file is part of Twin-CR, a platform for real-time cyber-physical
@@ -12,7 +12,7 @@ import type { DockviewPanelApi } from "dockview-core";
 import { FiLayout, FiSidebar, FiArrowDown, FiX } from "solid-icons/fi";
 import { Effect } from "effect";
 import { WindowBootstrapper } from "@/services/window-bootstrap";
-import { systemRuntime } from "@/config/runtime";
+import { getSystemRuntime } from "@/utils/getSystemRuntime";
 
 interface CustomTabProps {
   api: DockviewPanelApi;
@@ -54,7 +54,7 @@ export const DockviewTab: Component<CustomTabProps> = (props) => {
 
   const handleDetach = () => {
     const id = props.api.id;
-    const title = props.params?.label || props.title || "Vue détachée";
+    const title = props.params?.label || props.title || "Detached Panel";
 
     if (props.params) {
       localStorage.setItem(
@@ -72,7 +72,7 @@ export const DockviewTab: Component<CustomTabProps> = (props) => {
       yield* wm.createChildFromCurrent(title, targetRoute);
     });
 
-    systemRuntime
+    getSystemRuntime()
       .runPromise(program)
       .then(() => {
         props.api.close();
@@ -89,6 +89,12 @@ export const DockviewTab: Component<CustomTabProps> = (props) => {
         class="group flex h-full w-full items-center justify-between px-2 cursor-pointer relative"
         onContextMenu={(e) => e.stopPropagation()}
         onPointerDown={(e) => e.stopPropagation()}
+        onPointerUp={(e) => {
+          if (e.button === 1) {
+            e.stopPropagation();
+            handleClose();
+          }
+        }}
       >
         <span class="truncate pr-6">
           {props.params?.file?.filename || props.title}

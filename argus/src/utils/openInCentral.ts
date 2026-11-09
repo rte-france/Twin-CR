@@ -12,6 +12,7 @@ export interface OpenCentralParams {
   id: string;
   title: string;
   elementTag: string;
+  iconId?: `${string}:${string}`;
   params?: Record<string, any>;
   entryUrl?: string;
   isLocalFile?: boolean;
@@ -19,4 +20,20 @@ export interface OpenCentralParams {
 
 export const openInCentral = (payload: OpenCentralParams) => {
   window.dispatchEvent(new CustomEvent(ADD_CENTRAL_EVENT, { detail: payload }));
+};
+
+export const ADD_BOTTOM_LEFT_EVENT = "argus:open-bottom-left";
+
+export const openInBottomLeft = (payload: OpenCentralParams) => {
+  window.dispatchEvent(
+    new CustomEvent(ADD_BOTTOM_LEFT_EVENT, { detail: payload }),
+  );
+};
+
+export const ADD_BOTTOM_RIGHT_EVENT = "argus:open-bottom-right";
+
+export const openInBottomRight = (payload: OpenCentralParams) => {
+  window.dispatchEvent(
+    new CustomEvent(ADD_BOTTOM_RIGHT_EVENT, { detail: payload }),
+  );
 };
