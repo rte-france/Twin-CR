@@ -88,7 +88,8 @@ curve_names_receiver_(DynawoReceiver(5556, "curves_names")),
 timeline_receiver_(DynawoReceiver(5556, "timeline")),
 constraints_receiver_(DynawoReceiver(5556, "constraints")),
 logger_(logger),
-subprocess_(process_launcher) {
+subprocess_(process_launcher),
+information_flow_model_(information_flow_model) {
     const auto& working_dir = Orchestrator::get().getWorkingDir();
     const auto& config = Orchestrator::get().getConfig();
 
@@ -102,17 +103,6 @@ subprocess_(process_launcher) {
     std::filesystem::path scada_outputs_file = working_dir / get_or_throw<std::string>(config, {"input_files", "scada_outputs_file"});
     job_file_ = working_dir / get_or_throw<std::string>(config, {"input_files", "job_file"});
     period_ = get_or_throw<double>(config, {"master", "period"});
-    fast_return_delay_ = get_or_continue<double>(config, {"hmi", "fast_return_delay"}).value_or(0.0);
-    if (fast_return_delay_ < 0) {
-        throw std::invalid_argument("[hmi] fast_return_delay must be >= 0 in config.toml");
-    }
-    // The simulator applies a command at a coupling step and reports the new position one output
-    // later: for that long it still reports the old position, which must not be published as a
-    // correction of the anticipated one. 0 publishes the simulator's value at once.
-    fast_return_grace_ = get_or_continue<double>(config, {"hmi", "fast_return_grace"}).value_or(3.0);
-    if (fast_return_grace_ < 0) {
-        throw std::invalid_argument("[hmi] fast_return_grace must be >= 0 in config.toml");
-    }
 
     DydHandler dyd_handler = DydHandler(dyd_file);
     dynawo_events_ = dyd_handler.getEvents();
@@ -233,11 +223,6 @@ subprocess_(process_launcher) {
             }
             double factor = get_or_default(dynawo_output, {"factor"}, 1.0);
             bool publish_on_change = get_or_default(dynawo_output, {"publish_on_change"}, false);
-            bool fast_return = get_or_default(dynawo_output, {"fast_return"}, false);
-            if (fast_return && !publish_on_change) {
-                spdlog::warn("Dynawo scada output {}: fast_return ignored, only a publish_on_change (state) output can be anticipated", id);
-                fast_return = false;
-            }
             double last_value = get_or_default(dynawo_output, {"last_value"}, -999);
             double period = get_or_default(dynawo_output, {"period"}, 0);
             double period_offset;
@@ -251,7 +236,6 @@ subprocess_(process_launcher) {
 
             auto scada_output = std::make_shared<SCADA_output>(id, destination, routing, topic, tase2_id,
                 factor, publish_on_change, last_value, period, period_offset, dynawo_start_time);
-            scada_output->fast_return = fast_return;
             scada_outputs_by_curve_name_[curve_name].push_back(scada_output);
             scada_outputs_by_scada_id_[id].push_back(scada_output);
         } catch (const nlohmann::detail::type_error& e) {
@@ -338,46 +322,41 @@ void DynawoInterface::resetControl(const std::string& control_id) {
 
 void DynawoInterface::onControlReceived(const ControlReceived& info) {
     applyControl(info.id, info.value);
-    anticipateStateReturn(info);
+    if (info.flags.with_fast_TS) {
+        sendFastTS(info);
+    }
 }
 
-void DynawoInterface::anticipateStateReturn(const ControlReceived& info) {
-    auto it = scada_outputs_by_scada_id_.find(info.id);
-    if (it == scada_outputs_by_scada_id_.end()) {
-        return;  // No state output pairs with this command (e.g. a setpoint, or a non-Dynawo control)
+void DynawoInterface::sendFastTS(const ControlReceived& info) {
+    auto source = information_flow_model_.getSourceName(info);
+    if (!source.has_value()) {
+        spdlog::warn("Fast TS requested for control {}, but the control has no sender to return the TS to, skipping", info.id);
+        return;
     }
-    // The command has reached its RTU at the current time (a dropped command never gets here).
-    const double received_time = Orchestrator::get().getCurrentTime();
-    const double anticipated = info.value.to_double();  // Commanded position, already in SCADA units
-    for (const auto& scada_output : it->second) {
-        if (!scada_output->fast_return) {
-            continue;
+    bool sent = false;
+    if (scada_outputs_by_scada_id_.contains(info.id)) {
+        auto return_path = InformationFlowModel::getReturnPath(info);
+        const double time = Orchestrator::get().getCurrentTime();
+        for (const auto& scada_output : scada_outputs_by_scada_id_.at(info.id)) {
+            if (!scada_output->publish_on_change) {
+                continue;  // Only state outputs (TS) are returned
+            }
+
+            std::optional<tase2::Tase2Extension> tase2_extension;
+            if (scada_output->tase2_id.has_value()) {
+                tase2_extension.emplace(scada_output->tase2_id.value(), tase2::SignalisationType::TS,
+                tase2::CAUSE_SPONTANEOUS, tase2::QUALITY_VALIDITY_GOOD, false);
+            }
+            spdlog::debug("Fast TS {} = {} returned to {} at t={}", scada_output->id, info.value, *source, time);
+            // scada_output value not updated on purpose. The other subscribers get the TS on the next Dynawo timestep as usual
+            Orchestrator::get().emit(MeasurementSent(scada_output->id, info.value, time, *source, return_path,
+                                                     scada_output->topic, std::move(tase2_extension)));
+            sent = true;
         }
-        // Seed the change detector: Dynawo confirming this value stays silent. Its old value, which it
-        // keeps reporting until it has applied the command, is withheld during the grace window;
-        // anything else once the window expired corrects the anticipation.
-        scada_output->last_value = anticipated;
-        scada_output->anticipated_value = anticipated;
-        scada_output->anticipated_until = received_time + fast_return_grace_;
-        const double emit_time = received_time + fast_return_delay_;
-        spdlog::debug("Anticipating position {} = {} at t={} (command received at t={})",
-                      scada_output->id, anticipated, emit_time, received_time);
-        Orchestrator::get().scheduleEvent(
-            emit_time,
-            makeCallback<&DynawoInterface::emitAnticipatedState>(this, scada_output, anticipated, emit_time)
-        );
     }
-}
-
-void DynawoInterface::emitAnticipatedState(std::shared_ptr<SCADA_output> scada_output, double value, double time) {
-    // Same shape as a state output published after a Dynawo step: a spontaneous TS, plain Good.
-    std::optional<tase2::Tase2Extension> tase2_extension;
-    if (scada_output->tase2_id.has_value()) {
-        tase2_extension.emplace(scada_output->tase2_id.value(), tase2::SignalisationType::TS,
-                                tase2::CAUSE_SPONTANEOUS, tase2::QUALITY_VALIDITY_GOOD, false);
+    if (!sent) {
+        spdlog::warn("Fast TS requested for control {}, but no publish_on_change SCADA output has this id, skipping", info.id);
     }
-    Orchestrator::get().emit(MeasurementSent(scada_output->id, value, time, scada_output->destination,
-                                             scada_output->routing, scada_output->topic, tase2_extension));
 }
 
 void DynawoInterface::onActualControl(const ActualControl& info) {
@@ -470,22 +449,7 @@ void DynawoInterface::goToNextTimeStep() {
             bool do_emit = true;
             double local_value = value * scada_output.factor;
             if (scada_output.publish_on_change) {
-                if (scada_output.anticipated_until >= 0) {
-                    if (local_value == scada_output.anticipated_value) {
-                        // The simulator confirms the anticipated position: the window closes, silently.
-                        scada_output.anticipated_until = -1.0;
-                        do_emit = false;
-                    } else if (current_time_ < scada_output.anticipated_until) {
-                        // Still the pre-command position: the simulator has not applied the command yet.
-                        // Not a correction, nothing to publish.
-                        do_emit = false;
-                    } else {
-                        spdlog::warn("Anticipated position {} = {} not confirmed by the simulator within {} s: publishing {} as a correction",
-                                     scada_output.id, scada_output.anticipated_value, fast_return_grace_, local_value);
-                        scada_output.anticipated_until = -1.0;
-                        scada_output.last_value = local_value;
-                    }
-                } else if (scada_output.last_value != local_value) {
+                if (scada_output.last_value != local_value) {
                     scada_output.last_value = local_value;
                 } else {
                     do_emit = false;
@@ -502,9 +466,6 @@ void DynawoInterface::goToNextTimeStep() {
             if (scada_output.requested) {
                 scada_output.requested = false;
                 do_emit = true;  // Force emission if requested
-                if (scada_output.anticipated_until >= 0) {
-                    local_value = scada_output.anticipated_value;  // An interrogation during the window answers the anticipated position
-                }
             }
 
             std::optional<tase2::Tase2Extension> tase2_extension;

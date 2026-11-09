@@ -38,8 +38,6 @@ cyber_config_file = "cyber_config.json"
 
 [hmi]
 location = "CC"
-# fast_return_delay = 0.0  # seconds between a command reaching its RTU and the anticipated position of a "fast_return" state output
-# fast_return_grace = 3.0  # seconds the simulator may still report the old position before its value corrects the anticipation
 line_button_ids = []
 bool_button_ids = ["PL1_state"]
 subscribed_substations = [">"]

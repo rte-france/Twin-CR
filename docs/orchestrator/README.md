@@ -713,8 +713,6 @@ The fields are the same as for game master outputs (*Note: this might change in 
 
 Also, the optional field "tase2" (string) can be set for any SCADA output. If it is set, a tase2 field with tase2 data (validity, cause, etc.) will be added on top of the default format.
 
-The optional field "fast_return" (boolean, default false) marks a state output (publish_on_change) whose position the orchestrator anticipates when a command with the same id reaches the output's source node: the commanded value is sent from that node as an ordinary measurement, without waiting for the next Dynawo step, so that control applications see the position within their command timeout (fast devices such as breakers, disconnectors and tap changers stay at the simulator's pace). The anticipated measurement crosses the information flow model like any other, so the delay, drop and corruption functions of the return path apply, and the source RTU keeps it as the last known position. At the next Dynawo step, nothing is published when the simulator confirms the anticipated value, and the real position is published when it differs. The optional `fast_return_delay` key of the `[hmi]` table (seconds, default 0) adds the device's reaction time between the command's arrival and the anticipated measurement. The configurator sets "fast_return" from the IIDM switch kind (BREAKER). While the anticipated position awaits the simulator, the simulator still reports the old position until it has applied the command: those reports are withheld for `[hmi] fast_return_grace` seconds (default 3). The simulator reporting the anticipated position confirms it silently; if the window expires first, the simulator's value is published as a correction and a warning is logged. 0 publishes the simulator's value at once.
-
 The fields listed above are the only fields read by the orchestrator, but other fields might be read by other modules. Refer to the game master and SCADA documentation for more info.
 
 The following python [script](/tools/dynawo_toolbox/src/main_dynawo_outputs_config_generator.py) can be used to generate the Dynawo output files. It also generates the associated Dynawo crv file (at this stage, Dynawo only publishes the variables listed in the crv file, dynawo outputs whose dynawo_id is not included in the crv file will thus not be published).
@@ -786,6 +784,17 @@ Or with an addendum, if a "tase2" field is given the scada_outputs.json file:
     }
 }
 ```
+- Acknowledgement."destination"."topic": acknowledgements of the controls sent by "destination" (see [5.2](#52-control-acknowledgements-and-options)). Published in the format below (id and value are those of the acknowledged control, time_sent is the time the ack is sent, i.e. the time the control reached its destination):
+```json
+{
+    "control_uid": 42,
+    "id": "id",
+    "value": 1,
+    "control_time_sent": 10.0,
+    "time_sent": 10.05,
+    "time_received": 10.1
+}
+```
 - stop: stop message to signal the end of the simulation
 - time: current time of the simulation (published as string, updated at each Dynawo iteration). This is mostly meant for the game master, as the SCADA can guess the time from the value of the "time_received" field.
 - Dynawo.Timeline: Dynawo timeline events sent one by one in JSON format
@@ -801,6 +810,36 @@ For both topics, it replies with "OK" if the control was correctly formatted and
 ## 5.1. Connection of external automata
 
 External automata can be connected to the broker similarly to the HMI, i.e. they should subscribe to the HMI."destination"."topic", where "destination" should be replaced by the name of the node where the automaton is installed, and "topic" by the topic of the Dynawo outputs of interest (or * to subscribe to all topic). Optionally, it should also subscribe to the topic "stop" to know when the simulation is interrupted. Finally, the automaton should publish to "HMIControl" when it is activated. A very simple example of automaton is shown [here](/Orchestrator/automata/tcp_blocker.py).
+
+## 5.2. Control acknowledgements and options
+
+**Acknowledgement.** Whenever a control reaches its destination (ControlReceived), the information flow model automatically sends an acknowledgement (AcknowledgementSent, then AcknowledgementReceived) from the control's destination back to its source, along the reversed path of the control. The acknowledgement crosses the information flow model like a control (delay, drop, and control corruption functions apply), so it is lost if the control or the acknowledgement is dropped. Acknowledgements are published on Acknowledgement."destination"."topic" (destination = sender of the control), forwarded to Cycosim (type "AcknowledgementReceived") when their path enters a Cycosim node, and logged in the AcknowledgementSent/AcknowledgementReceived tables.
+
+**Control uid.** Each control gets a unique identifier, `control_uid`, carried by its acknowledgement (as id and time_sent are not unique, e.g. two controls sent in the same time step). It is returned in the reply to the HMIControl request (`{"status": "OK", "control_uid": 42}`), so that the sender can match the acknowledgement published later, and is logged in the control and acknowledgement tables.
+
+**Control options.** A control sent on HMIControl.> (or by Cycosim) accepts two optional boolean fields:
+```json
+{"id": "PL1_state", "value": 0, "with_fast_TS": true, "real_time_critical": true}
+```
+- `with_fast_TS`: when the control reaches its destination, the paired state output (the publish_on_change [SCADA output](#45-dynawo-outputs) with the same id as the control) is returned at once with the commanded value, from the control's destination to the original sender of the control only, as an ordinary measurement (it crosses the information flow model). The other modules still receive the TS at the next Dynawo step, when the simulator publishes it.
+- `real_time_critical`: the acknowledgement of the control must not wait for the event queue (which may lag behind real time under heavy load). The control itself still goes through the normal event queue. The control is timestamped from the real-time clock and the information flow model computes at once the control and its acknowledgement (delay, drop and corruption), from the thread that received the control. The acknowledgement is returned directly to the caller, in the reply to the HMIControl request (Cycosim: queued for the next synchronisation), its delay incorporated in its time_received: the caller is responsible for waiting until then. The acknowledgement is not published on the Acknowledgement topic, only logged. Reply example (`"acknowledgement": null` if the control or its acknowledgement is dropped):
+```json
+{
+    "status": "OK",
+    "control_uid": 42,
+    "acknowledgement": {
+        "control_uid": 42,
+        "id": "PL1_state",
+        "value": 0,
+        "source": "RTU_1",
+        "destination": "CC",
+        "control_time_sent": 10.0,
+        "time_sent": 10.05,
+        "time_received": 10.1,
+        "delay": 0.1
+    }
+}
+```
 
 # 6. Replay functionality
 

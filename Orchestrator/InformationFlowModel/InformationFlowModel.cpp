@@ -43,6 +43,8 @@ InformationFlowModel::InformationFlowModel(ClickHouseLogger& logger, double time
 void InformationFlowModel::initSubscriptions() {
     Orchestrator::get().subscribeTo<MeasurementSent, &InformationFlowModel::handleMeasurementSent>(this);
     Orchestrator::get().subscribeTo<ControlSent, &InformationFlowModel::handleControlSent>(this);
+    Orchestrator::get().subscribeTo<ControlReceived, &InformationFlowModel::onControlReceived>(this);
+    Orchestrator::get().subscribeTo<AcknowledgementSent, &InformationFlowModel::handleAcknowledgementSent>(this);
     Orchestrator::get().subscribeTo<DumpStateEvent, &InformationFlowModel::handleDumpStateEvent>(this);
 }
 
@@ -56,7 +58,11 @@ void InformationFlowModel::handleMeasurementSent(const MeasurementSent& info) {
     // Copy info in a MeasurementReceived event (with time_received=current_time)
     auto info_received = MeasurementReceived(info, Orchestrator::get().getCurrentTime());
     // Apply delay, drop and corruption functions on the created MeasurementReceived event (possibly modifying info.time_received and info.value)
-    bool dropped = propagateInformation<MeasurementReceived>(info_received);
+    bool dropped;
+    {
+        std::lock_guard<std::recursive_mutex> lock(mutex_);
+        dropped = propagateInformation<MeasurementReceived>(info_received);
+    }
     if (!dropped) {
         // Emit the event if it is not dropped
         Orchestrator::get().emitLater(std::move(info_received), info_received.time_received);
@@ -64,14 +70,103 @@ void InformationFlowModel::handleMeasurementSent(const MeasurementSent& info) {
 }
 
 void InformationFlowModel::handleControlSent(const ControlSent& info) {
+    if (info.flags.real_time_critical) {
+        return;  // Already propagated by handleRealTimeCriticalControl
+    }
     // Copy info in a ControlReceived event (with time_received=current_time)
     auto info_received = ControlReceived(info, Orchestrator::get().getCurrentTime());
     // Apply delay, drop and corruption functions on the created ControlReceived event (possibly modifying info.time_received and info.value)
-    bool dropped = propagateInformation<ControlReceived>(info_received);
+    bool dropped;
+    {
+        std::lock_guard<std::recursive_mutex> lock(mutex_);
+        dropped = propagateInformation<ControlReceived>(info_received);
+    }
     if (!dropped) {
         // Emit the event if it is not dropped
         Orchestrator::get().emitLater(std::move(info_received), info_received.time_received);
     }
+}
+
+void InformationFlowModel::handleAcknowledgementSent(const AcknowledgementSent& info) {
+    if (info.flags.real_time_critical) {
+        return;  // Already propagated by handleRealTimeCriticalControl
+    }
+    auto info_received = AcknowledgementReceived(info, Orchestrator::get().getCurrentTime());
+    bool dropped;
+    {
+        std::lock_guard<std::recursive_mutex> lock(mutex_);
+        dropped = propagateInformation<AcknowledgementReceived>(info_received);
+    }
+    if (!dropped) {
+        Orchestrator::get().emitLater(std::move(info_received), info_received.time_received);
+    }
+}
+
+void InformationFlowModel::onControlReceived(const ControlReceived& info) {
+    if (info.flags.real_time_critical) {
+        return;  // Acknowledgement already computed and returned to the caller by handleRealTimeCriticalControl
+    }
+    auto acknowledgement = makeAcknowledgement(info);
+    if (acknowledgement.has_value()) {
+        Orchestrator::get().emit(*acknowledgement);
+    }
+}
+
+std::optional<std::string> InformationFlowModel::getSourceName(const Information& info) const {
+    if (info.path.empty()) {
+        return std::nullopt;
+    }
+    return network_graph_->getNode(info.path.front()).getName();
+}
+
+std::optional<AcknowledgementSent> InformationFlowModel::makeAcknowledgement(const ControlReceived& control) const {
+    auto source = getSourceName(control);
+    if (!source.has_value()) {
+        return std::nullopt;  // No source to acknowledge to
+    }
+    std::optional<tase2::Tase2Extension> tase2_data = control.tase2_data;
+    if (tase2_data.has_value()) {
+        tase2_data->cause = tase2::CAUSE_ACTIVATION_CONFIRMATION;
+    }
+    return AcknowledgementSent(control.id, control.value, control.time_received, *source, getReturnPath(control),
+                               control.topic, std::move(tase2_data), control.control_uid, control.flags, control.time_sent);
+}
+
+std::optional<AcknowledgementReceived> InformationFlowModel::handleRealTimeCriticalControl(const ControlSent& control) {
+    std::optional<ControlReceived> control_received;
+    std::optional<AcknowledgementSent> acknowledgement_sent;
+    std::optional<AcknowledgementReceived> acknowledgement_received;
+    {
+        std::lock_guard<std::recursive_mutex> lock(mutex_);
+        control_received.emplace(control, control.time_sent);
+        if (propagateInformation<ControlReceived>(*control_received)) {
+            control_received.reset();  // Dropped
+        } else {
+            acknowledgement_sent = makeAcknowledgement(*control_received);
+            if (acknowledgement_sent.has_value()) {
+                acknowledgement_received.emplace(*acknowledgement_sent, acknowledgement_sent->time_sent);
+                if (propagateInformation<AcknowledgementReceived>(*acknowledgement_received)) {
+                    acknowledgement_received.reset();  // Dropped
+                }
+            }
+        }
+    }
+
+    // The control follows the usual path through the event queue (thread-safe scheduling), received by all modules.
+    // The acknowledgement is scheduled for logging only (other modules skip real-time critical acknowledgements).
+    Orchestrator::get().emitLater(ControlSent(control), control.time_sent);
+    if (control_received.has_value()) {
+        double time_received = control_received->time_received;
+        Orchestrator::get().emitLater(std::move(*control_received), time_received);
+    }
+    if (acknowledgement_sent.has_value()) {
+        double time_sent = acknowledgement_sent->time_sent;
+        Orchestrator::get().emitLater(std::move(*acknowledgement_sent), time_sent);
+    }
+    if (acknowledgement_received.has_value()) {
+        Orchestrator::get().emitLater(AcknowledgementReceived(*acknowledgement_received), acknowledgement_received->time_received);
+    }
+    return acknowledgement_received;
 }
 
 void InformationFlowModel::handleDumpStateEvent(const DumpStateEvent& event) {

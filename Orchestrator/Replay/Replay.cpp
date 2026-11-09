@@ -83,6 +83,12 @@ void Replay::goToNextTimeStep() {
                 case SerializableInfo::ControlReceived:
                     Orchestrator::get().emit(*static_cast<ControlReceived*>(event.get()));
                     break;
+                case SerializableInfo::AcknowledgementSent:
+                    Orchestrator::get().emit(*static_cast<AcknowledgementSent*>(event.get()));
+                    break;
+                case SerializableInfo::AcknowledgementReceived:
+                    Orchestrator::get().emit(*static_cast<AcknowledgementReceived*>(event.get()));
+                    break;
                 case SerializableInfo::ActualMeasurement:
                     Orchestrator::get().emit(*static_cast<ActualMeasurement*>(event.get()));
                     break;
@@ -106,6 +112,7 @@ void Replay::goToNextTimeStep() {
                     break;
                 case SerializableInfo::CycosimMeasurementReceived:
                 case SerializableInfo::CycosimControlReceived:
+                case SerializableInfo::CycosimAcknowledgementReceived:
                     // Do not replay Cycosim event during replay
                     break;
             }
@@ -134,12 +141,15 @@ std::string Replay::generateQuery(int event_type, double start_time, double end_
     switch (type) {
         case SerializableInfo::MeasurementSent:
         case SerializableInfo::ControlSent:
+        case SerializableInfo::AcknowledgementSent:
             query << " WHERE time_sent >= " << start_time << " AND time_sent < " << end_time;
             break;
         case SerializableInfo::MeasurementReceived:
         case SerializableInfo::ControlReceived:
         case SerializableInfo::CycosimMeasurementReceived:
         case SerializableInfo::CycosimControlReceived:
+        case SerializableInfo::AcknowledgementReceived:
+        case SerializableInfo::CycosimAcknowledgementReceived:
             query << " WHERE time_received >= " << start_time << " AND time_received < " << end_time;
             break;
         case SerializableInfo::ActualMeasurement:
@@ -167,6 +177,9 @@ std::string Replay::generateQuery(int event_type, double start_time, double end_
             case SerializableInfo::ActualControl:
             case SerializableInfo::CycosimMeasurementReceived:
             case SerializableInfo::CycosimControlReceived:
+            case SerializableInfo::AcknowledgementSent:
+            case SerializableInfo::AcknowledgementReceived:
+            case SerializableInfo::CycosimAcknowledgementReceived:
                 query << " AND topic='" << topic_filter_ << "'";
                 break;
             case SerializableInfo::TimeUpdate:
@@ -229,6 +242,12 @@ void Replay::fillBuffer(int event_type) {
             case SerializableInfo::ControlReceived:
                 buffers_[event_type].emplace_back(ControlReceived::deserialize(reader));
                 break;
+            case SerializableInfo::AcknowledgementSent:
+                buffers_[event_type].emplace_back(AcknowledgementSent::deserialize(reader));
+                break;
+            case SerializableInfo::AcknowledgementReceived:
+                buffers_[event_type].emplace_back(AcknowledgementReceived::deserialize(reader));
+                break;
             case SerializableInfo::ActualMeasurement:
                 buffers_[event_type].emplace_back(ActualMeasurement::deserialize(reader));
                 break;
@@ -252,11 +271,13 @@ void Replay::fillBuffer(int event_type) {
                 break;
             case SerializableInfo::CycosimMeasurementReceived:
             case SerializableInfo::CycosimControlReceived:
+            case SerializableInfo::CycosimAcknowledgementReceived:
                 // Do not replay Cycosim event during replay
                 break;
             }
         if (type == SerializableInfo::DumpStateEvent || type == SerializableInfo::RawDynawoCommand ||
-            type == SerializableInfo::CycosimMeasurementReceived || type == SerializableInfo::CycosimControlReceived) {
+            type == SerializableInfo::CycosimMeasurementReceived || type == SerializableInfo::CycosimControlReceived ||
+            type == SerializableInfo::CycosimAcknowledgementReceived) {
             // Avoid infinite loop of reader.peek() != EOF since we don't actually deserialize those types of events
             break;
         }

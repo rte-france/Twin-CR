@@ -52,9 +52,6 @@ class MeasurementCorruptionFunction: public CorruptionFunction {
         MeasurementCorruptionFunction(size_t seed, double likelihood):
             CorruptionFunction(seed, likelihood) {}
         MeasurementCorruptionFunction() = default;  // Default constructor needed for deserialization
-
-        virtual void apply(MeasurementReceived& info) = 0;
-        void apply(ControlReceived& info) final { (void) info; };  // Do not act on controls
 };
 SER20_REGISTER_TYPE(MeasurementCorruptionFunction);  // Necessary for polymorphic types
 CHECK_SERIALIZABLE(MeasurementCorruptionFunction);
@@ -67,9 +64,6 @@ class ControlCorruptionFunction: public CorruptionFunction {
         ControlCorruptionFunction(size_t seed, double likelihood):
             CorruptionFunction(seed, likelihood) {}
         ControlCorruptionFunction() = default;  // Default constructor needed for deserialization
-
-        void apply(MeasurementReceived& info) final { (void) info; };  // Do not act on measurements
-        virtual void apply(ControlReceived& info) = 0;
 };
 SER20_REGISTER_TYPE(ControlCorruptionFunction);  // Necessary for polymorphic types
 CHECK_SERIALIZABLE(ControlCorruptionFunction);
@@ -95,6 +89,7 @@ class RandomNoiseMeasurementCorruption: public MeasurementCorruptionFunction {
          * Add random noise to the measurement value
          */
         void apply(MeasurementReceived& info) override;
+        void apply(ControlReceived& info) override { (void) info; };  // Do not act on controls
 
         template<class Archive>
         void serialize(Archive& ar) {
@@ -118,6 +113,7 @@ class RandomNoiseControlCorruption: public ControlCorruptionFunction {
          * Add random noise to the control value
          */
         void apply(ControlReceived& info) override;
+        void apply(MeasurementReceived& info) override { (void) info; };  // Do not act on measurements
 
         template<class Archive>
         void serialize(Archive& ar) {
@@ -141,6 +137,7 @@ class ZeroOutMeasurementCorruption: public MeasurementCorruptionFunction {
          * Zero out the measurement value
          */
         void apply(MeasurementReceived& info) override;
+        void apply(ControlReceived& info) override { (void) info; };  // Do not act on controls
 
         template<class Archive>
         void serialize(Archive& ar) {
@@ -164,6 +161,7 @@ class ShiftMeasurementCorruption: public MeasurementCorruptionFunction {
          * Shift the measurement value by a constant factor
          */
         void apply(MeasurementReceived& info) override;
+        void apply(ControlReceived& info) override { (void) info; };  // Do not act on controls
 
         template<class Archive>
         void serialize(Archive& ar) {
@@ -187,6 +185,7 @@ class InvertControlCorruption: public ControlCorruptionFunction {
          * Invert the control value
          */
         void apply(ControlReceived& info) override;
+        void apply(MeasurementReceived& info) override { (void) info; };  // Do not act on measurements
 
         template<class Archive>
         void serialize(Archive& ar) {

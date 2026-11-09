@@ -52,10 +52,29 @@ bool CommunicationNode::apply(ControlReceived& info) {
     return dropped;
 }
 
+bool CommunicationNode::apply(AcknowledgementReceived& info) {
+    bool dropped = CommunicationElement::apply(info);
+    if (dropped) return dropped;
+
+    // Publish intermediary info (except when info arrives at its destination since it is no longer intermediary then)
+    if (publish_intermediary_info_ && info.destination != name_) {
+        Orchestrator::get().scheduleEvent(
+            info.time_received,
+            makeCallback<&CommunicationNode::publishIntermediaryAcknowledgement>(this, info)
+        );
+    }
+
+    return dropped;
+}
+
 void CommunicationNode::publishIntermediaryMeasurement(const MeasurementReceived& info) {
     Broker::get().publishIntermediaryMeasurement(info, name_);
 }
 
 void CommunicationNode::publishIntermediaryControl(const ControlReceived& info) {
     Broker::get().publishIntermediaryControl(info, name_);
+}
+
+void CommunicationNode::publishIntermediaryAcknowledgement(const AcknowledgementReceived& info) {
+    Broker::get().publishIntermediaryAcknowledgement(info, name_);
 }

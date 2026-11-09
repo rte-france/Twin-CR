@@ -14,12 +14,18 @@
           "description": "Identifier of the control signal. If not specified, \"tase2\" must be provided and its \"tase2_id\" is used to resolve the identifier"
         },
         "value": {
-          "oneOf": [
-            { "type": "boolean" },
-            { "type": "integer" },
-            { "type": "number" }
-          ],
+          "type": ["boolean", "number"],
           "description": "Control value"
+        },
+        "with_fast_TS": {
+          "type": "boolean",
+          "description": "When the control reaches its destination, immediately return the paired state output (publish_on_change SCADA output with the same id) with the commanded value to the sender of the control, instead of waiting for the next Dynawo step. The other modules still receive the TS at the next Dynawo step",
+          "default": false
+        },
+        "real_time_critical": {
+          "type": "boolean",
+          "description": "Compute the control and its acknowledgement (delay, drop, corruption) at once, from the real-time clock, without going through the event queue. The acknowledgement is returned in the reply (see hmi_control-reply.json), the caller is responsible for waiting until its time_received",
+          "default": false
         },
         "tase2": {
           "type": "object",
