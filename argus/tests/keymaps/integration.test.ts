@@ -9,7 +9,7 @@ co-simulation of power systems.
 import { describe, it, expect } from "vitest";
 import { Effect, Layer, Scope } from "effect";
 import { EventRegistryLive } from "@/services/events";
-import { KeymapSystemLive } from "@/services/keymaps";
+import { KeymapSystemLive, KeymapStore } from "@/services/keymaps";
 import {
   setLeftToggleHandler,
   setDockviewInstance,
@@ -20,7 +20,7 @@ const TestSystemLayer = Layer.merge(EventRegistryLive, KeymapSystemLive);
 describe("Keymap & Event Integration", () => {
   it("triggers centralized shell handlers when keymap shortcut is pressed", async () => {
     const scope = await Effect.runPromise(Scope.make());
-    await Effect.runPromise(Scope.extend(Layer.build(TestSystemLayer), scope));
+    const env = await Effect.runPromise(Scope.extend(Layer.build(TestSystemLayer), scope));
 
     let leftPanelToggled = false;
     let tabClosed = false;
@@ -88,6 +88,44 @@ describe("Keymap & Event Integration", () => {
     );
 
     expect(focusedRightGroup).toBe(true);
+
+    // Test dynamic rebinding
+    const store = await Effect.runPromise(
+      Effect.provide(
+        Effect.gen(function* () {
+          return yield* KeymapStore;
+        }),
+        env,
+      ),
+    );
+
+    leftPanelToggled = false;
+    await Effect.runPromise(
+      Effect.provide(
+        store.updateBinding("Global", "application:panel:open_left", "mod+u"),
+        env,
+      ),
+    );
+
+    // Old key (mod+b) should no longer trigger
+    window.dispatchEvent(
+      new KeyboardEvent("keydown", {
+        key: "b",
+        ctrlKey: true,
+        bubbles: true,
+      }),
+    );
+    expect(leftPanelToggled).toBe(false);
+
+    // New key (mod+u) should trigger
+    window.dispatchEvent(
+      new KeyboardEvent("keydown", {
+        key: "u",
+        ctrlKey: true,
+        bubbles: true,
+      }),
+    );
+    expect(leftPanelToggled).toBe(true);
 
     setLeftToggleHandler(null);
     setDockviewInstance(null);

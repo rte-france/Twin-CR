@@ -273,18 +273,26 @@ export const KeymapEngineLive = Layer.scoped(
         win.__KEYMAP_ATTACHED_LISTENERS__.add(runFork);
 
         if (win.__KEYMAP_ATTACHED_LISTENERS__.size === 1) {
-          win.addEventListener("keydown", (e: KeyboardEvent) => {
-            const firstListener = win.__KEYMAP_ATTACHED_LISTENERS__
-              ?.values()
-              .next().value;
-            firstListener?.(e);
-          });
-          win.addEventListener("mousedown", (e: MouseEvent) => {
-            const firstListener = win.__KEYMAP_ATTACHED_LISTENERS__
-              ?.values()
-              .next().value;
-            firstListener?.(e);
-          });
+          win.addEventListener(
+            "keydown",
+            (e: KeyboardEvent) => {
+              const firstListener = win.__KEYMAP_ATTACHED_LISTENERS__
+                ?.values()
+                .next().value;
+              firstListener?.(e);
+            },
+            true,
+          );
+          win.addEventListener(
+            "mousedown",
+            (e: MouseEvent) => {
+              const firstListener = win.__KEYMAP_ATTACHED_LISTENERS__
+                ?.values()
+                .next().value;
+              firstListener?.(e);
+            },
+            true,
+          );
           win.addEventListener("blur", handleBlur);
         }
       }),

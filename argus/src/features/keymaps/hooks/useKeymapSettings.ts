@@ -8,7 +8,7 @@ co-simulation of power systems.
 
 import { createSignal, onMount } from "solid-js";
 import { Effect } from "effect";
-import { getSystemRuntime } from "@/utils/getSystemRuntime";
+import { systemRuntime } from "@/config/runtime";
 import { KeymapStore, Keymaps } from "@/services/keymaps";
 import type { CommandDefinition, KeymapConfig } from "@/types/keymap.type";
 
@@ -22,7 +22,7 @@ export function useKeymapSettings() {
 
   const loadData = async () => {
     try {
-      const { allCmds, cfg } = await getSystemRuntime().runPromise(
+      const { allCmds, cfg } = await systemRuntime.runPromise(
         Effect.gen(function* () {
           const store = yield* KeymapStore;
           const allCmds = yield* store.getAllCommands;
@@ -45,7 +45,7 @@ export function useKeymapSettings() {
   ) => {
     setSavingId(commandId);
     try {
-      const updatedConfig = await getSystemRuntime().runPromise(
+      const updatedConfig = await systemRuntime.runPromise(
         Effect.gen(function* () {
           const store = yield* KeymapStore;
           yield* store.updateBinding(context, commandId, newKey);
@@ -62,7 +62,7 @@ export function useKeymapSettings() {
   };
 
   const getEventString = (event: KeyboardEvent): string => {
-    return getSystemRuntime().runSync(
+    return systemRuntime.runSync(
       Effect.gen(function* () {
         const utils = yield* Keymaps;
         return utils.getEventString(event, "logical");

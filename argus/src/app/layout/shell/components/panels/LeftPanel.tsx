@@ -37,7 +37,6 @@ export const LeftPanel = () => {
   const tools = () => config().leftSidebarTools || [];
 
   const handleKeyboardToggle = () => {
-    console.log("[LeftPanel] handleKeyboardToggle called, current isOpen:", layout.isOpen("left"));
     if (!layout.isOpen("left")) {
       if (!activeTopId() && !activeBottomId()) {
         const firstPanel = panels().find(
