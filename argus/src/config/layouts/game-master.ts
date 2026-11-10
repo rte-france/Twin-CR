@@ -59,6 +59,12 @@ export const rightSidebarPanels: PanelManifest[] = [
     elementTag: "nad-explorer",
   },
   {
+    id: "synoptic",
+    label: "Synoptic",
+    iconId: "mdi:map-legend",
+    elementTag: "synoptic-explorer",
+  },
+  {
     id: "ifl",
     label: "Information flow model",
     iconId: "mdi:graph-outline",

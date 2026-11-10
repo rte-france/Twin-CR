@@ -8,7 +8,7 @@ co-simulation of power systems.
 
 import { Component, Show, createSignal } from "solid-js";
 import { useNadContext } from "../hooks/useNadContext";
-import { backendGet } from "@/services/backend/service";
+import { typeOf } from "@/services/network-properties";
 import { SingleElementPopup } from "@/features/network-properties-viewer/components/SingleElementPopup";
 
 export const NadTooltip: Component = () => {
@@ -17,13 +17,13 @@ export const NadTooltip: Component = () => {
   const [componentType, setComponentType] = createSignal<string | null>(null);
 
   const handleOpenPopup = async (equipmentId: string) => {
-    try {
-      const { type } = await backendGet<{ type: string }>(`/network/type-of?id=${equipmentId}`);
-      setComponentType(type);
-      setPopupOpen(true);
-    } catch (e) {
-      console.error("Failed to fetch component type", e);
+    const type = await typeOf(equipmentId);
+    if (!type) {
+      console.error("Failed to fetch component type of", equipmentId);
+      return;
     }
+    setComponentType(type);
+    setPopupOpen(true);
   };
 
   return (

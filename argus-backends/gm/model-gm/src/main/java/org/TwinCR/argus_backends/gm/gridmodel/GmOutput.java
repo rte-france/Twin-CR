@@ -21,5 +21,6 @@ public record GmOutput(
         @JsonProperty("equipmentId") @JsonDeserialize(using = PooledString.class) String equipmentId,
         @JsonProperty("kind") @JsonDeserialize(using = PooledString.class) String kind,
         @JsonProperty("side") @JsonDeserialize(using = PooledString.class) String side,
-        @JsonProperty("voltage_level") @JsonDeserialize(using = PooledString.class) String voltageLevel) {
+        @JsonProperty("voltage_level") @JsonDeserialize(using = PooledString.class) String voltageLevel,
+        @JsonProperty("topic") @JsonDeserialize(using = PooledString.class) String topic) {
 }

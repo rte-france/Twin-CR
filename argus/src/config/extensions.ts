@@ -12,6 +12,7 @@ import "@/features/herge-viewer";
 import "@/features/substation-explorer";
 import "@/features/single-line-diagram";
 import "@/features/network-area-diagram";
+import "@/features/synoptic";
 import "@/features/dynawo-timeline";
 import "@/features/dynawo-constraints";
 import "@/features/gm-commands";

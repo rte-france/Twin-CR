@@ -16,6 +16,7 @@ import org.TwinCR.argus_backends.common.gridmodel.ControlSenderCommon;
 import org.TwinCR.argus_backends.common.telemetry.TelemetryConsumerCommon;
 import org.TwinCR.argus_backends.gm.core.config.Config;
 import org.TwinCR.argus_backends.gm.gridmodel.GmMapping;
+import org.TwinCR.argus_backends.gm.gridmodel.GmOutput;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -42,6 +43,7 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -506,5 +508,11 @@ public class ApiServer extends ApiServerCommon {
     @Override
     protected String orchestratorControlTopic() {
         return "GameMasterControl";
+    }
+
+    @Override
+    protected Optional<String> outputTopic(String outputId) {
+        GmOutput output = GmMapping.id_2_gmOutput.get(outputId);
+        return output == null ? Optional.empty() : Optional.ofNullable(output.topic());
     }
 }

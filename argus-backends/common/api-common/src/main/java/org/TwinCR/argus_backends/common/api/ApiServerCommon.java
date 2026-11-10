@@ -39,6 +39,9 @@ import org.TwinCR.argus_backends.common.gridmodel.GridModel;
 import org.TwinCR.argus_backends.common.gridmodel.NetworkTableExtractor;
 import org.TwinCR.argus_backends.common.gridmodel.TitienDiagramLabelProvider;
 import org.TwinCR.argus_backends.common.gridmodel.TitienResourcesComponentLibrary;
+import org.TwinCR.argus_backends.common.synoptic.SynopticFunctions;
+import org.TwinCR.argus_backends.common.synoptic.SynopticRenderer;
+import org.TwinCR.argus_backends.common.synoptic.SynopticStore;
 import org.TwinCR.argus_backends.common.telemetry.TelemetryConsumerCommon;
 import org.eclipse.jetty.http2.server.HTTP2CServerConnectionFactory;
 import org.eclipse.jetty.io.EofException;
@@ -108,6 +111,7 @@ public abstract class ApiServerCommon {
     protected final ControlSenderCommon controlSender;
     protected final String iidmVersion;
     protected final ControllableSwitchStyleProvider controllableSwitchStyleProvider;
+    protected final SynopticStore synopticStore;
 
     private static final Set<SseTopicSubscriber> clients = ConcurrentHashMap.newKeySet();
     private static final ScheduledExecutorService sseClientsManager = Executors.newSingleThreadScheduledExecutor();
@@ -171,6 +175,7 @@ public abstract class ApiServerCommon {
         this.controlSender = controlSender;
         this.iidmVersion = config.iidmVersion();
         this.controllableSwitchStyleProvider = controllableSwitchStyleProvider;
+        this.synopticStore = new SynopticStore(config);
 
         Server server = new Server();
         HttpConfiguration httpConfig = new HttpConfiguration();
@@ -217,6 +222,8 @@ public abstract class ApiServerCommon {
         registry.add(new SldHandler());
         registry.add(new SldMultiHandler());
         registry.add(new NadHandler());
+        registry.add(new SynopticListHandler());
+        registry.add(new SynopticHandler());
         registry.add(new SubstationListHandler());
         registry.add(new NetworkComponentTypesHandler());
         registry.add(new NetworkTypeOfHandler());
@@ -444,6 +451,63 @@ public abstract class ApiServerCommon {
             responseMap.put("svg", svgWriter.toString());
             responseMap.put("metadata", metadataWriter.toString());
             responseMap.put("element_id", substationName);
+            respondjson(resp, 200, MAPPER.writeValueAsString(responseMap));
+        }
+    }
+
+    @Path("/synoptics")
+    class SynopticListHandler extends RouteHandler {
+        @Override public String path() { return "/synoptics"; }
+
+        @GET
+        @Tag(name = "Grid")
+        @Operation(summary = "List the synoptic diagrams defined in [input_files.argus] synoptics_dir")
+        @ApiResponse(responseCode = "200", description = "JSON array of {name, title}")
+        @Override
+        public void handle(String target, HttpServletRequest req, HttpServletResponse resp) throws Exception {
+            addCorsHeaders(resp);
+            if (!"GET".equalsIgnoreCase(req.getMethod())) {
+                respondError(resp, 405, "Method Not Allowed");
+                return;
+            }
+            respondjson(resp, 200, MAPPER.writeValueAsString(synopticStore.list()));
+        }
+    }
+
+    @Path("/synoptic/{name}")
+    class SynopticHandler extends RouteHandler {
+        @Override public String path() { return "/synoptic"; }
+
+        @GET
+        @Tag(name = "Grid")
+        @Operation(summary = "Render a synoptic diagram with the current network values")
+        @Parameter(name = "name", in = ParameterIn.PATH, required = true, description = "Synoptic name")
+        @ApiResponse(responseCode = "200", description = "JSON {name, title, svg}")
+        @ApiResponse(responseCode = "404", description = "Unknown synoptic")
+        @Override
+        public void handle(String target, HttpServletRequest req, HttpServletResponse resp) throws Exception {
+            addCorsHeaders(resp);
+            if (!"GET".equalsIgnoreCase(req.getMethod())) {
+                respondError(resp, 405, "Method Not Allowed");
+                return;
+            }
+            String name = target.length() > "/synoptic/".length() ? target.substring("/synoptic/".length()) : "";
+            SynopticRenderer renderer = synopticStore.get(name);
+            if (renderer == null) {
+                respondError(resp, 404, "Unknown synoptic '" + name + "'");
+                return;
+            }
+            for (String topic : renderer.topics(GridModel.network, ApiServerCommon.this::outputTopic)) {
+                telemetryConsumer.temporarilyAcquireSubTopic(topic);
+            }
+            String svg;
+            synchronized (GridModel.network) {
+                svg = renderer.render(new SynopticFunctions(GridModel.network));
+            }
+            Map<String, String> responseMap = new HashMap<>();
+            responseMap.put("name", renderer.name());
+            responseMap.put("title", renderer.title());
+            responseMap.put("svg", svg);
             respondjson(resp, 200, MAPPER.writeValueAsString(responseMap));
         }
     }
@@ -1437,6 +1501,9 @@ public abstract class ApiServerCommon {
             os.flush();
         };
     }
+
+    // NATS sub-topic to subscribe to for receiving a telemetry output id (synoptic out('id')), empty if none is needed
+    protected abstract Optional<String> outputTopic(String outputId);
 
     protected boolean showMeasurementsOnSld() {
         return false;

@@ -1,0 +1,20 @@
+#
+# Copyright (c) 2026, RTE (https://www.rte-france.com)
+# See AUTHORS.md
+# SPDX-License-Identifier: MPL-2.0
+# This file is part of Twin-CR, a platform for real-time cyber-physical
+# co-simulation of power systems.
+#
+
+[project]
+name = "twincr-synoptic"
+version = "0.1.0"
+license = "MPL-2.0"
+description = "Generators of synoptic definitions (argus Synoptic window)"
+requires-python = ">=3.11"
+dependencies = [
+    "pypowsybl>=1.15.0",
+]
+
+[tool.uv]
+package = false

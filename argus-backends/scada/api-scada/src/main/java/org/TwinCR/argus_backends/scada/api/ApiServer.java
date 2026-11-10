@@ -357,6 +357,11 @@ public class ApiServer extends ApiServerCommon {
         return "HMIControl";
     }
 
+    @Override
+    protected Optional<String> outputTopic(String outputId) {
+        return Optional.empty();  // The SCADA telemetry consumer always subscribes to the full "HMI.SCADA.>"
+    }
+
     protected com.powsybl.sld.svg.LegendWriterFactory getSldLegendWriterFactory() {
         return (network, svgParameters) -> new SCADASVGLegendWriter(network, svgParameters, telemetryConsumer);
     }

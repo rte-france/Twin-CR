@@ -735,6 +735,8 @@ def create_template(
     scada_iidm_file: UploadFile | None = File(None),
     gm_iidm_file: UploadFile | None = File(None),
     other_files: list[UploadFile] = File(default_factory=list),
+    synoptic_files: list[UploadFile] = File(default_factory=list),
+    synoptic_relative_paths: list[str] = Form(default_factory=list),
     automata_commands: list[str] = Form(default_factory=list),
     period: float = Form(1),
     dynawo_variant: str = Form("public"),
@@ -747,7 +749,8 @@ def create_template(
     with it in `dynawo_files` (the client resolves them via
     /templates/dynawo_dependencies), and the connectors, curves and SCADA I/O
     files plus the config.toml are generated here. So is the asset simulator
-    config, unless one is uploaded.
+    config, unless one is uploaded. An optional synoptics folder (argus synoptic
+    diagrams) is stored as synoptics/ and declared as [input_files.argus] synoptics_dir.
     """
     user_name = current_user["preferred_username"]
     validate_template_name(template_name)
@@ -761,6 +764,13 @@ def create_template(
             status_code=400,
             detail=f"Got {len(dynawo_files)} Dynawo files for {len(dynawo_relative_paths)} paths",
         )
+    if len(synoptic_files) != len(synoptic_relative_paths):
+        raise HTTPException(
+            status_code=400,
+            detail=f"Got {len(synoptic_files)} synoptic files for {len(synoptic_relative_paths)} paths",
+        )
+    if synoptic_files and SYNOPTICS_INDEX not in synoptic_relative_paths:
+        raise HTTPException(status_code=400, detail=f"The synoptics folder has no {SYNOPTICS_INDEX}")
     if cyber_config_file and not mapping_file:
         # Without a mapping the SCADA I/O falls back to naming its nodes after
         # the IIDM substations, which the supplied graph does not contain.
@@ -818,6 +828,19 @@ def create_template(
                 raise HTTPException(status_code=400, detail=f"Other file {target.name} has the name of another input")
             stored[write_file_path(working_dir, upload)] = TemplateFileRole.other.value
             other_names.append(target.name)
+
+        # Synoptic diagrams of argus ([input_files.argus] synoptics_dir), kept with their folder structure
+        synoptics_root = (working_dir / SYNOPTICS_DIR).resolve()
+        for upload, relative in zip(synoptic_files, synoptic_relative_paths):
+            target = (synoptics_root / relative).resolve()
+            if not target.is_relative_to(synoptics_root):
+                raise HTTPException(status_code=400, detail=f"Unsafe synoptic path: {relative}")
+            if target in stored:
+                raise HTTPException(status_code=400, detail=f"Synoptic file {relative} has the path of another input")
+            target.parent.mkdir(parents=True, exist_ok=True)
+            with open(target, "wb") as handle:
+                shutil.copyfileobj(upload.file, handle)
+            stored[target] = TemplateFileRole.other.value
 
         # The jobs file names its own inputs, so anything it references has to be
         # here before the configurator can run.
@@ -888,6 +911,7 @@ def create_template(
                 asset_simulator_config_file=stored_name(asset_simulator_config_file) or generated_asset_simulator_config,
                 extra_io_file=stored_name(extra_io_file),
                 other_files=other_names,
+                synoptics_dir=SYNOPTICS_DIR if synoptic_files else None,
                 automata_commands=[c.strip() for c in automata_commands if c.strip()],
                 mapping_file=stored_name(mapping_file),
                 scada_iidm_file=stored_name(scada_iidm_file),
@@ -909,6 +933,11 @@ def create_template(
         return {"template_id": template.id, "uuid": template.uuid}
 
 
+# Template folder of the synoptics of a guided upload, and the index the argus backends read
+SYNOPTICS_DIR = "synoptics"
+SYNOPTICS_INDEX = "index.json"
+
+
 def build_config_toml(*, job_file: str, dsl_file: str | None, cyber_config_file: str | None,
                       scenario_file: str | None, geo_data: str | None,
                       asset_simulator_config_file: str | None, extra_io_file: str | None,
@@ -916,7 +945,7 @@ def build_config_toml(*, job_file: str, dsl_file: str | None, cyber_config_file:
                       scada_iidm_file: str | None, gm_iidm_file: str | None,
                       connectors_dyd: str, iidm_file: str, dynawo_path: str,
                       scada_suffix: str, period: float, other_files: list[str] | None = None,
-                      automata_commands: list[str] | None = None) -> str:
+                      automata_commands: list[str] | None = None, synoptics_dir: str | None = None) -> str:
     """
     Write the config.toml for a guided upload.
 
@@ -979,6 +1008,11 @@ def build_config_toml(*, job_file: str, dsl_file: str | None, cyber_config_file:
         gm_backend["iidm_file"] = gm_iidm_file
         input_files["gm_backend"] = gm_backend
 
+    if synoptics_dir:
+        argus = tomlkit.table()
+        argus["synoptics_dir"] = synoptics_dir
+        input_files["argus"] = argus
+
     config["input_files"] = input_files
 
     hmi = tomlkit.table()
@@ -1013,13 +1047,14 @@ def declared_inputs(input_files) -> tuple[dict[str, str], set[str]]:
 
     Subsections such as [input_files.scada_backend] share the layout; their keys
     become "scada_backend.iidm_file", matching TemplateFileRole.
+    *_dir keys are directories (e.g. argus.synoptics_dir), left out like other_dirs.
     """
     by_name: dict[str, str] = {}
     others: set[str] = set()
 
     def collect(section, prefix: str):
         for key, value in section.items():
-            if key in ("other_files", "other_dirs"):
+            if key in ("other_files", "other_dirs") or key.endswith("_dir"):
                 continue
             if isinstance(value, str):
                 by_name.setdefault(str(value), prefix + key)
