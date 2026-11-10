@@ -81,8 +81,7 @@ describe("Keymap & Event Integration", () => {
 
     window.dispatchEvent(
       new KeyboardEvent("keydown", {
-        key: "ArrowRight",
-        ctrlKey: true,
+        key: "l",
         altKey: true,
         bubbles: true,
       }),

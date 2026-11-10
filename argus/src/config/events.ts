@@ -22,10 +22,6 @@ import {
 } from "@/app/layout/shell/actions";
 import type { EventTree } from "@/types/event.type";
 
-/**
- * Global declarative event schema and handlers.
- * Nested keys form the event identifier (e.g. argus:tab:next).
- */
 export const EVENTS = {
   argus: {
     tab: {

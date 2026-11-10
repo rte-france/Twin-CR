@@ -6,6 +6,12 @@ This file is part of Twin-CR, a platform for real-time cyber-physical
 co-simulation of power systems.
 */
 
+import type {
+  CommandDefinition,
+  KeymapNode,
+  KeymapTree,
+} from "@/types/keymap.type";
+
 export const isMac =
   typeof window !== "undefined" &&
   navigator.userAgent.toLowerCase().includes("mac");
@@ -83,4 +89,38 @@ export function checkIsModifierOnly(pressedKeyStr: string): boolean {
   return ["control", "meta", "shift", "alt", "mod", "ctrl"].includes(
     pressedKeyStr,
   );
+}
+
+export function flattenKeymaps(
+  tree: KeymapTree,
+  delimiter = ":",
+): CommandDefinition[] {
+  const commands: CommandDefinition[] = [];
+
+  function traverse(node: unknown, path: string[]) {
+    if (!node || typeof node !== "object") return;
+
+    if ("description" in node && "handler" in node && "defaultKeys" in node) {
+      const leaf = node as KeymapNode;
+      const defaultKeys = Array.isArray(leaf.defaultKeys)
+        ? leaf.defaultKeys
+        : [leaf.defaultKeys as string];
+
+      commands.push({
+        id: path.join(delimiter),
+        name: leaf.description,
+        category: path.slice(0, -1).join(delimiter),
+        defaultKeys,
+        handler: leaf.handler,
+      });
+      return;
+    }
+
+    for (const [key, value] of Object.entries(node)) {
+      traverse(value, [...path, key]);
+    }
+  }
+
+  traverse(tree, []);
+  return commands;
 }

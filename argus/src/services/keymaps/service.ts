@@ -8,13 +8,13 @@ co-simulation of power systems.
 
 import { Context, Effect, Layer, Ref, Option, Runtime } from "effect";
 
-import { flattenKeymaps } from "@/config/keymaps";
+import { KEYMAPS } from "@/config/keymaps";
 import type {
   CommandId,
   KeymapConfig,
   CommandDefinition,
 } from "@/types/keymap.type";
-import { getEventString, isInputElement } from "./utils";
+import { flattenKeymaps, getEventString, isInputElement } from "./utils";
 
 export interface KeymapsService {
   readonly getEventString: (
@@ -61,7 +61,7 @@ export class KeymapStore extends Context.Tag("KeymapStore")<
 export const KeymapStoreLive = Layer.effect(
   KeymapStore,
   Effect.gen(function* () {
-    const defaultCommands = flattenKeymaps();
+    const defaultCommands = flattenKeymaps(KEYMAPS);
     const initialMap = new Map<CommandId, CommandDefinition>(
       defaultCommands.map((c) => [c.id, c]),
     );

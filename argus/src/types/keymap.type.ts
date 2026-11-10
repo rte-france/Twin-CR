@@ -24,3 +24,19 @@ export interface CommandDefinition {
   readonly defaultKeys: readonly string[];
   readonly handler: () => void | Promise<void>;
 }
+
+export interface KeymapNode {
+  readonly description: string;
+  readonly defaultKeys: string | readonly string[];
+  readonly handler: () => void | Promise<void>;
+}
+
+export interface KeymapCategory {
+  readonly [actionOrSub: string]:
+    | KeymapNode
+    | { readonly [action: string]: KeymapNode };
+}
+
+export interface KeymapTree {
+  readonly [category: string]: KeymapCategory;
+}

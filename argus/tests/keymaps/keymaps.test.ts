@@ -7,8 +7,8 @@ co-simulation of power systems.
 */
 
 import { describe, it, expect } from "vitest";
-import { flattenKeymaps } from "@/config/keymaps";
-import type { KeymapTree } from "@/config/keymaps";
+import { flattenKeymaps } from "@/services/keymaps/utils";
+import type { KeymapTree } from "@/types/keymap.type";
 
 describe("flattenKeymaps", () => {
   it("flattens nested keymaps tree with colon delimiter", () => {
