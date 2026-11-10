@@ -6,79 +6,67 @@ This file is part of Twin-CR, a platform for real-time cyber-physical
 co-simulation of power systems.
 */
 
-import { useParams } from "@solidjs/router";
+import { useParams, useSearchParams } from "@solidjs/router";
 import { createSignal, onMount, onCleanup } from "solid-js";
 import { MfeLoader } from "@/app/layout/shell/components/MfeLoader";
+import { hydratePanelFromUrlAndStorage } from "./panelHydration";
 
-import { emitTo } from "@tauri-apps/api/event";
+import { emit } from "@tauri-apps/api/event";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 
 export const Floating = (props: { parentLabel: string }) => {
   const params = useParams();
+  const [searchParams] = useSearchParams();
   const [manifest, setManifest] = createSignal<any>(null);
   const [componentProps, setComponentProps] = createSignal<any>(null);
+  const [originGroupId, setOriginGroupId] = createSignal<string | undefined>(
+    (searchParams as Record<string, string | undefined>).groupId,
+  );
 
   onMount(() => {
-    const id = decodeURIComponent(params.id!!);
-    const storageKey = `detached_payload_${id}`;
-    const storedData = localStorage.getItem(storageKey);
+    const rawId = params.id || "";
+    const hydrated = hydratePanelFromUrlAndStorage(
+      rawId,
+      searchParams as Record<string, string | undefined>,
+      params.viewType,
+    );
 
-    if (storedData) {
-      const parsedData = JSON.parse(storedData);
-
-      const reconstructedManifest = {
-        id: parsedData.id || id,
-        label: parsedData.label || parsedData.title,
-        iconId: parsedData.iconId || "file",
-        elementTag: parsedData.elementTag,
-        entryUrl: parsedData.entryUrl,
-        isLocalFile: parsedData.isLocalFile,
-      };
-
-      setManifest(reconstructedManifest);
-      setComponentProps(parsedData.params || parsedData);
-
-      localStorage.removeItem(storageKey);
-    } else {
-      console.warn("No payload found for l'ID :", id);
-
-      if (params.viewType) {
-        setManifest({
-          id: id,
-          elementTag: params.viewType,
-        });
-      }
-    }
+    setManifest(hydrated.manifest);
+    setComponentProps(hydrated.componentProps);
 
     const windowContext = getCurrentWindow();
+    let isClosing = false;
 
     const unlistenPromise = windowContext.onCloseRequested(async (event) => {
+      if (isClosing) return;
+      isClosing = true;
       event.preventDefault();
 
-      const currentManifest = manifest();
+      try {
+        const currentManifest = manifest();
 
-      if (currentManifest) {
-        const payload = {
-          id: currentManifest.id,
-          title: currentManifest.label,
-          elementTag: currentManifest.elementTag,
-          entryUrl: currentManifest.entryUrl,
-          isLocalFile: currentManifest.isLocalFile,
-          params: componentProps(),
-        };
+        if (currentManifest) {
+          const payload = {
+            id: currentManifest.id,
+            title: currentManifest.label,
+            elementTag: currentManifest.elementTag,
+            entryUrl: currentManifest.entryUrl,
+            isLocalFile: currentManifest.isLocalFile,
+            params: componentProps(),
+            groupId: originGroupId(),
+          };
 
-        const targetLabel = props.parentLabel || "main";
-        await emitTo(targetLabel, "argus:reattach-panel", payload);
+          await emit("argus:reattach-panel", payload);
+        }
+      } catch (err) {
+        console.error("Failed to emit reattach event:", err);
+      } finally {
+        await windowContext.destroy();
       }
-
-      const unlisten = await unlistenPromise;
-      unlisten();
-
-      await windowContext.close();
     });
 
     onCleanup(() => {
-      unlistenPromise.then((unlisten) => unlisten());
+      unlistenPromise.then((unlisten) => unlisten()).catch(() => {});
     });
   });
 

@@ -11,6 +11,7 @@ import { PanelManifest } from "@/types";
 import { getSystemRuntime } from "@/utils/getSystemRuntime";
 import { Effect } from "effect";
 import { WindowBootstrapper } from "@/services/window-bootstrap";
+import { buildPanelRoute } from "../../dockview/panelUrlBuilder";
 
 export interface PanelState {
   manifest: PanelManifest;
@@ -39,11 +40,18 @@ export const detachPanel = (panel: PanelState, closeFn: () => void) => {
     localStorage.setItem(`detached_payload_${id}`, JSON.stringify(params));
   }
 
-  const targetRoute = `/floating/${viewType}/${id}`;
+  const targetRoute = buildPanelRoute({
+    id,
+    title,
+    viewType,
+    entryUrl: manifest.entryUrl,
+    isLocalFile: manifest.isLocalFile,
+    props: params,
+  });
 
   const program = Effect.gen(function* () {
     const wm = yield* WindowBootstrapper;
-    yield* wm.createChildFromCurrent(title, encodeURIComponent(targetRoute));
+    yield* wm.createChildFromCurrent(title, targetRoute);
   });
 
   getSystemRuntime()

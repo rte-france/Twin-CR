@@ -8,3 +8,6 @@ co-simulation of power systems.
 
 pub mod commands;
 pub mod manager;
+
+#[cfg(test)]
+mod tests;

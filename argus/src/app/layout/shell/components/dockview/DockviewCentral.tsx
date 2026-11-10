@@ -15,6 +15,7 @@ import { DockviewTab } from "./DockviewTab";
 import { LeftHeaderActions } from "./LeftHeaderActions";
 import { usePlacement } from "../../providers/PlacementProvider";
 import { RightHeaderActions } from "./RightHeaderActions";
+import { listen } from "@tauri-apps/api/event";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import { PanelManifest } from "@/types";
 import { Watermark } from "./Watermark";
@@ -174,7 +175,7 @@ export const DockviewCentral = () => {
     });
 
     const handleAdd = (e: Event) => {
-      const payload = (e as CustomEvent<OpenCentralParams>).detail;
+      const payload = (e as CustomEvent<OpenCentralParams & { groupId?: string }>).detail;
 
       const existing = dockview.getGroupPanel(payload.id);
       if (existing) {
@@ -185,7 +186,16 @@ export const DockviewCentral = () => {
       let targetPosition: any = undefined;
       const currentMode = placement();
 
-      if (dockview.activeGroup) {
+      const targetGroup = payload.groupId
+        ? dockview.groups.find((g) => g.id === payload.groupId)
+        : undefined;
+
+      if (targetGroup) {
+        targetPosition = {
+          referenceGroup: targetGroup,
+          direction: "within",
+        };
+      } else if (dockview.activeGroup) {
         const activeGroup = dockview.activeGroup;
         const currentTab = activeGroup.activePanel;
         const insertIndex = currentTab
@@ -292,7 +302,7 @@ export const DockviewCentral = () => {
       group.panels[prevIndex].api.setActive();
     };
 
-    const unlistenReattachPromise = getCurrentWindow().listen(
+    const unlistenReattachPromise = listen(
       "argus:reattach-panel",
       (event: any) => {
         window.dispatchEvent(

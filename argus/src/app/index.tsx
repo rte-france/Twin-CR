@@ -11,7 +11,7 @@ import { Route, Router } from "@solidjs/router";
 import { Effect, Exit } from "effect";
 
 import { getSystemRuntime } from "@/utils/getSystemRuntime";
-import { initAuth } from "@/features/auth";
+import { initAuth, accessToken } from "@/features/auth";
 import { WindowManager } from "@/services/window-manager";
 
 import "@/config/extensions";
@@ -21,13 +21,26 @@ import { Home } from "./routes/home";
 import { Floating } from "./routes/floating";
 import { FloatingLayout } from "./layout/floating";
 import { Lobby } from "./routes/lobby";
+import { resolveInitialPath, getParentLabelFromUrl } from "./routes/routingUtils";
+
+const RootRoute = () => {
+  const token = accessToken();
+  if (token) {
+    return <Lobby />;
+  }
+  return <SignIn />;
+};
 
 const Routing = () => {
+  const initialUrl = resolveInitialPath();
+
+  const initialParent = getParentLabelFromUrl() || "main";
+
   const [windowInfo, setWindowInfo] = createSignal({
     label: "main",
     isMain: true,
-    initialRoute: "/",
-    themeSyncId: "main",
+    initialRoute: initialUrl,
+    themeSyncId: initialParent,
   });
 
   onMount(async () => {
@@ -38,12 +51,9 @@ const Routing = () => {
       const label = yield* wm.getCurrentLabel();
       const isMain = yield* wm.isMain();
 
-      const params = new URLSearchParams(window.location.search);
-      const targetRoute = params.get("route");
-      const initialRoute = targetRoute ? decodeURIComponent(targetRoute) : "/";
-      const themeSyncId = params.get("parent") || label;
+      const themeSyncId = getParentLabelFromUrl() || label;
 
-      return { label, isMain, initialRoute, themeSyncId };
+      return { label, isMain, initialRoute: initialUrl, themeSyncId };
     });
 
     getSystemRuntime().runCallback(identifyProgram, {
@@ -56,8 +66,8 @@ const Routing = () => {
   });
 
   return (
-    <Router>
-      <Route path="/" component={() => <SignIn />} />
+    <Router url={initialUrl}>
+      <Route path="/" component={RootRoute} />
       <Route path="/sign-in" component={SignIn} />
       <Route path="/lobby" component={Lobby} />
 
@@ -70,6 +80,23 @@ const Routing = () => {
           />
         )}
       />
+
+      <Route
+        path="/panels"
+        component={(props) => (
+          <FloatingLayout
+            windowLabel={windowInfo().label}
+            themeSyncId={windowInfo().themeSyncId}
+          >
+            {props.children}
+          </FloatingLayout>
+        )}
+      >
+        <Route
+          path="/:id"
+          component={() => <Floating parentLabel={windowInfo().themeSyncId} />}
+        />
+      </Route>
 
       <Route
         path="/floating"
