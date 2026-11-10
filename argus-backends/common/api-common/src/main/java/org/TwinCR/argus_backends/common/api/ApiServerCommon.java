@@ -543,7 +543,7 @@ public abstract class ApiServerCommon {
 
             List<String> voltageLevelNames = Arrays.stream(vlParam.split(",")).collect(Collectors.toList());
             VoltageLevelFilter voltageLevels = VoltageLevelFilter.createVoltageLevelsDepthFilter(GridModel.network, voltageLevelNames, depth);
-            Set<String> substationIds = voltageLevels.getVoltageLevels().stream()
+            Set<String> substationIds = voltageLevels.voltageLevels().stream()
                 .map(vlItem -> vlItem.getSubstation().get().getId())
                 .collect(Collectors.toSet());
             substationIds.forEach(telemetryConsumer::temporarilyAcquireSubTopic);
