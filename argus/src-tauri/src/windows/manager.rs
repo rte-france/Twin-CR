@@ -94,6 +94,7 @@ impl WindowManager {
         let url = format!("/?parent={}&route={}", parent_label, route);
         WebviewWindowBuilder::new(&self.app_handle, &label, WebviewUrl::App(url.into()))
             .title(title)
+            .visible(false)
             .build()
             .map_err(|e| e.to_string())?;
 

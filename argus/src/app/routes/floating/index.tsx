@@ -11,29 +11,28 @@ import { createSignal, onMount, onCleanup } from "solid-js";
 import { MfeLoader } from "@/app/layout/shell/components/MfeLoader";
 import { hydratePanelFromUrlAndStorage } from "./panelHydration";
 
-import { emit } from "@tauri-apps/api/event";
+import { emit, emitTo } from "@tauri-apps/api/event";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 
 export const Floating = (props: { parentLabel: string }) => {
   const params = useParams();
   const [searchParams] = useSearchParams();
-  const [manifest, setManifest] = createSignal<any>(null);
-  const [componentProps, setComponentProps] = createSignal<any>(null);
+
+  // Hydrate synchronously on component creation so MfeLoader mounts on first render
+  const rawId = params.id || "";
+  const initialHydrated = hydratePanelFromUrlAndStorage(
+    rawId,
+    searchParams as Record<string, string | undefined>,
+    params.viewType,
+  );
+
+  const [manifest, setManifest] = createSignal<any>(initialHydrated.manifest);
+  const [componentProps, setComponentProps] = createSignal<any>(initialHydrated.componentProps);
   const [originGroupId, setOriginGroupId] = createSignal<string | undefined>(
     (searchParams as Record<string, string | undefined>).groupId,
   );
 
   onMount(() => {
-    const rawId = params.id || "";
-    const hydrated = hydratePanelFromUrlAndStorage(
-      rawId,
-      searchParams as Record<string, string | undefined>,
-      params.viewType,
-    );
-
-    setManifest(hydrated.manifest);
-    setComponentProps(hydrated.componentProps);
-
     const windowContext = getCurrentWindow();
     let isClosing = false;
 
@@ -56,7 +55,11 @@ export const Floating = (props: { parentLabel: string }) => {
             groupId: originGroupId(),
           };
 
-          await emit("argus:reattach-panel", payload);
+          if (props.parentLabel) {
+            await emitTo(props.parentLabel, "argus:reattach-panel", payload);
+          } else {
+            await emit("argus:reattach-panel", payload);
+          }
         }
       } catch (err) {
         console.error("Failed to emit reattach event:", err);
@@ -68,6 +71,9 @@ export const Floating = (props: { parentLabel: string }) => {
     onCleanup(() => {
       unlistenPromise.then((unlisten) => unlisten()).catch(() => {});
     });
+
+    // Reveal the window immediately once mounted
+    windowContext.show().catch(() => {});
   });
 
   return (

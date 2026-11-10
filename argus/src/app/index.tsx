@@ -44,7 +44,12 @@ const Routing = () => {
   });
 
   onMount(async () => {
-    initAuth();
+    // Only initialise OAuth listener if this is the main window
+    const params = new URLSearchParams(window.location.search);
+    const isChild = params.has("parent") || params.get("detached") === "true";
+    if (!isChild) {
+      initAuth();
+    }
 
     const identifyProgram = Effect.gen(function* () {
       const wm = yield* WindowManager;
