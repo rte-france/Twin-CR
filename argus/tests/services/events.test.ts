@@ -64,6 +64,10 @@ describe("Event Registry & registerEvents", () => {
 
     expect(types).toContain("argus:tab:next");
     expect(types).toContain("argus:tab:prev");
+    expect(types).toContain("argus:group:left");
+    expect(types).toContain("argus:group:right");
+    expect(types).toContain("argus:group:up");
+    expect(types).toContain("argus:group:down");
     expect(types).toContain("argus:panel:close");
     expect(types).toContain("argus:panel:maximize:toggle");
     expect(types).toContain("argus:panel:left:toggle");

@@ -8,9 +8,7 @@ co-simulation of power systems.
 
 import type { DockviewComponent } from "dockview-core";
 import {
-  isLeftOpen,
   setIsLeftOpen,
-  isRightOpen,
   setIsRightOpen,
 } from "./components/panels/BottomPanel/utils";
 
@@ -66,6 +64,68 @@ export const toggleMaximize = () => {
     }
   }
 };
+
+export const focusGroupDirection = (
+  direction: "left" | "right" | "above" | "below",
+) => {
+  if (!dockviewInstance || dockviewInstance.groups.length <= 1) return;
+
+  const currentGroup = dockviewInstance.activeGroup;
+  if (!currentGroup?.element) return;
+
+  const currentRect = currentGroup.element.getBoundingClientRect();
+  const currentCenter = {
+    x: currentRect.left + currentRect.width / 2,
+    y: currentRect.top + currentRect.height / 2,
+  };
+
+  let bestGroup: typeof currentGroup | null = null;
+  let minDistance = Infinity;
+
+  for (const group of dockviewInstance.groups) {
+    if (group === currentGroup || !group.element) continue;
+
+    const rect = group.element.getBoundingClientRect();
+    const center = {
+      x: rect.left + rect.width / 2,
+      y: rect.top + rect.height / 2,
+    };
+
+    const dx = center.x - currentCenter.x;
+    const dy = center.y - currentCenter.y;
+
+    let isValid = false;
+    switch (direction) {
+      case "left":
+        isValid = dx < -10;
+        break;
+      case "right":
+        isValid = dx > 10;
+        break;
+      case "above":
+        isValid = dy < -10;
+        break;
+      case "below":
+        isValid = dy > 10;
+        break;
+    }
+
+    if (isValid) {
+      const distance = dx * dx + dy * dy;
+      if (distance < minDistance) {
+        minDistance = distance;
+        bestGroup = group;
+      }
+    }
+  }
+
+  bestGroup?.focus();
+};
+
+export const focusGroupLeft = () => focusGroupDirection("left");
+export const focusGroupRight = () => focusGroupDirection("right");
+export const focusGroupAbove = () => focusGroupDirection("above");
+export const focusGroupBelow = () => focusGroupDirection("below");
 
 export const toggleLeftPanel = () => {
   leftToggleHandler?.();

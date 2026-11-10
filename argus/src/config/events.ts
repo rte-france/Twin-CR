@@ -10,6 +10,10 @@ import {
   closeActivePanel,
   nextTab,
   prevTab,
+  focusGroupLeft,
+  focusGroupRight,
+  focusGroupAbove,
+  focusGroupBelow,
   toggleMaximize,
   toggleLeftPanel,
   toggleRightPanel,
@@ -27,6 +31,12 @@ export const EVENTS = {
     tab: {
       next: nextTab,
       prev: prevTab,
+    },
+    group: {
+      left: focusGroupLeft,
+      right: focusGroupRight,
+      up: focusGroupAbove,
+      down: focusGroupBelow,
     },
     panel: {
       close: closeActivePanel,

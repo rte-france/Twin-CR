@@ -90,6 +90,36 @@ export const KEYMAPS = {
         },
       },
     },
+    group: {
+      focus_left: {
+        description: "Focus Group to the Left",
+        defaultKeys: ["alt+h"],
+        handler: () => {
+          window.dispatchEvent(new CustomEvent("argus:group:left"));
+        },
+      },
+      focus_right: {
+        description: "Focus Group to the Right",
+        defaultKeys: ["alt+l"],
+        handler: () => {
+          window.dispatchEvent(new CustomEvent("argus:group:right"));
+        },
+      },
+      focus_above: {
+        description: "Focus Group Above",
+        defaultKeys: ["alt+k"],
+        handler: () => {
+          window.dispatchEvent(new CustomEvent("argus:group:up"));
+        },
+      },
+      focus_below: {
+        description: "Focus Group Below",
+        defaultKeys: ["alt+j"],
+        handler: () => {
+          window.dispatchEvent(new CustomEvent("argus:group:down"));
+        },
+      },
+    },
   },
 } as const satisfies KeymapTree;
 

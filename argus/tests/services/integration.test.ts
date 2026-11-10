@@ -62,6 +62,34 @@ describe("Keymap & Event Integration", () => {
 
     expect(tabClosed).toBe(true);
 
+    let focusedRightGroup = false;
+    const groupLeft: any = {
+      element: {
+        getBoundingClientRect: () => ({ left: 0, top: 0, width: 400, height: 600 }),
+      },
+    };
+    const groupRight: any = {
+      element: {
+        getBoundingClientRect: () => ({ left: 400, top: 0, width: 400, height: 600 }),
+      },
+      focus: () => {
+        focusedRightGroup = true;
+      },
+    };
+    mockDockview.groups = [groupLeft, groupRight];
+    mockDockview.activeGroup = groupLeft;
+
+    window.dispatchEvent(
+      new KeyboardEvent("keydown", {
+        key: "ArrowRight",
+        ctrlKey: true,
+        altKey: true,
+        bubbles: true,
+      }),
+    );
+
+    expect(focusedRightGroup).toBe(true);
+
     setLeftToggleHandler(null);
     setDockviewInstance(null);
     await Effect.runPromise(Scope.close(scope, Effect.void as any));
