@@ -9,6 +9,14 @@ co-simulation of power systems.
 /// <reference types="vite/client" />
 import "solid-js";
 
+interface ImportMetaEnv {
+  readonly APP_VERSION: string;
+}
+
+interface ImportMeta {
+  readonly env: ImportMetaEnv;
+}
+
 declare module "solid-js" {
   namespace JSX {
     interface IntrinsicElements {

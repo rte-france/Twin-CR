@@ -10,6 +10,7 @@ import { defineConfig } from "vite";
 import { fileURLToPath } from "node:url";
 import solid from "vite-plugin-solid";
 import tailwindcss from "@tailwindcss/vite";
+import pkg from './package.json' with { type: 'json' }
 
 const host = process.env.TAURI_DEV_HOST;
 
@@ -18,6 +19,10 @@ export default defineConfig(({}) => ({
     tailwindcss(),
     solid(),
   ],
+
+  define: {
+    'import.meta.env.APP_VERSION': JSON.stringify(pkg.version),
+  },
 
   clearScreen: false,
 
