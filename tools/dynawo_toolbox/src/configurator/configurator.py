@@ -465,8 +465,19 @@ class Configurator:
             else:  # Dynamic model
                 is_parameter = False
                 if in_or_out == InOrOut.IN:
-                    model_data_variables = self._model_library.get_model_extvars(model["model_lib"])  # ExtVar control
-                    var_name_type = self._find_entry_from_keywork(mapping, model_data_variables)
+                    if model["model_lib"].startswith("DYN"):
+                        model_data_variables = self._model_library.get_model_variables(model["model_lib"])  # variable control (C++ models have no extvar)
+                        var_name_type = self._find_entry_from_keywork(mapping, model_data_variables)
+                        if var_name_type is not None:
+                            var_name = var_name_type[0]
+                            if "type" in rule:  # Case of input variable in desc.xml for C++ models
+                                var_name_type = (var_name, rule["type"])
+                            else:
+                                raise ValueError(f"Input rule is missing 'type' definition for variable {var_name} of dynamic model "
+                                                 f"{model['model_lib']} (required for variables defined in .desc.xml file)")
+                    else:
+                        model_data_variables = self._model_library.get_model_extvars(model["model_lib"])  # ExtVar control
+                        var_name_type = self._find_entry_from_keywork(mapping, model_data_variables)
                     if var_name_type is None:
                         model_data_variables = self._model_library.get_model_parameters(model["model_lib"])  # Parameter control
                         var_name_type = self._find_entry_from_keywork(mapping, model_data_variables)
