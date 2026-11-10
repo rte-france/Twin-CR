@@ -76,28 +76,28 @@ export const KEYMAPS = {
     },
     group: {
       focus_left: {
-        description: "Focus Group to the Left",
+        description: "Focus Group Left",
         defaultKeys: ["alt+h"],
         handler: () => {
           window.dispatchEvent(new CustomEvent("argus:group:left"));
         },
       },
       focus_right: {
-        description: "Focus Group to the Right",
+        description: "Focus Group Right",
         defaultKeys: ["alt+l"],
         handler: () => {
           window.dispatchEvent(new CustomEvent("argus:group:right"));
         },
       },
-      focus_above: {
-        description: "Focus Group Above",
+      focus_up: {
+        description: "Focus Group Up",
         defaultKeys: ["alt+k"],
         handler: () => {
           window.dispatchEvent(new CustomEvent("argus:group:up"));
         },
       },
-      focus_below: {
-        description: "Focus Group Below",
+      focus_down: {
+        description: "Focus Group Down",
         defaultKeys: ["alt+j"],
         handler: () => {
           window.dispatchEvent(new CustomEvent("argus:group:down"));

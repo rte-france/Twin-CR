@@ -6,22 +6,12 @@ This file is part of Twin-CR, a platform for real-time cyber-physical
 co-simulation of power systems.
 */
 
-import { ManagedRuntime, Layer } from "effect";
-import { AppLayer } from "@/config/runtime";
+import { Layer, ManagedRuntime } from "effect";
+import { systemRuntime } from "@/config/runtime";
 
-const initRuntime = () => ManagedRuntime.make(AppLayer);
+export type AppRuntime = typeof systemRuntime;
 
-export type AppRuntime = ReturnType<typeof initRuntime>;
-
-// Host singleton for mounting layers
-let runtimeInstance: ReturnType<typeof initRuntime> | null = null;
-
-export const getSystemRuntime = () => {
-  if (!runtimeInstance) {
-    runtimeInstance = initRuntime();
-  }
-  return runtimeInstance;
-};
+export const getSystemRuntime = () => systemRuntime;
 
 declare global {
   interface Window {
