@@ -1,0 +1,66 @@
+job "postgres" {
+  datacenters = ["dc1"]
+  type        = "service"
+
+  group "database" {
+    count = 1
+
+    vault {
+      role = "nomad-workloads"
+    }
+
+    network {
+      mode = "host"
+      port "db" {
+        static = 5433
+      }
+    }
+
+    task "postgres" {
+      driver = "docker"
+
+      template {
+        data = <<EOF
+{% raw %}
+{{ with secret "secret/data/postgres" }}
+POSTGRES_USER="{{ .Data.data.user }}"
+POSTGRES_PASSWORD="{{ .Data.data.password }}"
+POSTGRES_DB="{{ .Data.data.database }}"
+{{ end }}
+{% endraw %}
+PGPORT="5433"
+EOF
+        destination = "secrets/db.env"
+        env         = true
+      }
+
+      config {
+        image        = "postgres:15-alpine"
+        network_mode = "host"
+        args         = ["-p", "5433"]
+
+        volumes = [
+          "/opt/twineu/postgres/data:/var/lib/postgresql/data",
+          "/opt/twineu/postgres/init:/docker-entrypoint-initdb.d:ro"
+        ]
+      }
+
+      resources {
+        cpu    = 500
+        memory = 512
+      }
+    }
+
+    service {
+      name     = "database"
+      port     = "db"
+      provider = "consul"
+
+      check {
+        type     = "tcp"
+        interval = "10s"
+        timeout  = "2s"
+      }
+    }
+  }
+}

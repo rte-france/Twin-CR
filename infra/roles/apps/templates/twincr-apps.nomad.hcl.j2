@@ -1,0 +1,140 @@
+job "twincr-apps" {
+  datacenters = ["dc1"]
+  type        = "service"
+
+  group "apps" {
+    count = 1
+
+    vault {
+      role = "nomad-workloads"
+    }
+
+    network {
+      mode = "bridge"
+      port "session_manager" {
+        static = 8090
+        to     = 8090
+      }
+      port "configurator" {
+        static = 8085
+        to     = 8080
+      }
+    }
+
+    service {
+      name         = "configurator-client"
+      port         = "configurator"
+      address_mode = "alloc"
+      provider     = "consul"
+
+      check {
+        name     = "Configurator Healthcheck"
+        type     = "http"
+        path     = "/status"
+        interval = "10s"
+        timeout  = "2s"
+      }
+    }
+
+    service {
+      name         = "session-manager"
+      port         = "session_manager"
+      address_mode = "alloc"
+      provider     = "consul"
+
+      tags = [
+        "traefik.enable=true",
+        "traefik.http.routers.session-manager.rule=Host(`session-manager.{{ base_domain }}`)",
+        "traefik.http.routers.session-manager.entrypoints=web,websecure",
+        "traefik.http.routers.session-manager.tls=true"
+      ]
+
+      check {
+        name     = "Session Manager Healthcheck"
+        type     = "http"
+        path     = "/status"
+        interval = "10s"
+        timeout  = "2s"
+      }
+    }
+
+    # ----------------------------------------------------
+    # CONFIGURATOR CLIENT
+    # ----------------------------------------------------
+    task "configurator-client" {
+      driver = "docker"
+
+      template {
+        destination = "secrets/s3.env"
+        env         = true
+        data        = <<EOF
+{% raw %}
+{{ with secret "secret/data/garage" }}
+AWS_ACCESS_KEY_ID="{{ .Data.data.access_key }}"
+AWS_SECRET_ACCESS_KEY="{{ .Data.data.secret_key }}"
+{{ end }}
+{% endraw %}
+AWS_ENDPOINT_URL_S3="http://{{ ansible_default_ipv4.address }}:3900"
+GARAGE_EXPOSED_PORT="3900"
+STORAGE_TYPE="S3"
+BUCKET="context-library"
+BUCKET_ARCHIVE="archive"
+NATS_URL="nats://{{ ansible_default_ipv4.address }}:4222"
+EOF
+      }
+
+      config {
+        image = "192.168.139.177:5000/configurator-client:latest"
+        ports = ["configurator"]
+      }
+
+      resources {
+        cpu    = 200
+        memory = 256
+      }
+    }
+
+    # ----------------------------------------------------
+    # SESSION MANAGER
+    # ----------------------------------------------------
+    task "session-manager" {
+      driver = "docker"
+
+      template {
+        destination = "secrets/sm.env"
+        env         = true
+        data        = <<EOF
+{% raw %}
+{{ with secret "secret/data/garage" }}
+AWS_ACCESS_KEY_ID="{{ .Data.data.access_key }}"
+AWS_SECRET_ACCESS_KEY="{{ .Data.data.secret_key }}"
+{{ end }}
+{% endraw %}
+DB_URL="sqlite:////data/database.db"
+CONFIGURATOR_CLIENT_ENDPOINT="http://127.0.0.1:8080"
+KEYCLOAK_INTERNAL_URL="http://{{ ansible_default_ipv4.address }}:8081"
+KEYCLOAK_REALM="twincr"
+KEYCLOAK_CLIENT_ID="session-manager-client"
+GARAGE_HOST="{{ ansible_default_ipv4.address }}"
+GARAGE_PORT="3900"
+BUCKET="context-library"
+EOF
+      }
+
+      config {
+        image = "192.168.139.177:5000/session-manager:latest"
+        ports = ["session_manager"]
+        extra_hosts = ["keycloak.localhost:192.168.139.177", "keycloak.{{ base_domain }}:192.168.139.177"]
+
+        volumes = [
+          "/opt/twincr/session-manager/data:/data"
+        ]
+      }
+
+      resources {
+        cpu    = 500
+        memory = 512
+      }
+    }
+  }
+}

@@ -1,0 +1,105 @@
+job "registry" {
+  datacenters = ["dc1"]
+  type        = "service"
+
+  group "registry" {
+    network {
+      port "registry_http" {
+        static = 5000
+        to     = 5000
+      }
+      port "ui_http"       { to = 80 }
+    }
+
+    task "registry" {
+      driver = "docker"
+
+      config {
+        image = "registry:2"
+        ports = ["registry_http"]
+
+        volumes = [
+          "/opt/registry/data:/var/lib/registry"
+        ]
+      }
+
+      env {
+        REGISTRY_STORAGE_DELETE_ENABLED = "true"
+
+        REGISTRY_HTTP_HEADERS_Access_Control_Allow_Origin  = "['*']"
+        REGISTRY_HTTP_HEADERS_Access_Control_Allow_Methods = "['HEAD', 'GET', 'OPTIONS', 'DELETE']"
+        REGISTRY_HTTP_HEADERS_Access_Control_Allow_Headers = "['Authorization', 'Accept', 'Cache-Control']"
+        REGISTRY_HTTP_HEADERS_Access_Control_Expose_Headers= "['Docker-Content-Digest']"
+      }
+
+      resources {
+        memory = 512
+      }
+    }
+
+    task "ui" {
+      driver = "docker"
+
+      config {
+        image = "joxit/docker-registry-ui:latest"
+        ports = ["ui_http"]
+      }
+
+      env {
+        REGISTRY_URL   = "https://registry.{{ base_domain }}"
+        DELETE_IMAGES  = "true"
+        REGISTRY_TITLE = "TwinEu Docker Registry"
+        SINGLE_REGISTRY = "true"
+      }
+
+      resources {
+        memory = 128
+      }
+    }
+
+    service {
+      name     = "docker-registry"
+      port     = "registry_http"
+      provider = "consul"
+
+      tags = [
+        "traefik.enable=true",
+        "traefik.http.routers.registry.rule=Host(`registry.{{ base_domain }}`)",
+        "traefik.http.routers.registry.entrypoints=web,websecure",
+        "traefik.http.routers.registry.tls=true",
+
+        "traefik.http.middlewares.cors-registry.headers.accesscontrolalloworiginlist=http://registry-ui.{{ base_domain }}",
+        "traefik.http.middlewares.cors-registry.headers.accesscontrolallowmethods=GET,OPTIONS,PUT,DELETE,HEAD",
+        "traefik.http.middlewares.cors-registry.headers.accesscontrolallowheaders=Authorization,Accept,Cache-Control,Content-Type",
+        "traefik.http.middlewares.cors-registry.headers.accesscontrolexposeheaders=Docker-Content-Digest",
+
+        "traefik.http.routers.registry.middlewares=cors-registry"
+      ]
+
+      check {
+        type     = "tcp"
+        interval = "10s"
+        timeout  = "2s"
+      }
+    }
+
+    service {
+      name     = "docker-registry-ui"
+      port     = "ui_http"
+      provider = "consul"
+
+      tags = [
+        "traefik.enable=true",
+        "traefik.http.routers.registry-ui.rule=Host(`registry-ui.{{ base_domain }}`)",
+         "traefik.http.routers.registry-ui.entrypoints=web,websecure",
+        "traefik.http.routers.registry-ui.tls=true"
+      ]
+
+      check {
+        type     = "tcp"
+        interval = "10s"
+        timeout  = "2s"
+      }
+    }
+  }
+}

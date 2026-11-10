@@ -1,0 +1,118 @@
+job "temporal" {
+  datacenters = ["dc1"]
+  type        = "service"
+
+  group "temporal-stack" {
+    count = 1
+
+    network {
+      mode = "bridge"
+
+      port "ui" {
+        static = 8233
+        to     = 8080
+      }
+
+      port "grpc" {
+        static = 7233
+        to     = 7233
+      }
+
+      port "db" {
+        static = 5432
+        to     = 5432
+      }
+    }
+
+    task "postgres" {
+      driver = "docker"
+      lifecycle {
+        hook    = "prestart"
+        sidecar = true
+      }
+      config {
+        image = "postgres:15-alpine"
+        ports = ["db"]
+      }
+      env {
+        POSTGRES_USER     = "temporal"
+        POSTGRES_PASSWORD = "temporal_password"
+        POSTGRES_DB       = "temporal"
+      }
+
+      resources {
+        cpu    = 200
+        memory = 256
+      }
+    }
+
+    task "server" {
+      driver = "docker"
+      config {
+        image = "temporalio/auto-setup:1.24"
+        ports = ["grpc"]
+      }
+      env {
+        DB             = "postgres12"
+        DB_PORT        = "5432"
+        POSTGRES_USER  = "temporal"
+        POSTGRES_PWD   = "temporal_password"
+        POSTGRES_SEEDS = "127.0.0.1"
+        BIND_ON_IP     = "0.0.0.0"
+        TEMPORAL_BROADCAST_ADDRESS = "127.0.0.1"
+        # TEMPORAL_BROADCAST_ADDRESS = "${NOMAD_IP_grpc}"
+      }
+
+      resources {
+        cpu    = 1000
+        memory = 1536
+      }
+    }
+
+    task "ui" {
+      driver = "docker"
+      config {
+        image = "temporalio/ui:2.49.1"
+        ports = ["ui"]
+      }
+      env {
+        TEMPORAL_ADDRESS = "127.0.0.1:7233"
+        TEMPORAL_UI_HOST = "0.0.0.0"
+        TEMPORAL_UI_PORT = "8080"
+      }
+
+      resources {
+        cpu    = 200
+        memory = 256
+      }
+    }
+
+    service {
+        name     = "temporal-ui"
+        port     = "ui"
+        address_mode = "alloc"
+        provider = "consul"
+
+        tags = [
+          "traefik.enable=true",
+          "traefik.http.routers.temporal-ui.rule=Host(`temporal.{{ base_domain }}`)",
+          "traefik.http.routers.temporal-ui.entrypoints=web,websecure",
+          "traefik.http.routers.temporal-ui.tls=true"
+        ]
+    }
+
+    service {
+      name     = "temporal-grpc"
+      port     = "grpc"
+      address_mode = "alloc"
+      provider = "consul"
+
+      tags = [
+        "traefik.enable=true",
+        "traefik.http.routers.temporal-grpc.rule=Host(`temporal-grpc.{{ base_domain }}`)",
+        "traefik.http.routers.temporal-grpc.entrypoints=web",
+        "traefik.http.services.temporal-grpc.loadbalancer.server.scheme=h2c"
+      ]
+    }
+  }
+}

@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+#MISE description="Install Argus native frontend dependencies via pnpm"
+#MISE sources=["argus/package.json", "argus/pnpm-lock.yaml"]
+#MISE outputs=["argus/node_modules"]
+
+set -euo pipefail
+
+echo "==> [setup:argus] Installing Argus dependencies..."
+(cd argus && pnpm install --frozen-lockfile --config.confirmModulesPurge=false)

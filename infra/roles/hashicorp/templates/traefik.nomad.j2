@@ -1,0 +1,105 @@
+job "traefik" {
+  datacenters = ["dc1"]
+  type        = "system"
+  group "traefik" {
+    network {
+      port "http"     { static = 80 }
+      port "https"    { static = 443 }
+      port "admin"    { static = 8080 }
+      port "lobby-api" { static = 8000 }
+    }
+    service {
+          name = "traefik-admin"
+          port = "admin"
+          check {
+            name     = "Traefik Ping Check"
+            type     = "http"
+            path     = "/ping"
+            interval = "10s"
+            timeout  = "2s"
+          }
+        }
+    task "traefik" {
+      driver = "docker"
+      env {
+        NO_PROXY = "127.0.0.1,localhost,10.0.0.0/8,192.168.0.0/16,172.16.0.0/12,.twin.eu"
+        no_proxy = "127.0.0.1,localhost,10.0.0.0/8,192.168.0.0/16,172.16.0.0/12,.twin.eu"
+      }
+      template {
+              destination = "local/traefik-routes.yml"
+              data = <<EOF
+      http:
+        routers:
+          auth-redirect:
+            rule: "Host(`auth.{{ base_domain }}`)"
+            entryPoints:
+              - web
+              - websecure
+            middlewares:
+              - auth-redirect-middleware
+            service: "noop@internal"
+            tls: {}
+          nomad-ui:
+            rule: "Host(`nomad.{{ base_domain }}`)"
+            service: nomad-svc
+            entryPoints:
+              - web
+              - websecure
+            tls: {}
+          consul-ui:
+            rule: "Host(`consul.{{ base_domain }}`)"
+            service: consul-svc
+            entryPoints:
+              - web
+              - websecure
+            tls: {}
+        middlewares:
+          auth-redirect-middleware:
+            redirectRegex:
+              regex: "^https?://auth\\.[^/]+/(.*)"
+              replacement: "https://keycloak.{{ base_domain }}/$${1}"
+              permanent: false
+        services:
+          nomad-svc:
+            loadBalancer:
+              servers:
+                - url: "http://127.0.0.1:4646"
+          consul-svc:
+            loadBalancer:
+              servers:
+                - url: "http://127.0.0.1:8500"
+      EOF
+            }
+      config {
+        image        = "traefik:v3.7"
+        network_mode = "host"
+        args = [
+          "--api.dashboard=true",
+          "--api.insecure=true",
+          "--providers.consulcatalog=true",
+          "--providers.consulcatalog.exposedByDefault=false",
+          "--providers.nomad=true",
+          "--providers.nomad.exposedByDefault=false",
+          "--ping=true",
+          "--providers.nomad.endpoint.address=http://127.0.0.1:4646",
+          "--providers.consulcatalog.endpoint.address=http://127.0.0.1:8500",
+          "--providers.file.filename=/local/traefik-routes.yml",
+          "--entrypoints.web.address=:80",
+          "--entrypoints.web.http.redirections.entrypoint.to=websecure",
+          "--entrypoints.web.http.redirections.entrypoint.scheme=https",
+          "--entrypoints.websecure.address=:443",
+          "--entrypoints.traefik.address=:8080",
+          "--entrypoints.lobby-api.address=:8000",
+          "--log.level=INFO",
+          "--accesslog=true",
+          "--accesslog.format=json",
+        ]
+        ports = ["http", "https", "admin", "lobby-api"]
+      }
+      resources {
+        cpu    = 200
+        memory = 256
+      }
+    }
+  }
+}

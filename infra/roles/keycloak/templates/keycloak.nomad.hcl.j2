@@ -1,0 +1,105 @@
+variable "keycloak_tag" {
+  default = "26.7.0"
+}
+
+job "keycloak" {
+  datacenters = ["dc1"]
+  type        = "service"
+
+  group "kc" {
+    count = 1
+
+    vault {
+      role = "nomad-workloads"
+    }
+
+    network {
+      port "http" {
+        static = 8081
+        to     = 8080
+      }
+      port "jgroups" {
+        to = 7800
+      }
+    }
+
+    task "kc" {
+      driver = "docker"
+
+      # ponytail: --import-realm only imports if the realm doesn't already
+      # exist (no force-override). Running import as a separate prestart
+      # JVM boot broke Keycloak's fresh-DB detection for KC_BOOTSTRAP_ADMIN_*
+      # (admin user was silently never created). Single boot = bootstrap works.
+      # Force reimport: delete the realm via Admin Console/kcadm.sh first.
+      config {
+        image = "quay.io/keycloak/keycloak:${var.keycloak_tag}"
+        extra_hosts = ["host.docker.internal:host-gateway"]
+
+        args  = ["start", "--import-realm", "--hostname=https://keycloak.{{ base_domain }}"]
+        ports = ["http", "jgroups"]
+
+        volumes = [
+          "/opt/keycloak/themes:/opt/keycloak/themes:ro",
+          "/opt/keycloak/config/realm.json:/opt/keycloak/data/import/realm.json:ro"
+        ]
+      }
+
+      template {
+        data = <<EOF
+KC_HTTP_ENABLED="true"
+KC_PROXY_HEADERS="xforwarded"
+KC_DB="postgres"
+KC_CACHE_STACK="tcp"
+jgroups.dns.query="keycloak.service.consul"
+
+{% raw %}
+{{ with secret "secret/data/keycloak" }}
+KC_BOOTSTRAP_ADMIN_USERNAME="{{ .Data.data.admin_user }}"
+KC_BOOTSTRAP_ADMIN_PASSWORD="{{ .Data.data.admin_password }}"
+{{ end }}
+
+{{ with secret "secret/data/postgres" }}
+KC_DB_USERNAME="{{ .Data.data.user }}"
+KC_DB_PASSWORD="{{ .Data.data.password }}"
+{{ end }}
+
+{{ range service "database" }}
+{{ if eq .Address "127.0.0.1" }}
+KC_DB_URL="jdbc:postgresql://host.docker.internal:{{ .Port }}/twineu"
+{{ else }}
+KC_DB_URL="jdbc:postgresql://{{ .Address }}:{{ .Port }}/twineu"
+{{ end }}
+{{ end }}
+{% endraw %}
+EOF
+        destination = "secrets/app.env"
+        env         = true
+      }
+
+      resources {
+        cpu    = 1000
+        memory = 1500
+      }
+    }
+
+    service {
+      name = "keycloak"
+      port = "http"
+      provider = "consul"
+
+      tags = [
+        "traefik.enable=true",
+        "traefik.http.routers.keycloak.rule=Host(`keycloak.{{ base_domain }}`)",
+        "traefik.http.routers.keycloak.entrypoints=websecure",
+        "traefik.http.routers.keycloak.tls=true"
+      ]
+
+      check {
+        type     = "http"
+        path     = "/realms/master"
+        interval = "15s"
+        timeout  = "5s"
+      }
+    }
+  }
+}

@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+#MISE description="Setup git pre-commit hooks"
+#MISE sources=[".pre-commit-config.yaml"]
+#MISE outputs=[".git/hooks/pre-commit"]
+
+set -euo pipefail
+
+echo "==> [setup:precommit] Installing pre-commit hooks..."
+pre-commit install

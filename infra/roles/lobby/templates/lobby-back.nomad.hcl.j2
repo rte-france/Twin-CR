@@ -1,0 +1,97 @@
+job "lobby-back" {
+  datacenters = ["dc1"]
+  type        = "service"
+  meta {
+    deploy_timestamp = "{{ ansible_date_time.iso8601 }}"
+  }
+  group "app" {
+    count = 1
+    network {
+      mode = "bridge"
+      port "http" {
+        to = 8000
+      }
+    }
+    service {
+      name         = "lobby-api"
+      port         = "http"
+      provider     = "nomad"
+      address_mode = "alloc"
+      check {
+        name     = "alive"
+        type     = "http"
+        path     = "/docs"
+        interval = "10s"
+        timeout  = "2s"
+      }
+      tags = [
+        "traefik.enable=true",
+        "traefik.http.routers.lobby-api.rule=Host(`lobby.{{ base_domain }}`) && (PathPrefix(`/api`) || PathPrefix(`/docs`))",
+        "traefik.http.routers.lobby-api.entrypoints=websecure",
+        "traefik.http.routers.lobby-api.tls=true",
+        "traefik.http.services.lobby-api.loadbalancer.passhostheader=true",
+      ]
+    }
+    task "server" {
+      driver = "docker"
+      config {
+        image      = "registry.{{ base_domain }}/lobby:latest"
+        force_pull = true
+        ports      = ["http"]
+        command    = "uvicorn"
+        args       = ["app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+      }
+      env {
+        ENVIRONMENT            = "development"
+        BASE_DOMAIN            = "{{ base_domain }}"
+        NOMAD_URL              = "http://nomad.{{ base_domain }}"
+        CONSUL_URL             = "http://${attr.unique.network.ip-address}:8500"
+        TEMPORAL_ADDRESS       = "temporal-grpc.{{ base_domain }}:80"
+        TEMPORAL_NAMESPACE     = "default"
+        DATABASE_URL           = "postgresql+asyncpg://twineu_api:twineu_password@${attr.unique.network.ip-address}:5433/twineu"
+        S3_ENDPOINT_URL        = "http://s3.{{ base_domain }}"
+        S3_ACCESS_KEY_ID       = "GK366e7b8f524748ed72d268ce"
+        S3_SECRET_ACCESS_KEY   = "bc015f5da70e106e49a1320cd2bb72276f19f66080201ee4b5222584a34c091b"
+        S3_BUCKET_NAME         = "twineu-files"
+        KEYCLOAK_URL           = "https://keycloak.{{ base_domain }}"
+        KEYCLOAK_REALM         = "twineu"
+        KEYCLOAK_CLIENT_ID     = "session-manager-client"
+        KEYCLOAK_CLIENT_SECRET = ""
+      }
+      resources {
+        cpu    = 500
+        memory = 256
+      }
+    }
+    task "worker" {
+      driver = "docker"
+      config {
+        image      = "registry.{{ base_domain }}/lobby:latest"
+        force_pull = true
+        command    = "python"
+        args       = ["-m", "app.worker"]
+      }
+      env {
+        ENVIRONMENT            = "development"
+        BASE_DOMAIN            = "{{ base_domain }}"
+        NOMAD_URL              = "http://nomad.{{ base_domain }}"
+        CONSUL_URL             = "http://${attr.unique.network.ip-address}:8500"
+        TEMPORAL_ADDRESS       = "temporal-grpc.{{ base_domain }}:80"
+        TEMPORAL_NAMESPACE     = "default"
+        DATABASE_URL           = "postgresql+asyncpg://twineu_api:twineu_password@${attr.unique.network.ip-address}:5433/twineu"
+        S3_ENDPOINT_URL        = "http://s3.{{ base_domain }}"
+        S3_ACCESS_KEY_ID       = "GK366e7b8f524748ed72d268ce"
+        S3_SECRET_ACCESS_KEY   = "bc015f5da70e106e49a1320cd2bb72276f19f66080201ee4b5222584a34c091b"
+        S3_BUCKET_NAME         = "twineu-files"
+        KEYCLOAK_URL           = "https://keycloak.{{ base_domain }}"
+        KEYCLOAK_REALM         = "twineu"
+        KEYCLOAK_CLIENT_ID     = "session-manager-client"
+        KEYCLOAK_CLIENT_SECRET = ""
+      }
+      resources {
+        cpu    = 500
+        memory = 256
+      }
+    }
+  }
+}

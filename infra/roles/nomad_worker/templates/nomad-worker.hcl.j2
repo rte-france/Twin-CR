@@ -1,0 +1,27 @@
+datacenter = "dc1"
+data_dir  = "/opt/nomad"
+bind_addr = "0.0.0.0"
+
+advertise {
+  http = "{{ ansible_facts['default_ipv4']['address'] }}"
+  rpc  = "{{ ansible_facts['default_ipv4']['address'] }}"
+  serf = "{{ ansible_facts['default_ipv4']['address'] }}"
+}
+
+client {
+  enabled = true
+  servers = ["{{ nomad_server_ip | default(hostvars[groups['nomad_servers'][0]]['ansible_facts']['default_ipv4']['address']) }}:4647"]
+  node_class = "compute"
+}
+
+plugin "docker" {
+  config {
+    allow_privileged = true
+    volumes { enabled = true }
+    infra_image = "registry.k8s.io/pause-arm64:3.3"
+  }
+}
+
+consul {
+  address = "{{ nomad_server_ip | default(hostvars[groups['nomad_servers'][0]]['ansible_facts']['default_ipv4']['address']) }}:8500"
+}

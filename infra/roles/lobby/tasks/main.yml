@@ -1,0 +1,53 @@
+#
+# Copyright (c) 2025-2026, RTE (http://www.rte-france.com)
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+# SPDX-License-Identifier: MPL-2.0
+# This file is part of the Twin-CR project.
+#
+
+---
+- name: Template Nomad job file for Lobby
+  ansible.builtin.template:
+    src: lobby-back.nomad.hcl.j2
+    dest: /tmp/lobby-back.nomad.hcl
+    mode: "0644"
+
+- name: Deploy Lobby via Nomad CLI
+  ansible.builtin.command: nomad job run /tmp/lobby-back.nomad.hcl
+  register: nomad_run_lobby
+  changed_when: "'Evaluating deployment' in nomad_run_lobby.stdout or 'Job registration successful' in nomad_run_lobby.stdout"
+
+- name: Wait for Lobby API HTTP port to be ready in Consul/Traefik
+  ansible.builtin.uri:
+    url: "https://lobby.{{ base_domain }}/docs"
+    validate_certs: no
+    status_code: 200
+  register: api_check
+  until: api_check.status == 200
+  retries: 12
+  delay: 10
+  when: ansible_check_mode is not defined
+
+- name: Template Nomad job file for Lobby Front
+  ansible.builtin.template:
+    src: lobby-front.nomad.hcl.j2
+    dest: /tmp/lobby-front.nomad.hcl
+    mode: "0644"
+
+- name: Deploy Lobby Front via Nomad CLI
+  ansible.builtin.command: nomad job run /tmp/lobby-front.nomad.hcl
+  register: nomad_run_lobby_front
+  changed_when: "'Evaluating deployment' in nomad_run_lobby_front.stdout or 'Job registration successful' in nomad_run_lobby_front.stdout"
+
+- name: Wait for Lobby Front to be ready
+  ansible.builtin.uri:
+    url: "https://app.{{ base_domain }}/health"
+    validate_certs: no
+    status_code: 200
+  register: front_check
+  until: front_check.status == 200
+  retries: 12
+  delay: 10
+  when: ansible_check_mode is not defined

@@ -1,0 +1,31 @@
+#!/usr/bin/env bash
+#MISE description="Generate Garage S3 credentials if missing"
+#MISE sources=["configurator_server/init_garage.sh"]
+#MISE outputs=["configurator_server/credentials.txt"]
+
+set -euo pipefail
+
+CREDENTIALS="configurator_server/credentials.txt"
+
+if [ -f "$CREDENTIALS" ]; then
+    echo "==> [setup:garage] Credentials already present in $CREDENTIALS"
+    exit 0
+fi
+
+if [ -f .env ] && grep -q '^AWS_ACCESS_KEY_ID=..' .env 2>/dev/null; then
+    echo "==> [setup:garage] AWS_ACCESS_KEY_ID already configured in .env"
+    exit 0
+fi
+
+echo "==> [setup:garage] Initializing Garage S3..."
+if ! docker info >/dev/null 2>&1; then
+    echo "ERROR: Docker is required to initialize Garage S3 credentials." >&2
+    exit 1
+fi
+
+PROJECT_NAME=${COMPOSE_PROJECT_NAME:-$(basename "$PWD" | tr 'A-Z' 'a-z' | tr -cd 'a-z0-9_-')}
+GARAGE_COMPOSE="docker compose -p $PROJECT_NAME -f configurator_server/docker-compose-garage.yaml"
+
+$GARAGE_COMPOSE up -d garage
+(cd configurator_server && ./init_garage.sh)
+$GARAGE_COMPOSE stop garage || true

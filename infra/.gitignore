@@ -1,0 +1,9 @@
+.vault_pass.txt
+.generated_secrets/
+.venv/
+
+**/secrets.yml
+
+*.retry
+*.log
+.venv

@@ -1,0 +1,333 @@
+variable "session_id" {
+  type        = string
+  description = "Unique Twin-CR session ID"
+}
+
+variable "context_id" {
+  type        = string
+  description = "S3 context template UUID (e.g. 4Bus, Nordic)"
+}
+
+variable "config_path" {
+  type        = string
+  default     = "config.toml"
+  description = "Path to the configuration file inside context"
+}
+
+variable "scenario_id" {
+  type        = string
+  default     = ""
+  description = "Optional DSL scenario identifier"
+}
+
+variable "author" {
+  type        = string
+  default     = "system"
+  description = "User author of the session"
+}
+
+variable "base_domain" {
+  type        = string
+  default     = "localhost"
+  description = "Base domain for Traefik ingress"
+}
+
+job "twincr-session" {
+  datacenters = ["dc1"]
+  type        = "service"
+
+  vault {
+    role = "nomad-workloads"
+  }
+
+  meta {
+    session_id  = var.session_id
+    context_id  = var.context_id
+    scenario_id = var.scenario_id
+    config_path = var.config_path
+    author      = var.author
+  }
+
+  group "session-stack" {
+    count = 1
+
+    network {
+      mode = "bridge"
+      port "clickhouse" { to = 8123 }
+      port "nats"       { to = 4222 }
+      port "core_dsl"   { to = 8000 }
+      port "scada_http" { to = 8081 }
+      port "gm_http"    { to = 8082 }
+    }
+
+    service {
+      name         = "scada-${var.session_id}"
+      port         = "scada_http"
+      address_mode = "alloc"
+      provider     = "consul"
+
+      tags = [
+        "traefik.enable=true",
+        "traefik.http.routers.scada-${var.session_id}.rule=Host(`scada-${var.session_id}.${var.base_domain}`)",
+        "traefik.http.routers.scada-${var.session_id}.entrypoints=web,websecure",
+        "traefik.http.routers.scada-${var.session_id}.tls=true"
+      ]
+
+      check {
+        name     = "SCADA Health"
+        type     = "http"
+        path     = "/health"
+        interval = "10s"
+        timeout  = "2s"
+      }
+    }
+
+    service {
+      name         = "gm-${var.session_id}"
+      port         = "gm_http"
+      address_mode = "alloc"
+      provider     = "consul"
+
+      tags = [
+        "traefik.enable=true",
+        "traefik.http.routers.gm-${var.session_id}.rule=Host(`gm-${var.session_id}.${var.base_domain}`)",
+        "traefik.http.routers.gm-${var.session_id}.entrypoints=web,websecure",
+        "traefik.http.routers.gm-${var.session_id}.tls=true"
+      ]
+
+      check {
+        name     = "GameMaster Health"
+        type     = "http"
+        path     = "/health"
+        interval = "10s"
+        timeout  = "2s"
+      }
+    }
+
+    service {
+      name         = "nats-${var.session_id}"
+      port         = "nats"
+      address_mode = "alloc"
+      provider     = "consul"
+
+      check {
+        name     = "NATS TCP Port"
+        type     = "tcp"
+        interval = "5s"
+        timeout  = "2s"
+      }
+    }
+
+    service {
+      name         = "clickhouse-${var.session_id}"
+      port         = "clickhouse"
+      address_mode = "alloc"
+      provider     = "consul"
+
+      check {
+        name     = "ClickHouse Health"
+        type     = "http"
+        path     = "/ping"
+        interval = "5s"
+        timeout  = "2s"
+      }
+    }
+
+    service {
+      name         = "core-${var.session_id}"
+      port         = "core_dsl"
+      address_mode = "alloc"
+      provider     = "consul"
+
+      check {
+        name     = "Orchestrator Healthcheck"
+        type     = "script"
+        command  = "test"
+        args     = ["-f", "/tmp/orchestrator_healthcheck"]
+        task     = "twincr-core"
+        interval = "5s"
+        timeout  = "5s"
+      }
+    }
+
+    # ====================================================
+    # 0. S3 ARTIFACT DOWNLOAD (Prestart via AWS CLI)
+    # ====================================================
+    task "fetch-context" {
+      driver = "docker"
+
+      lifecycle {
+        hook    = "prestart"
+        sidecar = false
+      }
+
+      template {
+        destination = "secrets/s3.env"
+        env         = true
+        data        = <<EOF
+{% raw %}
+{{ with secret "secret/data/garage" }}
+AWS_ACCESS_KEY_ID="{{ .Data.data.access_key }}"
+AWS_SECRET_ACCESS_KEY="{{ .Data.data.secret_key }}"
+{{ end }}
+{% endraw %}
+S3_ENDPOINT="http://192.168.139.177:3900"
+BUCKET="context-library"
+CONTEXT_ID="${var.context_id}"
+EOF
+      }
+
+      config {
+        image   = "amazon/aws-cli:latest"
+        command = "/bin/sh"
+        args    = [
+          "-c",
+          "aws --endpoint-url $S3_ENDPOINT --region garage s3 sync s3://$BUCKET/CONTEXTS/$CONTEXT_ID/DATA /local/context"
+        ]
+      }
+
+      resources {
+        cpu    = 200
+        memory = 256
+      }
+    }
+
+    # ====================================================
+    # 1. NATS BROKER
+    # ====================================================
+    task "nats" {
+      driver = "docker"
+
+      config {
+        image = "nats:latest"
+        ports = ["nats"]
+      }
+
+      resources {
+        cpu    = 100
+        memory = 128
+      }
+    }
+
+    # ====================================================
+    # 2. CLICKHOUSE SERVER
+    # ====================================================
+    task "clickhouse" {
+      driver = "docker"
+
+      config {
+        image = "clickhouse/clickhouse-server:latest"
+        ports = ["clickhouse"]
+      }
+
+      env {
+        CLICKHOUSE_SKIP_USER_SETUP = "1"
+        TZ                         = "Europe/Paris"
+      }
+
+      resources {
+        cpu        = 300
+        memory     = 512
+        memory_max = 1024
+      }
+    }
+
+    # ====================================================
+    # 3. TWINCR CORE (Dynawo & Orchestrator)
+    # ====================================================
+    task "twincr-core" {
+      driver = "docker"
+
+      config {
+        image = "192.168.139.177:5000/twincr-core:latest"
+        ports = ["core_dsl"]
+
+        volumes = [
+          "local/context:/home/orchestrator/context"
+        ]
+
+        command = "/bin/bash"
+        args = [
+          "-c",
+          "chmod +x /home/orchestrator/envs/run_orchestrator.sh && /home/orchestrator/envs/run_orchestrator.sh"
+        ]
+      }
+
+      env {
+        TZ       = "Europe/Paris"
+        NATS_URL = "nats://127.0.0.1:4222"
+      }
+
+      resources {
+        cpu    = 500
+        memory = 1024
+      }
+    }
+
+    # ====================================================
+    # 4. ARGUS BACKEND SCADA
+    # ====================================================
+    task "argus-scada" {
+      driver = "docker"
+
+      config {
+        image = "192.168.139.177:5000/argus-backend-scada:latest"
+        ports = ["scada_http"]
+
+        entrypoint = [
+          "java", "-Xmx1g", "-XX:+ExitOnOutOfMemoryError", "-jar", "/app/app_scada.jar",
+          "--http-port", "8081",
+          "--nats-url", "nats://127.0.0.1:4222",
+          "--config-path", "/home/orchestrator/context/${var.config_path}",
+          "--clickhouse-host", "127.0.0.1",
+          "--clickhouse-port", "8123",
+          "--configurator-host", "127.0.0.1",
+          "--configurator-port", "8085",
+          "--mode", "CLICKHOUSE"
+        ]
+
+        volumes = [
+          "local/context:/home/orchestrator/context"
+        ]
+      }
+
+      resources {
+        cpu    = 400
+        memory = 768
+      }
+    }
+
+    # ====================================================
+    # 5. ARGUS BACKEND GAMEMASTER
+    # ====================================================
+    task "argus-gm" {
+      driver = "docker"
+
+      config {
+        image = "192.168.139.177:5000/argus-backend-gm:latest"
+        ports = ["gm_http"]
+
+        entrypoint = [
+          "java", "-Xmx1g", "-XX:+ExitOnOutOfMemoryError", "-jar", "/app/app_gm.jar",
+          "--http-port", "8082",
+          "--nats-url", "nats://127.0.0.1:4222",
+          "--config-path", "/home/orchestrator/context/${var.config_path}",
+          "--clickhouse-host", "127.0.0.1",
+          "--clickhouse-port", "8123",
+          "--configurator-host", "127.0.0.1",
+          "--configurator-port", "8085",
+          "--mode", "CLICKHOUSE"
+        ]
+
+        volumes = [
+          "local/context:/home/orchestrator/context"
+        ]
+      }
+
+      resources {
+        cpu    = 400
+        memory = 768
+      }
+    }
+  }
+}

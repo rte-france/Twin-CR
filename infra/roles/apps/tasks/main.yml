@@ -1,0 +1,26 @@
+#
+# Copyright (c) 2025-2026, RTE (http://www.rte-france.com)
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+# SPDX-License-Identifier: MPL-2.0
+# This file is part of the Twin-CR project.
+#
+
+---
+- name: Create directories for Session Manager
+  ansible.builtin.file:
+    path: /opt/twincr/session-manager/data
+    state: directory
+    mode: "0777"
+
+- name: Template Apps Nomad job file
+  ansible.builtin.template:
+    src: twincr-apps.nomad.hcl.j2
+    dest: /tmp/twincr-apps.nomad.hcl
+    mode: "0644"
+
+- name: Deploy Session Manager and Configurator Client via Nomad CLI
+  ansible.builtin.command: nomad job run -detach /tmp/twincr-apps.nomad.hcl
+  register: nomad_run_apps
+  changed_when: "'Job registration successful' in nomad_run_apps.stdout"

@@ -1,0 +1,56 @@
+job "homepage" {
+  datacenters = ["dc1"]
+  type        = "service"
+
+  group "homepage" {
+    count = 1
+
+    network {
+      port "http" {
+        to = 3000
+      }
+    }
+
+    service {
+      name     = "homepage"
+      port     = "http"
+      provider = "consul"
+
+      tags = [
+        "traefik.enable=true",
+        "traefik.http.routers.homepage.rule=Host(`portal.{{ base_domain }}`)",
+        "traefik.http.routers.homepage.entrypoints=web,websecure",
+        "traefik.http.routers.homepage.tls=true"
+      ]
+
+      check {
+        type     = "http"
+        path     = "/"
+        interval = "10s"
+        timeout  = "2s"
+      }
+    }
+
+    task "homepage" {
+      driver = "docker"
+
+      config {
+        image = "ghcr.io/gethomepage/homepage:v0.10.9"
+        ports = ["http"]
+        volumes = [
+          "/opt/homepage/config:/app/config"
+        ]
+      }
+
+      env {
+        HOMEPAGE_ALLOWED_HOSTS = "portal.{{ base_domain }}"
+        CONFIG_VERSION         = "{{ (lookup('template', 'settings.yaml.j2') ~ lookup('template', 'services.yaml.j2') ~ lookup('template', 'bookmarks.yaml.j2')) | hash('sha1') }}"
+      }
+
+      resources {
+        cpu    = 100
+        memory = 128
+      }
+    }
+  }
+}

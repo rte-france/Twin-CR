@@ -1,0 +1,36 @@
+#
+# Copyright (c) 2025-2026, RTE (http://www.rte-france.com)
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+# SPDX-License-Identifier: MPL-2.0
+# This file is part of the Twin-CR project.
+#
+
+---
+- name: Create directories for Garage data and config
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    mode: "0755"
+  loop:
+    - /opt/garage/data
+    - /opt/garage/meta
+    - /opt/garage/config
+
+- name: Template Garage configuration
+  ansible.builtin.template:
+    src: garage.toml.j2
+    dest: /opt/garage/config/garage.toml
+    mode: "0644"
+
+- name: Template Garage job file
+  ansible.builtin.template:
+    src: garage.nomad.j2
+    dest: /tmp/garage.nomad
+    mode: "0644"
+
+- name: Deploy Garage via Nomad CLI
+  ansible.builtin.command: nomad job run -detach /tmp/garage.nomad
+  register: nomad_run_garage
+  changed_when: "'Job registration successful' in nomad_run_garage.stdout"

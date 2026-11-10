@@ -1,0 +1,59 @@
+#
+# Copyright (c) 2025-2026, RTE (http://www.rte-france.com)
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+# SPDX-License-Identifier: MPL-2.0
+# This file is part of the Twin-CR project.
+#
+
+---
+- name: Ensure gnupg and jq are installed (Debian)
+  ansible.builtin.package:
+    name:
+      - gnupg
+      - jq
+    state: present
+  environment: "{{ proxy_env | default({}) }}"
+
+- name: Add HashiCorp repository key
+  ansible.builtin.get_url:
+    url: https://apt.releases.hashicorp.com/gpg
+    dest: /etc/apt/keyrings/hashicorp-archive-keyring.asc
+    mode: "0644"
+  environment: "{{ proxy_env | default({}) }}"
+
+- name: Add HashiCorp repository
+  ansible.builtin.apt_repository:
+    repo: "deb [signed-by=/etc/apt/keyrings/hashicorp-archive-keyring.asc] https://apt.releases.hashicorp.com {{ ansible_distribution_release }} main"
+    state: present
+    filename: hashicorp
+  environment: "{{ proxy_env | default({}) }}"
+
+- name: Install Nomad
+  ansible.builtin.package:
+    name: nomad
+    state: present
+  environment: "{{ proxy_env | default({}) }}"
+
+- name: Create data and config directory
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    mode: "0755"
+  loop:
+    - /etc/nomad.d
+    - /opt/nomad
+
+- name: Copy Nomad worker configuration
+  ansible.builtin.template:
+    src: nomad-worker.hcl.j2
+    dest: /etc/nomad.d/nomad.hcl
+    mode: "0644"
+
+- name: Start and enable Nomad service
+  ansible.builtin.systemd:
+    name: nomad
+    state: restarted
+    daemon_reload: yes
+    enabled: yes

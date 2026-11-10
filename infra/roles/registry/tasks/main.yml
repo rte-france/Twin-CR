@@ -1,0 +1,25 @@
+#
+# Copyright (c) 2025-2026, RTE (http://www.rte-france.com)
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+# SPDX-License-Identifier: MPL-2.0
+# This file is part of the Twin-CR project.
+#
+
+---
+- name: Create directories for Registry data
+  ansible.builtin.file:
+    path: /opt/registry/data
+    state: directory
+    mode: "0755"
+
+- name: Template Registry job file
+  ansible.builtin.template:
+    src: registry.nomad.hcl.j2
+    dest: /tmp/registry.nomad.hcl
+
+- name: Deploy Registry via Nomad CLI
+  ansible.builtin.command: nomad job run /tmp/registry.nomad.hcl
+  register: nomad_run_registry
+  changed_when: "'Job registration successful' in nomad_run_registry.stdout"

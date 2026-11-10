@@ -1,9 +1,10 @@
 #
-# Copyright (c) 2025-2026, RTE (https://www.rte-france.com)
-# See AUTHORS.md
+# Copyright (c) 2025-2026, RTE (http://www.rte-france.com)
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
 # SPDX-License-Identifier: MPL-2.0
-# This file is part of Twin-CR, a platform for real-time cyber-physical
-# co-simulation of power systems.
+# This file is part of the Twin-CR project.
 #
 
 # Tools used by setup.sh and the native runs, installed by setup.sh with mise (https://mise.jdx.dev, required).
@@ -11,8 +12,24 @@
 [tools]
 python = "3.11"              # setup.sh, examples config.sh (dynawo_toolbox venv), NRT tests (same as the CI)
 uv = "latest"                # configurator_client, session-manager (they get their own Python 3.14 from uv)
-node = "24"                  # Argus native run (same as envs/Dockerfile.argus.AppImage)
+node = "20"                  # Argus native run (same as envs/Dockerfile.argus.AppImage)
 pnpm = "10.18.3"
 jq = "latest"                # envs/fetch_simulators.sh
-go = "1.23.6"                # pre-commit gitleaks hook
 "pipx:pre-commit" = "4.7.0"   # Pinned: the git hook stores the path of this install, which contains the version
+nomad = "latest"
+
+[tasks.setup]
+description = "Setup environment and build docker images"
+alias = "setup"
+depends = [
+  "setup:precommit",
+  "setup:garage",
+  "setup:env",
+  "setup:dynawo",
+  "setup:devenvs",
+  "setup:argus",
+  "setup:examples",
+  "setup:build",
+]
+run = "echo '==> Setup completed successfully.'"
+

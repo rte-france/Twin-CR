@@ -1,0 +1,60 @@
+#
+# Copyright (c) 2025-2026, RTE (http://www.rte-france.com)
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+# SPDX-License-Identifier: MPL-2.0
+# This file is part of the Twin-CR project.
+#
+
+---
+# 1. Base prerequisites for all nodes (Docker + CNI networking)
+- name: Prepare common node environment
+  hosts: all
+  become: true
+  environment: "{{ proxy_env | default({}) }}"
+  roles:
+    - base
+    - role: docker
+      tags: docker
+    - role: cni
+      tags: cni
+
+# 2. Control plane (Nomad Server + Consul + Vault)
+- name: Deploy HashiCorp Control Plane
+  hosts: nomad_servers
+  become: true
+  environment: "{{ proxy_env | default({}) }}"
+  roles:
+    - role: hashicorp
+      tags: hashicorp
+
+# 3. Worker nodes (Nomad Clients joining cluster)
+- name: Join Nomad Worker Nodes
+  hosts: nomad_workers
+  become: true
+  environment: "{{ proxy_env | default({}) }}"
+  roles:
+    - role: nomad_worker
+      tags: worker
+
+# 4. Central Services & Ingress (Only on Server/Primary node)
+- name: Deploy Cluster Core Services
+  hosts: nomad_servers
+  become: true
+  environment: "{{ proxy_env | default({}) }}"
+  roles:
+    - role: postgres
+      tags: postgres
+    - role: registry
+      tags: registry
+    - role: garage
+      tags: garage
+    - role: keycloak
+      tags: keycloak
+    - role: temporal
+      tags: temporal
+    - role: homepage
+      tags: homepage
+    - role: apps
+      tags: apps

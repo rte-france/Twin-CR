@@ -1,0 +1,385 @@
+#
+# Copyright (c) 2025-2026, RTE (http://www.rte-france.com)
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+# SPDX-License-Identifier: MPL-2.0
+# This file is part of the Twin-CR project.
+#
+
+---
+# ==========================================
+# DEBIAN / UBUNTU (DEV)
+# ==========================================
+
+- name: Ensure gnupg and jq are installed (Debian)
+  ansible.builtin.apt:
+    name:
+      - gnupg
+      - jq
+      - curl
+    state: present
+  when: ansible_facts['os_family'] == 'Debian'
+  environment: "{{ proxy_env | default({}) }}"
+
+- name: Ensure /etc/apt/keyrings directory exists
+  ansible.builtin.file:
+    path: /etc/apt/keyrings
+    state: directory
+    mode: "0755"
+  when: ansible_facts['os_family'] == 'Debian'
+
+- name: Download HashiCorp GPG key (Debian)
+  ansible.builtin.get_url:
+    url: https://apt.releases.hashicorp.com/gpg
+    dest: /etc/apt/keyrings/hashicorp-archive-keyring.asc
+    mode: "0644"
+  when: ansible_facts['os_family'] == 'Debian'
+  environment: "{{ proxy_env | default({}) }}"
+
+- name: Add HashiCorp repository (Debian)
+  ansible.builtin.apt_repository:
+    repo: "deb [arch={{ 'arm64' if ansible_facts['architecture'] == 'aarch64' else 'amd64' }} signed-by=/etc/apt/keyrings/hashicorp-archive-keyring.asc] https://apt.releases.hashicorp.com {{ ansible_facts['distribution_release'] }} main"
+    state: present
+    update_cache: yes
+    filename: hashicorp
+  when: ansible_facts['os_family'] == 'Debian'
+  environment: "{{ proxy_env | default({}) }}"
+
+- name: Install Nomad, Consul and Vault (Debian)
+  ansible.builtin.apt:
+    name:
+      - nomad
+      - consul
+      - vault
+    state: present
+  when: ansible_facts['os_family'] == 'Debian'
+  environment: "{{ proxy_env | default({}) }}"
+
+# ==========================================
+# REDHAT (OPF)
+# ==========================================
+
+- name: Add HashiCorp repository (RedHat)
+  ansible.builtin.get_url:
+    url: https://rpm.releases.hashicorp.com/RHEL/hashicorp.repo
+    dest: /etc/yum.repos.d/hashicorp.repo
+  when: ansible_facts['os_family'] == 'RedHat'
+  environment: "{{ proxy_env | default({}) }}"
+
+- name: Install Nomad, Consul and Vault (RedHat)
+  ansible.builtin.dnf:
+    name:
+      - nomad
+      - consul
+      - vault
+      - jq
+      - curl
+    state: present
+    update_cache: yes
+  when: ansible_facts['os_family'] == 'RedHat'
+  environment: "{{ proxy_env | default({}) }}"
+
+# ==========================================
+# 1. BASE CONFIGURATION & DIRECTORIES
+# ==========================================
+
+- name: Create data and config directories for HashiCorp tools
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    mode: "0755"
+  loop:
+    - /etc/nomad.d
+    - /etc/consul.d
+    - /etc/vault.d
+    - /opt/nomad
+    - /opt/consul
+    - /opt/vault/data
+
+- name: Copy HashiCorp systemd service files
+  ansible.builtin.copy:
+    src: "{{ item }}"
+    dest: "/etc/systemd/system/{{ item }}"
+    mode: "0644"
+  loop:
+    - nomad.service
+    - consul.service
+    - vault.service
+
+- name: Configure Consul
+  ansible.builtin.template:
+    src: consul-config.hcl.j2
+    dest: /etc/consul.d/consul.hcl
+    mode: "0644"
+
+- name: Configure Vault
+  ansible.builtin.template:
+    src: vault-config.hcl.j2
+    dest: /etc/vault.d/vault.hcl
+    mode: "0644"
+
+- name: Start and Enable Vault & Consul
+  ansible.builtin.systemd:
+    name: "{{ item }}"
+    state: restarted
+    daemon_reload: yes
+    enabled: yes
+  loop:
+    - vault
+    - consul
+
+# ==========================================
+# 2. VAULT INITIALIZATION & UNSEAL
+# ==========================================
+
+- name: Wait for Vault to listen on 8200
+  ansible.builtin.wait_for:
+    host: 127.0.0.1
+    port: 8200
+    delay: 2
+    timeout: 30
+
+- name: Check Vault initialization status
+  ansible.builtin.uri:
+    url: http://127.0.0.1:8200/v1/sys/init
+    method: GET
+    status_code: 200
+  register: vault_init_status
+
+- name: Initialize Vault (if uninitialized)
+  ansible.builtin.uri:
+    url: http://127.0.0.1:8200/v1/sys/init
+    method: POST
+    body_format: json
+    body:
+      secret_shares: 1
+      secret_threshold: 1
+    status_code: 200
+  register: vault_init_resp
+  when: not vault_init_status.json.initialized
+
+- name: Save Vault credentials on host
+  ansible.builtin.copy:
+    content: |
+      VAULT_ROOT_TOKEN="{{ vault_init_resp.json.root_token }}"
+      VAULT_UNSEAL_KEY="{{ vault_init_resp.json['keys'][0] }}"
+    dest: /etc/vault.d/vault.creds
+    mode: "0600"
+  when:
+    - not vault_init_status.json.initialized
+    - vault_init_resp is defined
+    - vault_init_resp.json is defined
+
+- name: Check if Vault credentials file exists
+  ansible.builtin.stat:
+    path: /etc/vault.d/vault.creds
+  register: vault_creds_stat
+
+- name: Load Vault credentials
+  ansible.builtin.slurp:
+    src: /etc/vault.d/vault.creds
+  register: vault_creds_raw
+  when: vault_creds_stat.stat.exists
+
+- name: Extract Vault Root Token and Unseal Key
+  ansible.builtin.set_fact:
+    vault_root_token: "{{ (vault_creds_raw.content | b64decode | regex_search('VAULT_ROOT_TOKEN=\"(.*)\"', '\\1'))[0] | default('root') }}"
+    vault_unseal_key: "{{ (vault_creds_raw.content | b64decode | regex_search('VAULT_UNSEAL_KEY=\"(.*)\"', '\\1'))[0] | default('') }}"
+  when: vault_creds_stat.stat.exists
+
+- name: Fallback default Root Token if unmanaged
+  ansible.builtin.set_fact:
+    vault_root_token: "{{ vault_token | default('root') }}"
+  when: not vault_creds_stat.stat.exists
+
+- name: Check Vault seal status
+  ansible.builtin.uri:
+    url: http://127.0.0.1:8200/v1/sys/seal-status
+    method: GET
+    status_code: 200
+  register: vault_seal_status
+
+- name: Unseal Vault
+  ansible.builtin.uri:
+    url: http://127.0.0.1:8200/v1/sys/unseal
+    method: POST
+    body_format: json
+    body:
+      key: "{{ vault_unseal_key }}"
+    status_code: 200
+  when:
+    - vault_seal_status.json.sealed
+    - vault_unseal_key is defined
+    - vault_unseal_key | length > 0
+
+# ==========================================
+# 3. NOMAD START (needed before Vault JWT config)
+# ==========================================
+
+- name: Configure Nomad (Workload Identity based Vault integration)
+  ansible.builtin.template:
+    src: nomad-config.hcl.j2
+    dest: /etc/nomad.d/nomad.hcl
+    mode: "0644"
+
+- name: Start and Enable Nomad service
+  ansible.builtin.systemd:
+    name: nomad
+    state: restarted
+    daemon_reload: yes
+    enabled: yes
+
+- name: Wait for Nomad API to be ready
+  ansible.builtin.uri:
+    url: http://127.0.0.1:4646/v1/status/leader
+    status_code: 200
+  register: nomad_ready
+  until: nomad_ready.status == 200
+  retries: 15
+  delay: 4
+
+- name: Wait for Nomad JWKS endpoint (workload identity keys)
+  ansible.builtin.uri:
+    url: http://127.0.0.1:4646/.well-known/jwks.json
+    status_code: 200
+  register: nomad_jwks
+  until: nomad_jwks.status == 200
+  retries: 15
+  delay: 4
+
+# ==========================================
+# 4. VAULT ENGINES, POLICIES & JWT AUTH FOR NOMAD
+# ==========================================
+
+- name: Enable KV v2 secret engine
+  ansible.builtin.command: vault secrets enable -path=secret kv-v2
+  environment: &vault_env
+    VAULT_ADDR: "http://127.0.0.1:8200"
+    VAULT_TOKEN: "{{ vault_root_token }}"
+  register: enable_kv
+  failed_when: enable_kv.rc != 0 and "path is already in use" not in enable_kv.stderr
+  changed_when: enable_kv.rc == 0
+
+- name: Enable PKI secrets engine
+  ansible.builtin.command: vault secrets enable -path=pki pki
+  environment: *vault_env
+  register: enable_pki
+  failed_when: enable_pki.rc != 0 and "path is already in use" not in enable_pki.stderr
+  changed_when: enable_pki.rc == 0
+
+- name: Tune PKI engine TTL
+  ansible.builtin.command: vault secrets tune -max-lease-ttl=87600h pki
+  environment: *vault_env
+  changed_when: false
+
+- name: Generate Internal Root CA for PKI (if not existing)
+  ansible.builtin.command: >
+    vault write -field=certificate pki/root/generate/internal
+    common_name="TwinEU Internal CA"
+    ttl=87600h
+  environment: *vault_env
+  register: gen_ca
+  failed_when: gen_ca.rc != 0 and "already has a CA" not in gen_ca.stderr
+  changed_when: gen_ca.rc == 0
+
+- name: Configure PKI Role for Workloads
+  ansible.builtin.command: >
+    vault write pki/roles/twineu-workloads
+    allowed_domains="service.consul,{{ base_domain | default('twin.eu') }},localhost,127.0.0.1"
+    allow_subdomains=true
+    allow_ip_sans=true
+    allow_localhost=true
+    max_ttl=720h
+  environment: *vault_env
+  changed_when: false
+
+- name: Copy Vault workloads policy
+  ansible.builtin.copy:
+    src: nomad-workloads-policy.hcl
+    dest: /tmp/nomad-workloads-policy.hcl
+    mode: "0644"
+
+- name: Apply Vault nomad-workloads policy
+  ansible.builtin.command: vault policy write nomad-workloads /tmp/nomad-workloads-policy.hcl
+  environment: *vault_env
+  changed_when: false
+
+- name: Enable JWT auth backend for Nomad workload identity
+  ansible.builtin.command: vault auth enable -path=jwt-nomad jwt
+  environment: *vault_env
+  register: enable_jwt
+  failed_when: enable_jwt.rc != 0 and "path is already in use" not in enable_jwt.stderr
+  changed_when: enable_jwt.rc == 0
+
+- name: Point JWT backend at Nomad JWKS endpoint
+  ansible.builtin.command: >
+    vault write auth/jwt-nomad/config
+    jwks_url="http://127.0.0.1:4646/.well-known/jwks.json"
+    jwt_supported_algs="RS256,EdDSA"
+    default_role="nomad-workloads"
+  environment: *vault_env
+  changed_when: false
+
+- name: Create Vault JWT role for Nomad workloads
+  ansible.builtin.command: >
+    vault write auth/jwt-nomad/role/nomad-workloads
+    role_type="jwt"
+    bound_audiences="vault.io"
+    user_claim="/nomad_job_id"
+    user_claim_json_pointer=true
+    token_type="service"
+    token_policies="nomad-workloads"
+    token_period="30m"
+    token_explicit_max_ttl=0
+  environment: *vault_env
+  changed_when: false
+
+# Seed initial database & keycloak secrets into Vault KV
+- name: Seed Database Secrets in Vault KV
+  ansible.builtin.command: >
+    vault kv put secret/postgres
+    user="{{ db_user | default('twineu_api') }}"
+    password="{{ db_password | default('twineu_password') }}"
+    database="{{ db_name | default('twineu') }}"
+  environment: *vault_env
+  changed_when: false
+
+- name: Seed Keycloak Secrets in Vault KV
+  ansible.builtin.command: >
+    vault kv put secret/keycloak
+    admin_user="{{ keycloak_admin_user | default('admin') }}"
+    admin_password="{{ keycloak_admin_password | default(lookup('password', playbook_dir + '/.generated_secrets/keycloak_admin_password__' + inventory_hostname + ' length=24 chars=ascii_letters,digits')) }}"
+  environment: *vault_env
+  changed_when: false
+  no_log: true
+
+# ==========================================
+# 5. TRAEFIK INGRESS
+# ==========================================
+
+- name: Copy Traefik job file to VM
+  ansible.builtin.template:
+    src: traefik.nomad.j2
+    dest: /tmp/traefik.nomad
+    mode: "0644"
+
+- name: Deploy Traefik via Nomad CLI
+  ansible.builtin.command: nomad job run -detach /tmp/traefik.nomad
+  register: nomad_run
+  changed_when: "'Job registration successful' in nomad_run.stdout"
+
+# ==========================================
+# 6. DNSMASQ WILDCARD DNS
+# ==========================================
+
+- name: Copy dnsmasq job file to VM
+  ansible.builtin.template:
+    src: dnsmasq.nomad.j2
+    dest: /tmp/dnsmasq.nomad
+    mode: "0644"
+
+- name: Deploy dnsmasq via Nomad CLI
+  ansible.builtin.command: nomad job run -detach /tmp/dnsmasq.nomad
+  register: dnsmasq_run
+  changed_when: "'Job registration successful' in dnsmasq_run.stdout"

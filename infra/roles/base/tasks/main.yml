@@ -1,0 +1,36 @@
+#
+# Copyright (c) 2025-2026, RTE (http://www.rte-france.com)
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+# SPDX-License-Identifier: MPL-2.0
+# This file is part of the Twin-CR project.
+#
+
+---
+- name: Create twineu user
+  user:
+    name: twineu
+    shell: /bin/bash
+    groups: "{{ 'wheel' if ansible_facts['os_family'] == 'RedHat' else 'sudo' }}"
+    append: yes
+
+- name: Update apt cache and install dependencies (Ubuntu / Debian)
+  apt:
+    name:
+      - curl
+      - unzip
+      - jq
+    state: present
+    update_cache: yes
+    cache_valid_time: 3600
+  when: ansible_facts['os_family'] == "Debian"
+
+- name: Install dependencies (Red Hat / CentOS)
+  yum:
+    name:
+      - curl
+      - unzip
+      - jq
+    state: present
+  when: ansible_facts['os_family'] == "RedHat"

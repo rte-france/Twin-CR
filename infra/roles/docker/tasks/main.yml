@@ -1,0 +1,63 @@
+#
+# Copyright (c) 2025-2026, RTE (http://www.rte-france.com)
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+# SPDX-License-Identifier: MPL-2.0
+# This file is part of the Twin-CR project.
+#
+
+---
+- name: Install docker
+  shell: curl -fsSL https://get.docker.com | sh
+  args:
+    creates: /usr/bin/docker
+
+- name: Add twineu user to docker group
+  user:
+    name: twineu
+    groups: docker
+    append: yes
+
+- name: Ensure /etc/docker directory exists
+  file:
+    path: /etc/docker
+    state: directory
+    mode: "0755"
+
+- name: Configure Docker daemon daemon.json
+  copy:
+    dest: /etc/docker/daemon.json
+    content: |
+      {
+        "insecure-registries": ["127.0.0.1:5000", "0.0.0.0:5000", "{{ ansible_default_ipv4.address }}:5000", "registry.localhost:5000", "registry.localhost"]
+      }
+  register: docker_daemon_config
+
+- name: Create Docker service drop-in directory
+  file:
+    path: /etc/systemd/system/docker.service.d
+    state: directory
+    mode: "0755"
+
+- name: Configure Docker daemon proxy
+  copy:
+    dest: /etc/systemd/system/docker.service.d/http-proxy.conf
+    content: |
+      [Service]
+      Environment="HTTP_PROXY={{ lookup('env', 'http_proxy') | default(lookup('env', 'HTTP_PROXY'), true) }}"
+      Environment="HTTPS_PROXY={{ lookup('env', 'https_proxy') | default(lookup('env', 'HTTPS_PROXY'), true) }}"
+      Environment="NO_PROXY={{ lookup('env', 'no_proxy') | default(lookup('env', 'NO_PROXY'), true) }},localhost,127.0.0.1,::1,172.17.0.0/16,10.0.0.0/8"
+  when: lookup('env', 'http_proxy') != '' or lookup('env', 'HTTP_PROXY') != ''
+  register: proxy_config
+
+- name: Reload systemd daemon
+  systemd:
+    daemon_reload: yes
+  when: proxy_config.changed or docker_daemon_config.changed
+
+- name: Start and enable docker service
+  systemd:
+    name: docker
+    state: "{{ 'restarted' if (proxy_config.changed or docker_daemon_config.changed) else 'started' }}"
+    enabled: yes

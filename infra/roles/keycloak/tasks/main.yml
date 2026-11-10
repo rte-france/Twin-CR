@@ -1,0 +1,62 @@
+#
+# Copyright (c) 2025-2026, RTE (http://www.rte-france.com)
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+# SPDX-License-Identifier: MPL-2.0
+# This file is part of the Twin-CR project.
+#
+
+---
+- name: Ensure jq and curl are installed for Keycloak script
+  ansible.builtin.package:
+    name:
+      - jq
+      - curl
+    state: present
+  environment: "{{ proxy_env | default({}) }}"
+
+- name: Ensure Postgres init directory exists
+  ansible.builtin.file:
+    path: /opt/twineu/postgres/init
+    state: directory
+    mode: "0755"
+
+- name: Copy Keycloak DB initialization script
+  ansible.builtin.copy:
+    src: files/init_kc.sql
+    dest: /opt/twineu/postgres/init/init_kc.sql
+    mode: "0644"
+
+- name: Create directories for Keycloak data and config
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    mode: "0755"
+  loop:
+    - /opt/keycloak/data
+    - /opt/keycloak/meta
+    - /opt/keycloak/config
+    - /opt/keycloak/themes
+
+- name: Copy Keycloak themes from repository
+  ansible.builtin.copy:
+    src: files/themes/
+    dest: /opt/keycloak/themes/
+    mode: "0755"
+
+- name: Template Keycloak realm file
+  ansible.builtin.template:
+    src: realm.json.j2
+    dest: /opt/keycloak/config/realm.json
+    mode: "0644"
+
+- name: Template Keycloak job file
+  ansible.builtin.template:
+    src: keycloak.nomad.hcl.j2
+    dest: /tmp/keycloak.nomad.hcl
+
+- name: Deploy Keycloak via Nomad CLI
+  ansible.builtin.command: nomad job run -detach /tmp/keycloak.nomad.hcl
+  register: nomad_run_keycloak
+  changed_when: "'Job registration successful' in nomad_run_keycloak.stdout"

@@ -1,0 +1,96 @@
+#!/usr/bin/env bash
+#MISE description="Deploy and manage the TwinEU Nomad/Consul/Vault infrastructure"
+#MISE alias="infra"
+#USAGE flag "-h --help" help="Show infra help"
+#USAGE arg "[args]..." help="Options forwarded to make (e.g. NODES=2 ENV=opf)"
+
+set -euo pipefail
+
+cd infra
+
+if [ ! -f .vault_pass.txt ]; then
+    echo "dev" > .vault_pass.txt
+fi
+
+TARGET_ENV="dev"
+NODES_COUNT="1"
+
+for arg in "$@"; do
+    case "$arg" in
+        ENV=*) TARGET_ENV="${arg#ENV=}" ;;
+        NODES=*) NODES_COUNT="${arg#NODES=}" ;;
+        --nodes=*) NODES_COUNT="${arg#--nodes=}" ;;
+    esac
+done
+
+IS_MAC=false
+if [ "$(uname -s)" = "Darwin" ]; then
+    IS_MAC=true
+fi
+
+# Multi-node provisioning for dev (Mac OrbStack or Linux Docker)
+if [ "$TARGET_ENV" = "dev" ]; then
+    if [ "$IS_MAC" = true ] && command -v orb >/dev/null 2>&1; then
+        # Ensure primary machine exists and is running
+        if ! orb list 2>/dev/null | grep -q '^twineu-dev[[:space:]]'; then
+            echo "Creating primary machine twineu-dev..."
+            orb create debian:bookworm twineu-dev -u twineu
+            orb -m twineu-dev sudo usermod -aG sudo twineu
+            orb -m twineu-dev bash -c 'echo "twineu ALL=(ALL) NOPASSWD:ALL" | sudo tee /etc/sudoers.d/twineu'
+            orb -m twineu-dev sudo apt update && orb -m twineu-dev sudo apt install -y python3
+        elif orb list 2>/dev/null | grep -E '^twineu-dev[[:space:]]+stopped' >/dev/null 2>&1; then
+            echo "Starting primary machine twineu-dev..."
+            orb start twineu-dev
+        fi
+
+        # Repair Consul cluster state if VM was paused
+        if orb -m twineu-dev journalctl -u consul -n 10 2>/dev/null | grep -q "server_rejoin_age_max" 2>/dev/null; then
+            echo "Repairing stale Consul cluster state on primary..."
+            orb -m twineu-dev sudo systemctl stop consul >/dev/null 2>&1 || true
+            orb -m twineu-dev sudo rm -rf /opt/consul/* >/dev/null 2>&1 || true
+            orb -m twineu-dev sudo systemctl start consul >/dev/null 2>&1 || true
+            sleep 2
+        fi
+
+        # Provision worker nodes if NODES_COUNT > 1
+        WORKERS_INI=""
+        if [ "$NODES_COUNT" -gt 1 ]; then
+            NUM_WORKERS=$((NODES_COUNT - 1))
+            echo "==> Multi-node mode: configuring $NUM_WORKERS worker node(s)..."
+            for i in $(seq 1 "$NUM_WORKERS"); do
+                WORKER_NAME="twineu-worker-$i"
+                if ! orb list 2>/dev/null | grep -q "^$WORKER_NAME[[:space:]]"; then
+                    echo "Creating worker machine $WORKER_NAME..."
+                    orb create debian:bookworm "$WORKER_NAME" -u twineu
+                    orb -m "$WORKER_NAME" sudo usermod -aG sudo twineu
+                    orb -m "$WORKER_NAME" bash -c 'echo "twineu ALL=(ALL) NOPASSWD:ALL" | sudo tee /etc/sudoers.d/twineu'
+                    orb -m "$WORKER_NAME" sudo apt update && orb -m "$WORKER_NAME" sudo apt install -y python3
+                elif orb list 2>/dev/null | grep -E "^$WORKER_NAME[[:space:]]+stopped" >/dev/null 2>&1; then
+                    echo "Starting worker machine $WORKER_NAME..."
+                    orb start "$WORKER_NAME"
+                fi
+                WORKERS_INI="${WORKERS_INI}worker$i ansible_host=$WORKER_NAME.orb.local ansible_user=twineu ansible_ssh_common_args='-o StrictHostKeyChecking=no' ansible_remote_tmp=/tmp ansible_python_interpreter=/usr/bin/python3"$'\n'
+            done
+        fi
+
+        # Generate dynamic inventory
+        cat <<EOF > environments/dev/inventory_orb.ini
+[nomad_servers]
+twineu ansible_host=orb ansible_user=twineu ansible_ssh_common_args='-o StrictHostKeyChecking=no' ansible_remote_tmp=/tmp ansible_python_interpreter=/usr/bin/python3
+
+[nomad_workers]
+${WORKERS_INI}
+
+[twineu_dev:children]
+nomad_servers
+nomad_workers
+EOF
+
+        echo "Deploying infrastructure ($NODES_COUNT node(s))..."
+        make dev-mac "$@"
+        exit 0
+    fi
+fi
+
+# Generic deployment (Linux or remote)
+make deploy "$@"

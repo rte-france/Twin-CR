@@ -1,0 +1,37 @@
+- Identity & Security:
+    - Keycloak Admin Console:
+        icon: keycloak.png
+        href: "https://keycloak.{{ base_domain }}/admin/"
+        description: "IAM realm management, clients, roles and sessions"
+    - Keycloak User Account:
+        icon: keycloak.png
+        href: "https://keycloak.{{ base_domain }}/realms/twincr/account/"
+        description: "User profile, credentials and active sessions"
+
+- Orchestration & Mesh:
+    - Nomad UI:
+        icon: nomad.png
+        href: "https://nomad.{{ base_domain }}"
+        description: "Cluster orchestrator, job specs and client allocations"
+    - Consul UI:
+        icon: consul.png
+        href: "https://consul.{{ base_domain }}"
+        description: "Service mesh topology, health checks and KV storage"
+    - Traefik Dashboard:
+        icon: traefik.png
+        href: "http://traefik.{{ base_domain }}:8080/dashboard/"
+        description: "Reverse-proxy routing tables, middlewares and entrypoints"
+
+- Storage & Workflows:
+    - Temporal:
+        icon: temporal.png
+        href: "https://temporal.{{ base_domain }}/namespaces/default/workflows"
+        description: "Durable execution engine and workflow monitoring"
+    - Garage S3:
+        icon: minio.png
+        href: "https://ui.garage.{{ base_domain }}"
+        description: "S3-compatible distributed object storage admin"
+    - Docker Registry:
+        icon: docker.png
+        href: "https://registry-ui.{{ base_domain }}"
+        description: "Internal container registry catalog and manifests"

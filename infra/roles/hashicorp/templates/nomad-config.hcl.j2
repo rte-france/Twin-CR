@@ -1,0 +1,45 @@
+datacenter = "dc1"
+data_dir  = "/opt/nomad"
+bind_addr = "0.0.0.0"
+
+advertise {
+  http = "{{ ansible_facts['default_ipv4']['address'] }}"
+  rpc  = "{{ ansible_facts['default_ipv4']['address'] }}"
+  serf = "{{ ansible_facts['default_ipv4']['address'] }}"
+}
+
+server {
+  enabled          = true
+  bootstrap_expect = 1
+}
+
+client {
+  enabled = true
+}
+
+plugin "docker" {
+  config {
+    allow_privileged = true
+    volumes { enabled = true }
+    infra_image = "registry.k8s.io/pause-arm64:3.3"
+  }
+}
+
+consul {
+  address = "127.0.0.1:8500"
+}
+
+# Vault integration via Workload Identity (JWT). No static token: Nomad signs a
+# JWT per allocation, Vault validates it against Nomad's JWKS endpoint.
+vault {
+  enabled               = true
+  address               = "http://127.0.0.1:8200"
+  jwt_auth_backend_path = "jwt-nomad"
+
+  default_identity {
+    aud  = ["vault.io"]
+    ttl  = "1h"
+    file = true
+    env  = true
+  }
+}

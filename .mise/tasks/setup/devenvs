@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+#MISE description="Sync python environments using uv (configurator_client)"
+#MISE sources=["configurator_client/pyproject.toml"]
+#MISE outputs=["configurator_client/.venv"]
+
+set -euo pipefail
+
+echo "==> [setup:devenvs] Syncing configurator_client environment..."
+(cd configurator_client && uv sync)

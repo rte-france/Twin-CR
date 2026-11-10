@@ -1,0 +1,30 @@
+#!/usr/bin/env bash
+#MISE description="Download and verify Dynawo simulators"
+#MISE depends=["setup:env"]
+#MISE sources=["envs/dynawo.version", "envs/fetch_simulators.sh"]
+#MISE outputs=["simulators/dynawo/dynawo.sh"]
+
+set -euo pipefail
+
+source envs/dynawo.version
+
+echo "==> [setup:dynawo] Checking Dynawo simulators ($DYNAWO_VERSION)..."
+
+# Download archive if missing or if simulators directory doesn't have dynawo.sh
+if [ ! -f "simulators.zip" ] || [ ! -x "simulators/dynawo/dynawo.sh" ]; then
+    TOKEN="${GITHUB_TOKEN:-}"
+    if [ -z "$TOKEN" ] && [ -f .env ]; then
+        TOKEN=$(grep '^GITHUB_TOKEN=' .env 2>/dev/null | cut -d '=' -f2- || true)
+    fi
+    if [ -z "$TOKEN" ] && command -v gh >/dev/null 2>&1; then
+        TOKEN=$(gh auth token 2>/dev/null || true)
+    fi
+
+    env FETCH_PUBLIC_DYNAWO=true GITHUB_TOKEN="$TOKEN" bash envs/fetch_simulators.sh --force
+fi
+
+if [ ! -x "simulators/dynawo/dynawo.sh" ]; then
+    echo "ERROR: simulators/dynawo/dynawo.sh not found after extraction." >&2
+    exit 1
+fi
+echo "==> [setup:dynawo] Dynawo is ready."

@@ -1,0 +1,57 @@
+job "lobby-front" {
+  datacenters = ["dc1"]
+  type        = "service"
+  meta {
+    deploy_timestamp = "{{ ansible_date_time.iso8601 }}"
+  }
+  group "app" {
+    count = 1
+    network {
+      mode = "bridge"
+      port "http" {
+        to = 80
+      }
+    }
+    service {
+      name         = "lobby-front"
+      port         = "http"
+      provider     = "nomad"
+      address_mode = "alloc"
+      check {
+        name     = "alive"
+        type     = "http"
+        path     = "/health"
+        interval = "10s"
+        timeout  = "2s"
+      }
+      tags = [
+        "traefik.enable=true",
+        "traefik.http.routers.lobby-front.rule=Host(`lobby.{{ base_domain }}`)",
+        "traefik.http.routers.lobby-front.entrypoints=websecure",
+        "traefik.http.routers.lobby-front.tls=true",
+      ]
+    }
+    task "server" {
+      driver = "docker"
+      config {
+        image      = "registry.{{ base_domain }}/lobby-front:latest"
+        force_pull = true
+        ports      = ["http"]
+      }
+      env {
+        VITE_ENVIRONMENT        = "production"
+        VITE_LOG_LEVEL          = "Info"
+        VITE_API_URL            = "https://lobby.{{ base_domain }}/api/v1"
+        VITE_API_TOKEN          = "test-token"
+        VITE_KEYCLOAK_URL       = "https://keycloak.twin.eu"
+        VITE_KEYCLOAK_REALM     = "twineu"
+        VITE_KEYCLOAK_CLIENT_ID = "lobby"
+
+      }
+      resources {
+        cpu    = 200
+        memory = 128
+      }
+    }
+  }
+}

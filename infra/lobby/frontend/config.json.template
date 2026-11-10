@@ -1,0 +1,9 @@
+{
+  "environment": "${VITE_ENVIRONMENT}",
+  "logLevel": "${VITE_LOG_LEVEL}",
+  "apiUrl": "${VITE_API_URL}",
+  "apiToken": "${VITE_API_TOKEN}",
+  "keycloakUrl": "${VITE_KEYCLOAK_URL}",
+  "keycloakRealm": "${VITE_KEYCLOAK_REALM}",
+  "keycloakClientId": "${VITE_KEYCLOAK_CLIENT_ID}"
+}

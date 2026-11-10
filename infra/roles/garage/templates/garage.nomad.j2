@@ -1,0 +1,115 @@
+job "garage" {
+  datacenters = ["dc1"]
+  type = "service"
+
+  group "storage" {
+    count = 1
+
+    network {
+      port "s3_api" { static = 3900 }
+      port "rpc"    { static = 3901 }
+      port "admin"  { static = 3903 }
+      port "webui"  { static = 3909 }
+    }
+
+    service {
+      name     = "garage-s3"
+      port     = "s3_api"
+      provider = "consul"
+
+      tags = [
+        "traefik.enable=true",
+        "traefik.http.routers.garage-s3.rule=Host(`s3.{{ base_domain }}`) || HostRegexp(`{subdomain:[a-zA-Z0-9-]+}.s3.{{ base_domain }}`)",
+        "traefik.http.routers.garage-s3.entrypoints=web",
+        "traefik.http.services.garage-s3.loadbalancer.server.port=${NOMAD_PORT_s3_api}"
+      ]
+
+      check {
+        type     = "tcp"
+        interval = "10s"
+        timeout  = "2s"
+      }
+    }
+
+    service {
+      name     = "garage-admin"
+      port     = "admin"
+      provider = "consul"
+
+      tags = [
+        "traefik.enable=true",
+        "traefik.http.routers.garage-admin.rule=Host(`admin.garage.{{ base_domain }}`)",
+        "traefik.http.routers.garage-admin.entrypoints=web",
+        "traefik.http.services.garage-admin.loadbalancer.server.port=${NOMAD_PORT_admin}"
+      ]
+
+      check {
+        type     = "tcp"
+        interval = "10s"
+        timeout  = "2s"
+      }
+    }
+
+    service {
+      name     = "garage-webui"
+      port     = "webui"
+      provider = "consul"
+
+      tags = [
+        "traefik.enable=true",
+        "traefik.http.routers.garage-webui.rule=Host(`ui.garage.{{ base_domain }}`)",
+        "traefik.http.routers.garage-webui.entrypoints=web,websecure",
+        "traefik.http.routers.garage-webui.tls=true",
+        "traefik.http.services.garage-webui.loadbalancer.server.port=${NOMAD_PORT_webui}"
+      ]
+
+      check {
+        type     = "tcp"
+        interval = "10s"
+        timeout  = "2s"
+      }
+    }
+
+    task "garage-daemon" {
+      driver = "docker"
+
+      config {
+        image = "dxflrs/garage:v2.3.0"
+        network_mode = "host"
+
+        volumes = [
+          "/opt/garage/data:/opt/garage/data",
+          "/opt/garage/meta:/opt/garage/meta",
+          "/opt/garage/config/garage.toml:/etc/garage.toml"
+        ]
+      }
+
+      resources {
+        cpu    = 500
+        memory = 512
+      }
+    }
+
+    task "garage-webui" {
+      driver = "docker"
+
+      env {
+        PORT = "3909"
+      }
+
+      config {
+        image = "khairul169/garage-webui:latest"
+        network_mode = "host"
+
+        volumes = [
+          "/opt/garage/config/garage.toml:/etc/garage.toml"
+        ]
+      }
+
+      resources {
+        cpu    = 200
+        memory = 256
+      }
+    }
+  }
+}

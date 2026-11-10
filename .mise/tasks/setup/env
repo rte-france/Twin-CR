@@ -1,0 +1,36 @@
+#!/usr/bin/env bash
+#MISE description="Sync root and service .env files from .env-example"
+#MISE depends=["setup:garage"]
+#MISE sources=[".env-example", "configurator_server/credentials.txt"]
+#MISE outputs=[".env"]
+
+set -euo pipefail
+
+echo "==> [setup:env] Synchronizing .env files..."
+mkdir -p logs
+
+KEY_ID=""
+SECRET=""
+CREDENTIALS="configurator_server/credentials.txt"
+if [ -f "$CREDENTIALS" ]; then
+    KEY_ID=$(grep "Key ID:" "$CREDENTIALS" 2>/dev/null | awk '{print $NF}' | head -n 1 || true)
+    SECRET=$(grep "Secret key:" "$CREDENTIALS" 2>/dev/null | awk '{print $NF}' | head -n 1 || true)
+fi
+
+VARIANT="public"
+if [ "${RTE:-false}" = "true" ]; then
+    VARIANT="private"
+fi
+
+python3 tools/env_sync.py sync .env-example .env --backup-dir logs \
+    --set "ARGUS_BACKENDS_BUILD_VARIANT=$VARIANT" \
+    --set-if-empty "AWS_ACCESS_KEY_ID=$KEY_ID" \
+    --set-if-empty "AWS_SECRET_ACCESS_KEY=$SECRET"
+
+for service in configurator_client session-manager keycloak; do
+    if [ -f "$service/.env" ] && [ -f "$service/.env-example" ]; then
+        python3 tools/env_sync.py sync "$service/.env-example" "$service/.env" --backup-dir logs \
+            --set-if-empty "AWS_ACCESS_KEY_ID=$KEY_ID" \
+            --set-if-empty "AWS_SECRET_ACCESS_KEY=$SECRET"
+    fi
+done

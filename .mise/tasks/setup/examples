@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+#MISE description="Generate orchestrator example mappings (cfg.sh)"
+#MISE depends=["setup:dynawo", "setup:devenvs"]
+#MISE sources=["docs/orchestrator/examples/**"]
+
+set -euo pipefail
+
+echo "==> [setup:examples] Generating example mappings..."
+mkdir -p .cache/setup
+
+for cfg in docs/orchestrator/examples/*/cfg.sh; do
+    [ -x "$cfg" ] || continue
+    ex_dir=$(dirname "$cfg")
+    echo "  -> Running cfg.sh in $ex_dir"
+    (cd "$ex_dir" && ./cfg.sh)
+done

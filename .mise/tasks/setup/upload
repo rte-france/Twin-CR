@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+#MISE description="Upload orchestrator examples to Garage S3"
+#MISE depends=["setup:env", "setup:devenvs", "setup:examples"]
+
+set -euo pipefail
+
+KEY_ID=$(python3 tools/env_sync.py get .env AWS_ACCESS_KEY_ID 2>/dev/null || true)
+SECRET=$(python3 tools/env_sync.py get .env AWS_SECRET_ACCESS_KEY 2>/dev/null || true)
+
+if [ -z "$KEY_ID" ] || [ -z "$SECRET" ]; then
+    echo "ERROR: AWS_ACCESS_KEY_ID or AWS_SECRET_ACCESS_KEY missing in .env" >&2
+    exit 1
+fi
+
+echo "==> [setup:upload] Uploading examples to Garage S3..."
+for cfg in docs/orchestrator/examples/*/config.toml; do
+    [ -f "$cfg" ] || continue
+    ctx_name=$(basename "$(dirname "$cfg")")
+    echo "  -> Uploading context: $ctx_name"
+    (cd configurator_client && env AWS_ACCESS_KEY_ID="$KEY_ID" AWS_SECRET_ACCESS_KEY="$SECRET" uv run upload_context "$PWD/../$cfg" "$ctx_name")
+done
