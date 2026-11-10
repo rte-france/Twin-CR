@@ -6,7 +6,7 @@ This file is part of Twin-CR, a platform for real-time cyber-physical
 co-simulation of power systems.
 */
 
-import { createSignal, createEffect, onMount, onCleanup, Switch, Show } from "solid-js";
+import { createSignal, createEffect, onCleanup, Switch, Show } from "solid-js";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import { FiX } from "solid-icons/fi";
 import { Effect } from "effect";
@@ -187,7 +187,7 @@ export const Lobby = () => {
           >
             Local dev session
           </button>
-          <span class="text-sm text-slate-400 font-medium">Version x.x.x</span>
+          <span class="text-sm text-slate-400 font-medium">v{import.meta.env.APP_VERSION}</span>
           <LobbyStatus />
         </div>
       </div>
