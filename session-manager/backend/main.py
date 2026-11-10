@@ -28,7 +28,8 @@ from fastapi.responses import JSONResponse
 from sqlalchemy import case, func
 from sqlmodel import select, Session
 
-from backend.config import KEYCLOAK_CLIENT_ID, UPDATE_SESSION_STATE_TIMEOUT, CONFIGURATOR_CLIENT_ENDPOINT
+from backend.config import KEYCLOAK_CLIENT_ID, UPDATE_SESSION_STATE_TIMEOUT, CONFIGURATOR_CLIENT_ENDPOINT, \
+    SIMULATORS_PATH, EXTRA_RULES_PATH
 from backend.db.constants import USERS_FOLDER_ID, ROOT_FOLDER_ID
 from backend.db.engine import create_db_and_tables, SessionDep, StorageDep, SessionServiceDep, \
     CurrentUserDep, principal_handler, engine
@@ -44,19 +45,19 @@ TEMPLATE_NAME_RE = re.compile(r"[A-Za-z0-9 ._-]{1,100}")
 # Paths inside the orchestrator container, as in the example config.toml files.
 # RTE's build carries models the public one does not, so a context is tied to one.
 DYNAWO_SCRIPT_PATHS = {
-    "public": "/home/orchestrator/simulators/dynawo/dynawo.sh",
-    "rte": "/home/orchestrator/simulators/dynawo-rte/dynawo.sh",
+    "public": SIMULATORS_PATH + "/dynawo/dynawo.sh",
+    "rte": SIMULATORS_PATH + "/dynawo-rte/dynawo.sh",
 }
 
 DYNAWO_DDB_PATHS = {
-    "public": "/home/session-manager/simulators/dynawo/ddb",
-    "rte": "/home/session-manager/simulators/dynawo-rte/ddb",
+    "public": SIMULATORS_PATH + "/dynawo/ddb",
+    "rte": SIMULATORS_PATH + "/dynawo-rte/ddb",
 }
 
 # Configurator rules of the models only in RTE's build, merged over the default ones (mounted by the Twin-CR compose override)
 DYNAWO_EXTRA_RULES_DIRS = {
     "public": None,
-    "rte": "/home/session-manager/dynawo_rules",
+    "rte": EXTRA_RULES_PATH,
 }
 
 load_dotenv()

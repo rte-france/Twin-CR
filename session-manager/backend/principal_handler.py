@@ -11,8 +11,8 @@ from jwt.exceptions import PyJWKClientError
 from fastapi import Depends, HTTPException
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 
-from backend.config import JWKS_URL, KEYCLOAK_CLIENT_ID
-
+from backend.config import JWKS_URL, KEYCLOAK_CLIENT_ID, DEV_MODE
+import ssl
 
 class PrincipalHandler:
     """
@@ -20,6 +20,8 @@ class PrincipalHandler:
     """
 
     def __init__(self):
+        if DEV_MODE:
+            ssl._create_default_https_context = ssl._create_unverified_context
         self.security_scheme = HTTPBearer()
         # Fetches the realm's public keys once and caches them, so verification does not
         # cost a round trip per request.

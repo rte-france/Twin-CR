@@ -5,11 +5,26 @@ This micro-service is a backend to handle session CRUDs, and argus client author
 
 ### Installation for dev
 
+We describe here the installation process where the other services run with docker and the session-manager is launched manually.
+
 1. Install using UV:
     ```bash
     uv sync
     ```
-2. Copy the env-example file in a .env file in the session-manager folder, and complete it.
+2. Copy the env-example file in a .env file in the session-manager folder. 
+   - Uncomment the following variables and complete SIMULATORS_PATH and EXTRA_RULES_PATH.  
+     ```
+     # variables to complete when running session-manager with uv (not with docker)
+     #DEV_MODE=TRUE
+     #KEYCLOAK_INTERNAL_URL=
+     #SIMULATORS_PATH=
+     #EXTRA_RULES_PATH=
+     ```
+   - Set the hosts to "localhost" 
+     ```
+     GARAGE_HOST=localhost
+     CONFIGURATOR_HOST=localhost
+     ```
 3. Then to run the server :
     ```bash
     uv run uvicorn backend.main:app --host 0.0.0.0 --port 8090
