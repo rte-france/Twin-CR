@@ -18,6 +18,7 @@ import { RightHeaderActions } from "./RightHeaderActions";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import { PanelManifest } from "@/types";
 import { Watermark } from "./Watermark";
+import { setDockviewInstance } from "../../actions";
 
 const CENTRAL_STATE_KEY = "argus-central-dockview-state";
 
@@ -242,55 +243,7 @@ export const DockviewCentral = () => {
       }
     }) as EventListener;
 
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "m") {
-        e.preventDefault();
-
-        const activeGroup = dockview.activeGroup;
-
-        if (activeGroup) {
-          if (activeGroup.api.isMaximized()) {
-            activeGroup.api.exitMaximized();
-          } else {
-            activeGroup.api.maximize();
-          }
-        }
-      }
-    };
-
-    const handleCloseActivePanel = () => {
-      const activeGroup = dockview.activeGroup;
-      if (activeGroup && activeGroup.activePanel) {
-        activeGroup.activePanel.api.close();
-      }
-    };
-
-    const handleNextTab = () => {
-      const group = dockview.activeGroup;
-      if (!group || group.panels.length <= 1) return;
-
-      const currentIndex = group.panels.findIndex(
-        (p) => p === group.activePanel,
-      );
-
-      const nextIndex = (currentIndex + 1) % group.panels.length;
-
-      group.panels[nextIndex].api.setActive();
-    };
-
-    const handlePrevTab = () => {
-      const group = dockview.activeGroup;
-      if (!group || group.panels.length <= 1) return;
-
-      const currentIndex = group.panels.findIndex(
-        (p) => p === group.activePanel,
-      );
-
-      const prevIndex =
-        (currentIndex - 1 + group.panels.length) % group.panels.length;
-
-      group.panels[prevIndex].api.setActive();
-    };
+    setDockviewInstance(dockview);
 
     const unlistenReattachPromise = getCurrentWindow().listen(
       "argus:reattach-panel",
@@ -304,25 +257,13 @@ export const DockviewCentral = () => {
     window.addEventListener("argus:move-panel", onMovePanel);
     window.addEventListener("argus:add-central", handleAdd);
     window.addEventListener("argus:focus-tool", handleFocusTool);
-    window.addEventListener("keydown", handleKeyDown);
-
-    window.addEventListener("argus:close-active-panel", handleCloseActivePanel);
-    window.addEventListener("argus:next-tab", handleNextTab);
-    window.addEventListener("argus:prev-tab", handlePrevTab);
 
     onCleanup(() => {
+      setDockviewInstance(null);
       resizeObserver.disconnect();
       window.removeEventListener("argus:move-panel", onMovePanel);
       window.removeEventListener("argus:add-central", handleAdd);
       window.removeEventListener("argus:focus-tool", handleFocusTool);
-      window.removeEventListener("keydown", handleKeyDown);
-
-      window.removeEventListener(
-        "argus:close-active-panel",
-        handleCloseActivePanel,
-      );
-      window.removeEventListener("argus:next-tab", handleNextTab);
-      window.removeEventListener("argus:prev-tab", handlePrevTab);
 
       unlistenReattachPromise.then((unlisten) => unlisten());
       dockview.dispose();

@@ -25,6 +25,8 @@ import { ExtensionLive, ExtensionRendererLive } from "@/services/extensions";
 import { BackendLive } from "@/services/backend";
 import { ConfigServiceLive } from "@/services/config";
 import { FileSystemLive } from "@/services/file-system";
+import { EventRegistryLive } from "@/services/events";
+import { KeymapSystemLive } from "@/services/keymaps";
 
 import {
   HttpClientLayer,
@@ -52,6 +54,8 @@ const BaseServicesLayer = Layer.mergeAll(
   HergeClientLive,
   HttpClientRegistryLive,
   HttpServicesLayer,
+  EventRegistryLive,
+  KeymapSystemLive,
 );
 
 const ResolvedAppModeLayer = Layer.provide(AppModeLive, BaseServicesLayer);
