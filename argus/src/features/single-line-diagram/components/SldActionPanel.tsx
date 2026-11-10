@@ -17,7 +17,7 @@ import { Chart } from "@/features/chart-editor/types";
 
 import { MappingItem, MappingService } from "@/services/mapping";
 import { ChartDataRow, ChartService } from "@/services/chart";
-import { backendGet } from "@/services/backend";
+import { typeOf } from "@/services/network-properties";
 import { SingleElementPopup } from "@/features/network-properties-viewer/components/SingleElementPopup";
 
 interface Props {
@@ -39,13 +39,13 @@ export const SldActionPanel: Component<Props> = (props) => {
 
   const handleOpenPropertiesPopup = async () => {
     if (!props.SelectedActionItem) return;
-    try {
-      const { type } = await backendGet<{ type: string }>(`/network/type-of?id=${props.SelectedActionItem.equipmentId}`);
-      setComponentType(type);
-      setPropertiesPopupOpen(true);
-    } catch (e) {
-      console.error("Failed to fetch component type", e);
+    const type = await typeOf(props.SelectedActionItem.equipmentId);
+    if (!type) {
+      console.error("Failed to fetch component type of", props.SelectedActionItem.equipmentId);
+      return;
     }
+    setComponentType(type);
+    setPropertiesPopupOpen(true);
   };
 
   const loadAvailableCharts = () => {

@@ -65,6 +65,28 @@ def collect_dynawo_files(jobs_file: Path) -> set:
     return to_upload
 
 
+def directory_files(dir_path: Path, required: bool = True) -> set:
+    if required and not dir_path.is_dir():
+        raise RuntimeError(f"{dir_path} is not a directory.")
+    return {file for file in dir_path.rglob("*") if file.is_file()}
+
+
+def collect_input_files(section: dict, base_dir: Path) -> set:
+    """Files of an [input_files] (sub)section: *_dir keys and other_dirs are directories, the other paths are files."""
+    to_upload = set()
+    for key, value in section.items():
+        if key == "other_files":
+            to_upload |= {base_dir / f for f in value}
+        elif key == "other_dirs":
+            for d in value:
+                to_upload |= directory_files(base_dir / d, required=False)
+        elif isinstance(value, str):
+            to_upload |= directory_files(base_dir / value) if key.endswith("_dir") else {base_dir / value}
+        elif isinstance(value, dict):
+            to_upload |= collect_input_files(value, base_dir)
+    return to_upload
+
+
 def main():
     if len(sys.argv) != 3:
         print("Usage: script.py <config.toml> <context_id>")
@@ -79,39 +101,10 @@ def main():
         config = toml.load(f)
 
     input_files = config.get("input_files", {})
-    to_upload: set[Path] = set()
 
-    # Collect all scalar string fields (e.g. scenario_file, job_file, ...)
-    for key, value in input_files.items():
-        if key in ("other_files", "other_dirs"):
-            continue
-        if isinstance(value, str):
-            to_upload.add(base_dir / value)
-        elif isinstance(value, dict):
-            # Handle subsections like [input_files.scada_backend]
-            for subkey, subvalue in value.items():
-                if subkey in ("other_files", "other_dirs"):
-                    continue
-                if isinstance(subvalue, str):
-                    to_upload.add(base_dir / subvalue)
-            for f in value.get("other_files", []):
-                to_upload.add(base_dir / f)
-            for d in value.get("other_dirs", []):
-                dir_path = base_dir / d
-                for file in dir_path.rglob("*"):
-                    if file.is_file():
-                        to_upload.add(file)
-
-    # Collect other_files list
-    for f in input_files.get("other_files", []):
-        to_upload.add(base_dir / f)
-
-    # Collect other_dirs — upload all files recursively
-    for d in input_files.get("other_dirs", []):
-        dir_path = base_dir / d
-        for file in dir_path.rglob("*"):
-            if file.is_file():
-                to_upload.add(file)
+    # Every path of [input_files] and its subsections (e.g. [input_files.scada_backend]):
+    # *_dir keys and other_dirs are directories (uploaded recursively), the other strings and other_files are files
+    to_upload: set[Path] = collect_input_files(input_files, base_dir)
 
     # Collect the Dynawo files referenced by the jobs file (parFile, iidmFile, dydFile, ...)
     job_file = input_files.get("job_file")
