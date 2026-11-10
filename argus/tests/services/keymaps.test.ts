@@ -38,3 +38,30 @@ describe("flattenKeymaps", () => {
     ]);
   });
 });
+
+describe("getEventString", () => {
+  it("normalizes Backtab key event with shift into shift+tab", async () => {
+    const { getEventString } = await import("@/services/keymaps/utils");
+    const event = new KeyboardEvent("keydown", {
+      key: "Backtab",
+      shiftKey: true,
+      ctrlKey: true,
+    });
+    expect(getEventString(event)).toBe("mod+shift+tab");
+  });
+
+  it("preserves standard browser keys like ArrowLeft and ArrowRight", async () => {
+    const { getEventString } = await import("@/services/keymaps/utils");
+    const leftEvent = new KeyboardEvent("keydown", {
+      key: "ArrowLeft",
+      ctrlKey: true,
+    });
+    expect(getEventString(leftEvent)).toBe("mod+arrowleft");
+
+    const spaceEvent = new KeyboardEvent("keydown", {
+      key: " ",
+      ctrlKey: true,
+    });
+    expect(getEventString(spaceEvent)).toBe("mod+space");
+  });
+});

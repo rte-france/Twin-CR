@@ -11,16 +11,8 @@ export const isMac =
   navigator.userAgent.toLowerCase().includes("mac");
 
 export const SPECIAL_KEYS: Record<string, string> = {
-  escape: "escape",
-  enter: "enter",
-  arrowup: "up",
-  arrowdown: "down",
-  arrowleft: "left",
-  arrowright: "right",
   " ": "space",
-  backspace: "backspace",
-  tab: "tab",
-  delete: "delete",
+  backtab: "tab",
 };
 
 export const MODIFIER_NAMES = [

@@ -61,7 +61,7 @@ export const KEYMAPS = {
       },
       close_panel: {
         description: "Close Active Panel",
-        defaultKeys: ["mod+w", "click_middle"],
+        defaultKeys: ["mod+w"],
         handler: () => {
           window.dispatchEvent(new CustomEvent("argus:panel:close"));
         },
@@ -77,14 +77,14 @@ export const KEYMAPS = {
     tab: {
       go_to_next: {
         description: "Go to Next Tab",
-        defaultKeys: ["mod+tab"],
+        defaultKeys: ["mod+arrowright"],
         handler: () => {
           window.dispatchEvent(new CustomEvent("argus:tab:next"));
         },
       },
       go_to_previous: {
         description: "Go to Previous Tab",
-        defaultKeys: ["mod+shift+tab"],
+        defaultKeys: ["mod+arrowleft"],
         handler: () => {
           window.dispatchEvent(new CustomEvent("argus:tab:prev"));
         },

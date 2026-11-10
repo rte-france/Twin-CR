@@ -9,7 +9,11 @@ co-simulation of power systems.
 import { Context, Effect, Layer, Ref, Option, Runtime } from "effect";
 
 import { flattenKeymaps } from "@/config/keymaps";
-import type { CommandId, KeymapConfig, CommandDefinition } from "@/types/keymap.type";
+import type {
+  CommandId,
+  KeymapConfig,
+  CommandDefinition,
+} from "@/types/keymap.type";
 import { getEventString, isInputElement } from "./utils";
 
 export interface KeymapsService {
@@ -138,7 +142,6 @@ export const KeymapEngineLive = Layer.scoped(
 
     const executeCommand = (commandId: CommandId) =>
       Effect.gen(function* () {
-        console.debug(`[KeymapEngine] Executing command: "${commandId}"`);
         const maybeCommand = yield* store.getCommand(commandId);
         if (Option.isSome(maybeCommand)) {
           yield* Effect.tryPromise(async () => {
@@ -149,7 +152,7 @@ export const KeymapEngineLive = Layer.scoped(
             ),
           );
         } else {
-          console.warn(`[KeymapEngine] Command not found: "${commandId}"`);
+          Effect.logWarning(`[KeymapEngine] Command not found: "${commandId}"`);
         }
       });
 
@@ -271,11 +274,15 @@ export const KeymapEngineLive = Layer.scoped(
 
         if (win.__KEYMAP_ATTACHED_LISTENERS__.size === 1) {
           win.addEventListener("keydown", (e: KeyboardEvent) => {
-            const firstListener = win.__KEYMAP_ATTACHED_LISTENERS__?.values().next().value;
+            const firstListener = win.__KEYMAP_ATTACHED_LISTENERS__
+              ?.values()
+              .next().value;
             firstListener?.(e);
           });
           win.addEventListener("mousedown", (e: MouseEvent) => {
-            const firstListener = win.__KEYMAP_ATTACHED_LISTENERS__?.values().next().value;
+            const firstListener = win.__KEYMAP_ATTACHED_LISTENERS__
+              ?.values()
+              .next().value;
             firstListener?.(e);
           });
           win.addEventListener("blur", handleBlur);
