@@ -54,6 +54,7 @@ co-simulation of power systems.
         <maven.deploy.version>3.1.4</maven.deploy.version>
         <maven.dependency.version>3.8.1</maven.dependency.version>
         <maven.jaxb2.version>3.3.0</maven.jaxb2.version>
+        <maven.enforcer.version>3.5.0</maven.enforcer.version>
 
         <!-- PowSyBl dependencies -->
         <powsyblcore.version>7.3.0</powsyblcore.version>
@@ -98,6 +99,39 @@ co-simulation of power systems.
                 </plugin>
             </plugins>
         </pluginManagement>
+        <plugins>
+            <!-- Fail the build when two paths of a module bring different versions of an artifact
+                 (e.g. a module-level <version> pin overriding dependencyManagement for that module only):
+                 code compiled against one version would otherwise run against another in the fat jars. -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-enforcer-plugin</artifactId>
+                <version>${maven.enforcer.version}</version>
+                <executions>
+                    <execution>
+                        <id>enforce-dependency-convergence</id>
+                        <goals>
+                            <goal>enforce</goal>
+                        </goals>
+                        <configuration>
+                            <rules>
+                                <dependencyConvergence>
+                                    <!-- Limited to the artifact families managed in this pom -->
+                                    <includes>
+                                        <include>com.powsybl</include>
+                                        <include>com.fasterxml.jackson.core</include>
+                                        <include>org.slf4j</include>
+                                        <include>ch.qos.logback</include>
+                                        <include>info.picocli</include>
+                                        <include>io.nats</include>
+                                    </includes>
+                                </dependencyConvergence>
+                            </rules>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
     </build>
 
     <profiles>
