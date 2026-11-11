@@ -4,8 +4,6 @@
   "packageManager": "pnpm@12.14.0",
   "scripts": {
     "tauri": "pnpm --filter ./apps/argus exec tauri",
-    "tauri:build": "turbo run tauri:build",
-    "tauri:dev": "turbo run tauri:dev",
     "deps:lint": "syncpack lint --dependency-types prod,dev",
     "deps:fix": "syncpack fix",
     "deps:audit": "knip --dependencies",
