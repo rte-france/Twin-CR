@@ -546,6 +546,20 @@ Finally, a "manual_actuator_scada" command can be used to emulate a manual actua
 ]
 ```
 
+### 4.3.10. General interrogation
+
+A "general_interrogation" command sends a general interrogation (GI, see [4.4.3](#443-special-node-types)) to an RTU or ARP, which then resends the latest TSes it saved. It goes through the information flow model (it can be delayed/dropped/corrupted, and is acknowledged like any control). "source" is optional and defaults to the SCADA (`[hmi] location`). When sent as a request, the reply contains the control uid of the general interrogation (`{"status": "OK", "control_uid": 42}`).
+
+```json
+[
+    {
+        "t_start": 20,
+        "command": "general_interrogation",
+        "destination": "RTU_1"
+    }
+]
+```
+
 
 ## 4.4. Cyber configuration
 
@@ -655,11 +669,11 @@ The type of a node can be any valid string, however, the following node types ha
 - ARP
 - SCADA
 
-RTUs, ARPs, and the SCADA node form a chain of elements that allows for the handling of so-called "contrôle général" (CG). A CG is a request that is automatically sent from the SCADA to one of its ARPs (resp. from an ARP to one of its RTUs) whenever communication is restored between the two elements. When an RTU or ARP receives a CG, it sends back the most recent information it has to the SCADA.
+RTUs, ARPs, and the SCADA node form a chain of elements that allows for the handling of general interrogations (GI, "contrôle général" or CG in French). A GI is a request that is automatically sent from the SCADA to one of its ARPs (resp. from an ARP to one of its RTUs) whenever communication is restored between the two elements. When an RTU or ARP receives a GI, it sends back the most recent information it has to the SCADA.
 
-Therefore, nodes which are typed as "RTU" or "ARP" will store all measurements that pass through them (actually, they only store TSes, measurements that are published on change, TMs, i.e. measurements that are published periodically are out-of-scope of the CG functionality), keeping only the most up-to-date values (based on the time_sent of the measurements), and resend them to the SCADA when they receive a CG.
+Therefore, nodes which are typed as "RTU" or "ARP" will store all measurements that pass through them (actually, they only store TSes, measurements that are published on change, TMs, i.e. measurements that are published periodically are out-of-scope of the GI functionality), keeping only the most up-to-date values (based on the time_sent of the measurements), and resend them to the SCADA when they receive a GI.
 
-The notion of an "available" communication channel between two elements is not obvious to define, especially when modelling communications with an information flow model instead of a detailed communication simulator. What has been defined for now is that a communication element (node or link) is available or not depending on its drop function (element marked unavailable when drop probability > 99%). A communication channel between two elements (defined in the c++ code as a "MonitoredPath") is defined as available when all its elements (needed to go from the first element to the second and back, cf a ping request) are available. MonitoredPaths are automatically created between every RTU and the closest ARP (or SCADA if there is no ARP between the RTU and the SCADA), and between every ARP and the SCADA. Whenever a MonitoredPath becomes available, a CG is automatically sent along this path.
+The notion of an "available" communication channel between two elements is not obvious to define, especially when modelling communications with an information flow model instead of a detailed communication simulator. What has been defined for now is that a communication element (node or link) is available or not depending on its drop function (element marked unavailable when drop probability > 99%). A communication channel between two elements (defined in the c++ code as a "MonitoredPath") is defined as available when all its elements (needed to go from the first element to the second and back, cf a ping request) are available. MonitoredPaths are automatically created between every RTU and the closest ARP (or SCADA if there is no ARP between the RTU and the SCADA), and between every ARP and the SCADA. Whenever a MonitoredPath becomes available, a GI is automatically sent along this path. A GI can also be sent on demand with the "general_interrogation" command (see [4.3.10](#4310-general-interrogation)).
 
 
 ## 4.5. Dynawo outputs

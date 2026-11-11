@@ -127,6 +127,11 @@ class InformationFlowModel {
             return network_graph_->listDestinations(source);
         }
 
+        std::string getNodeType(const std::string& node_name) {
+            std::lock_guard<std::recursive_mutex> lock(mutex_);
+            return network_graph_->getNodeType(node_name);
+        }
+
         nlohmann::json getNodeConfig(const std::string& node_name) {
             std::lock_guard<std::recursive_mutex> lock(mutex_);
             return network_graph_->getNodeConfig(node_name);

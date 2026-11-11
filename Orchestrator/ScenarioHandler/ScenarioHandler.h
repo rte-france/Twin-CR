@@ -44,6 +44,7 @@ class ScenarioHandler : public ScenarioHandlerInterface {
         InformationFlowModel& information_flow_model_;
         DynawoInterface& dynawo_interface_;
         double start_time_;
+        std::string scada_location_;
 };
 
 #endif // SCENARIO_HANDLER_H

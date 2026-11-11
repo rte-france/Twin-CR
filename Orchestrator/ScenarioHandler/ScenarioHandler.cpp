@@ -23,7 +23,8 @@ ScenarioHandler::ScenarioHandler(InformationFlowModel& information_flow_model, D
 broker_(Broker::get()),
 information_flow_model_(information_flow_model),
 dynawo_interface_(dynawo_interface),
-start_time_(start_time) {
+start_time_(start_time),
+scada_location_(get_or_throw<std::string>(Orchestrator::get().getConfig(), {"hmi", "location"})) {
     auto& working_dir = Orchestrator::get().getWorkingDir();
     auto& config = Orchestrator::get().getConfig();
 
@@ -139,6 +140,21 @@ nlohmann::json ScenarioHandler::applyScenario(const nlohmann::json& scenario, Mo
             if (mode == Mode::Execute) {
                 auto control_signal = ControlReceived(command_id, value, t_start, destination, topic, std::nullopt, information_flow_model_.nextControlUid());
                 emitNowOrLater(std::move(control_signal), t_start);
+            }
+
+        } else if (scenario_type == "general_interrogation") {
+            // General interrogation (GI) sent through the information flow model, the RTU/ARP then resends its latest TSes
+            std::string destination = scenario["destination"];
+            std::string source = scenario.value("source", scada_location_);
+            std::string destination_type = information_flow_model_.getNodeType(destination);
+            if (destination_type != "RTU" && destination_type != "ARP") {
+                throw std::invalid_argument(fmt::format("General interrogation destination {} is a {}, not an RTU nor an ARP", destination, destination_type));
+            }
+            auto path = information_flow_model_.getPath(source, destination);
+            if (mode == Mode::Execute) {
+                int64_t control_uid = information_flow_model_.nextControlUid();
+                emitNowOrLater(makeGeneralInterrogation(t_start, destination, path, control_uid), t_start);
+                reply["control_uid"] = control_uid;
             }
 
         } else if (scenario_type == "command_injection_game_master") {

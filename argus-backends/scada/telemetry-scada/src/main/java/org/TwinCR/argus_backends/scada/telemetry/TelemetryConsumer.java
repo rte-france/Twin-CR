@@ -230,7 +230,7 @@ public class TelemetryConsumer extends TelemetryConsumerCommon {
 
             String subject = msg.getSubject();
 
-            // TODO Make a "Controle General"
+            // TODO Make a general interrogation (GI)
 
             try {
                 TelemetryMessage t = JsonUtil.fromJson(msg.getData(), TelemetryMessage.class);
