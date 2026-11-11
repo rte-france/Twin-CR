@@ -36,7 +36,14 @@ tauri-plugin-shell = "2"
 
 # Network
 http = "1.4.0"
-reqwest = { version = "0.13.2", default-features = false, features = ["rustls", "http2", "json", "stream", "multipart", "form"] }
+reqwest = { version = "0.13.2", default-features = false, features = [
+    "rustls",
+    "http2",
+    "json",
+    "stream",
+    "multipart",
+    "form",
+] }
 reqwest-middleware = { version = "0.5.2", features = ["multipart"] }
 reqwest-eventsource = "0.6.0"
 eventsource-stream = "0.2.3"
@@ -59,7 +66,12 @@ base64 = "0.22.1"
 bytes = { version = "1.11.1", features = ["serde"] }
 
 # Database
-sqlx = { version = "0.8.6", features = ["sqlite", "chrono", "runtime-tokio", "json"] }
+sqlx = { version = "0.8.6", features = [
+    "sqlite",
+    "chrono",
+    "runtime-tokio",
+    "json",
+] }
 
 # Collections performance
 ahash = "0.8.12"
@@ -78,10 +90,29 @@ uuid = { version = "1.22.0", features = ["v4"] }
 tokio-util = "0.7.20"
 
 [dev-dependencies]
+# Test
 proptest = "1.6"
 wiremock = "0.6"
+
+# Bench
+criterion = { version = "0.5.1", features = ["async_tokio"] }
+hdrhistogram = "7.6.0"
+hyper = { version = "1.12", features = ["full"] }
+hyper-util = { version = "0.1", features = ["full"] }
+http-body-util = "0.1"
+libc = "0.2"
+pprof = { version = "0.14", features = ["flamegraph", "criterion"] }
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+tracing-chrome = "0.7"
+console-subscriber = "0.4"
 
 # Desktop targets
 [target.'cfg(not(any(target_os = "android", target_os = "ios")))'.dependencies]
 tauri-plugin-single-instance = { version = "2.0.0", features = ["deep-link"] }
 tauri-plugin-window-state = "2"
+
+[[bench]]
+name = "http_client"
+path = "benches/http_client/main.rs"
+harness = false
