@@ -13,25 +13,25 @@
       "dependsOn": ["^build"],
       "outputs": ["dist/**"]
     },
-    "test": {
-      "dependsOn": ["^build"],
+    "test:ui": {
+      "inputs": [
+        "src/**/*",
+        "tests/**/*",
+        "index.html",
+        "vite.config.ts",
+        "vitest.config.ts"
+      ],
       "outputs": ["coverage/**"],
       "cache": true
     },
-    "tauri:build": {
-      "dependsOn": ["^build"],
+    "test:tauri": {
       "inputs": [
-        "src/**/*",
         "src-tauri/src/**/*",
         "src-tauri/Cargo.toml",
+        "src-tauri/Cargo.lock",
         "src-tauri/tauri.conf.json"
       ],
-      "outputs": ["src-tauri/target/release/bundle/**/*"]
-    },
-    "tauri:dev": {
-      "dependsOn": ["^build"],
-      "cache": false,
-      "persistent": true
+      "cache": true
     }
   }
 }

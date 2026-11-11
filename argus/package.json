@@ -3,7 +3,6 @@
   "private": true,
   "packageManager": "pnpm@12.14.0",
   "scripts": {
-    "test": "turbo run test",
     "tauri": "pnpm --filter ./apps/argus exec tauri",
     "tauri:build": "turbo run tauri:build",
     "tauri:dev": "turbo run tauri:dev",
@@ -11,7 +10,10 @@
     "deps:fix": "syncpack fix",
     "deps:audit": "knip --dependencies",
     "deps:clean": "knip --fix --fix-type dependencies",
-    "deadcode": "knip"
+    "deadcode": "knip",
+    "test": "turbo run test:ui test:tauri",
+    "test:ui": "turbo run test:ui",
+    "test:tauri": "turbo run test:tauri"
   },
   "devDependencies": {
     "knip": "^6.44.2",

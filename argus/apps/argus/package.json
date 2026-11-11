@@ -14,9 +14,9 @@
     "tauri:build": "tauri build",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
-    "test": "pnpm test:ui && pnpm test:rust",
+    "test": "pnpm test:ui && pnpm test:tauri",
     "test:ui": "vitest run --reporter verbose",
-    "test:rust": "cargo test --manifest-path src-tauri/Cargo.toml",
+    "test:tauri": "cargo test --manifest-path src-tauri/Cargo.toml",
     "test:watch": "vitest watch"
   },
   "dependencies": {
