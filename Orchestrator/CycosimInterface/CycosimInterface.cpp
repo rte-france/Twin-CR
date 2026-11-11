@@ -26,6 +26,7 @@ information_flow_model_(information_flow_model) {
     Orchestrator::get().subscribeTo<ActualMeasurement, &CycosimInterface::onActualMeasurement>(this);
     Orchestrator::get().subscribeTo<CycosimMeasurementReceived, &CycosimInterface::sendMeasurement>(this);
     Orchestrator::get().subscribeTo<CycosimControlReceived, &CycosimInterface::sendControl>(this);
+    Orchestrator::get().subscribeTo<CycosimAcknowledgementReceived, &CycosimInterface::sendAcknowledgement>(this);
 
     if (!config_.contains("topic_mapping")) {
         spdlog::warn("CycosimInterface: No topic_mapping found in the cycosim config, CycosimInterface will not be able to receive non-empty messages");
@@ -154,8 +155,19 @@ void CycosimInterface::parseCycosimMessage(nlohmann::json message) {
         auto ts = MeasurementSent(id, value, current_time, destination_twincr, path, topic, std::move(tase2_data));
         Orchestrator::get().emit(ts);
     } else if (message["type"] == "ControlSent") {
-        auto tc = ControlSent(id, value, current_time, destination_twincr, path, topic, std::move(tase2_data));
-        Orchestrator::get().emit(tc);
+        ControlFlags flags;
+        flags.with_fast_TS = message.value("with_fast_TS", false);
+        flags.real_time_critical = message.value("real_time_critical", false);
+        auto tc = ControlSent(id, value, current_time, destination_twincr, path, topic, std::move(tase2_data), information_flow_model_.nextControlUid(), flags);
+        if (flags.real_time_critical) {
+            // The acknowledgement is computed at once and queued for the next sync, its delay incorporated in its time
+            auto acknowledgement = information_flow_model_.handleRealTimeCriticalControl(tc);
+            if (acknowledgement.has_value()) {
+                queueAcknowledgement(*acknowledgement, source_twincr);
+            }
+        } else {
+            Orchestrator::get().emit(tc);
+        }
     } else {
         spdlog::warn("Received message with unknown type: {}", message.dump());
     }
@@ -252,4 +264,32 @@ R"({{
     fmt::format_to(std::back_inserter(message_string_buffer_), "}}");
 
     to_publish_.push_back(nlohmann::json::parse(std::string_view(message_string_buffer_.data(), message_string_buffer_.size())));
+}
+
+void CycosimInterface::sendAcknowledgement(const CycosimAcknowledgementReceived& info) {
+    if (info.flags.real_time_critical) {
+        return;  // Already queued for Cycosim when the control was sent
+    }
+    queueAcknowledgement(info, info.source);
+}
+
+void CycosimInterface::queueAcknowledgement(const AcknowledgementReceived& info, const std::string& source) {
+    spdlog::trace(
+        "CycosimInterface: Queuing AcknowledgementReceived - id='{}', destination='{}', value={}",
+        info.id, info.destination, info.value);
+
+    nlohmann::json msg;
+    msg["id"] = info.id;
+    msg["source"] = source;
+    msg["destination"] = info.destination;
+    msg["value"] = info.value.to_json();
+    msg["control_uid"] = info.control_uid;
+    msg["control_time_sent"] = info.control_time_sent;
+    msg["time_sent"] = info.time_sent;
+    msg["time"] = info.time_received;
+    msg["with_fast_TS"] = info.flags.with_fast_TS;
+    msg["real_time_critical"] = info.flags.real_time_critical;
+    msg["type"] = "AcknowledgementReceived";
+
+    to_publish_.push_back(std::move(msg));
 }

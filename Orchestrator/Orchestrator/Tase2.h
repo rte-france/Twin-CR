@@ -24,6 +24,7 @@ constexpr int QUALITY_VALIDITY_QUESTIONABLE = 3;
 // Causes from https://lf-energy.atlassian.net/wiki/spaces/FLED/pages/13675948/Cause+of+Transmission
 constexpr int CAUSE_PERIODIC = 1;
 constexpr int CAUSE_SPONTANEOUS = 3;
+constexpr int CAUSE_ACTIVATION_CONFIRMATION = 7;  // Acknowledgement of a control
 
 enum class SignalisationType : int32_t {
     TS = 0,  // Télésignalisation : Transmission of state information (open/closed, on/off)

@@ -22,6 +22,7 @@ class CycosimNode : public CommunicationNode {
 
         virtual bool apply(MeasurementReceived& info) override;
         virtual bool apply(ControlReceived& info) override;
+        virtual bool apply(AcknowledgementReceived& info) override;
 
         template<class Archive>
         void serialize(Archive& ar) {

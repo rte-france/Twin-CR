@@ -88,7 +88,8 @@ curve_names_receiver_(DynawoReceiver(5556, "curves_names")),
 timeline_receiver_(DynawoReceiver(5556, "timeline")),
 constraints_receiver_(DynawoReceiver(5556, "constraints")),
 logger_(logger),
-subprocess_(process_launcher) {
+subprocess_(process_launcher),
+information_flow_model_(information_flow_model) {
     const auto& working_dir = Orchestrator::get().getWorkingDir();
     const auto& config = Orchestrator::get().getConfig();
 
@@ -321,6 +322,41 @@ void DynawoInterface::resetControl(const std::string& control_id) {
 
 void DynawoInterface::onControlReceived(const ControlReceived& info) {
     applyControl(info.id, info.value);
+    if (info.flags.with_fast_TS) {
+        sendFastTS(info);
+    }
+}
+
+void DynawoInterface::sendFastTS(const ControlReceived& info) {
+    auto source = information_flow_model_.getSourceName(info);
+    if (!source.has_value()) {
+        spdlog::warn("Fast TS requested for control {}, but the control has no sender to return the TS to, skipping", info.id);
+        return;
+    }
+    bool sent = false;
+    if (scada_outputs_by_scada_id_.contains(info.id)) {
+        auto return_path = InformationFlowModel::getReturnPath(info);
+        const double time = Orchestrator::get().getCurrentTime();
+        for (const auto& scada_output : scada_outputs_by_scada_id_.at(info.id)) {
+            if (!scada_output->publish_on_change) {
+                continue;  // Only state outputs (TS) are returned
+            }
+
+            std::optional<tase2::Tase2Extension> tase2_extension;
+            if (scada_output->tase2_id.has_value()) {
+                tase2_extension.emplace(scada_output->tase2_id.value(), tase2::SignalisationType::TS,
+                tase2::CAUSE_SPONTANEOUS, tase2::QUALITY_VALIDITY_GOOD, false);
+            }
+            spdlog::debug("Fast TS {} = {} returned to {} at t={}", scada_output->id, info.value, *source, time);
+            // scada_output value not updated on purpose. The other subscribers get the TS on the next Dynawo timestep as usual
+            Orchestrator::get().emit(MeasurementSent(scada_output->id, info.value, time, *source, return_path,
+                                                     scada_output->topic, std::move(tase2_extension)));
+            sent = true;
+        }
+    }
+    if (!sent) {
+        spdlog::warn("Fast TS requested for control {}, but no publish_on_change SCADA output has this id, skipping", info.id);
+    }
 }
 
 void DynawoInterface::onActualControl(const ActualControl& info) {

@@ -11,7 +11,6 @@ co-simulation of power systems.
 #include "Orchestrator.h"
 
 #include "graaflib/types.h"
-#include <memory>
 
 
 RTU::RTU(std::string name, std::string type, graaf::vertex_id_t vertex_id) :
@@ -53,9 +52,20 @@ bool RTU::apply(ControlReceived& info) {
             assert(it != full_route.end());  // Full route should always contain self, as an RTU only saves TSes that pass through it
             std::vector<graaf::vertex_id_t> remaining_route(it, full_route.end());
 
-            Orchestrator::get().emit(MeasurementSent(info.id, info.value, info.time_sent, info.destination, remaining_route, info.topic, info.tase2_data));
+            auto measurement = MeasurementSent(info.id, info.value, info.time_sent, info.destination, remaining_route, info.topic, info.tase2_data);
+            if (Orchestrator::get().isMainThread()) {
+                Orchestrator::get().emit(measurement);
+            } else {
+                // Real-time critical control propagated from another thread: emit() is main-thread only
+                Orchestrator::get().emitLater(std::move(measurement), Orchestrator::get().getCurrentTime());
+            }
         }
     }
 
     return dropped;
+}
+
+bool RTU::apply(AcknowledgementReceived& info) {
+    // Acknowledgements simply cross the RTU (no CG handling)
+    return CommunicationNode::apply(info);
 }

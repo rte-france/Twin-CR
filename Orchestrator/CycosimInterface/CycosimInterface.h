@@ -83,6 +83,18 @@ private:
      */
     void sendControl(const CycosimControlReceived& info);
 
+    /**
+     * Send a CycosimAcknowledgementReceived event (acknowledgement of a control sent from Cycosim) to Cycosim
+     * The acknowledgement is actually saved in a queue, and will be sent to Cycosim on
+     * the next goToNextTimeStep() call
+     */
+    void sendAcknowledgement(const CycosimAcknowledgementReceived& info);
+
+    /**
+     * Queue an acknowledgement for Cycosim
+     */
+    void queueAcknowledgement(const AcknowledgementReceived& info, const std::string& source);
+
     // Configuration
     nlohmann::json config_;
     double period_;

@@ -143,6 +143,14 @@ class Orchestrator {
         double getCurrentTime() const { return current_time_; }
 
         /**
+         * Simulation time derived from the real-time clock, which runs ahead of getCurrentTime() when the event queue lags behind real time.
+         * Used to timestamp information that bypasses the event queue (real-time critical controls).
+         * Never lower than getCurrentTime(), and equal to it while paused.
+         * Thread-safe.
+         */
+        double getClockTime() const;
+
+        /**
          * True if called from the main simulation thread (the only thread emit() may be called from).
          */
         bool isMainThread() const { return std::this_thread::get_id() == main_thread_id_; }
@@ -188,7 +196,7 @@ class Orchestrator {
         double dump_period_;
         double end_time_;
         std::unique_ptr<EventQueue> event_queue_;
-        steady_clock::time_point real_start_time_;
+        std::atomic<steady_clock::time_point> real_start_time_;
         const std::chrono::time_point<std::chrono::system_clock> initial_clock_time_;
         const std::string simulation_name_;
         const std::thread::id main_thread_id_;  // Set at construction; emit() asserts it is only called back from this thread
@@ -200,6 +208,9 @@ class Orchestrator {
             Subscriptions<ControlSent>,
             Subscriptions<ControlReceived>,
             Subscriptions<CycosimControlReceived>,
+            Subscriptions<AcknowledgementSent>,
+            Subscriptions<AcknowledgementReceived>,
+            Subscriptions<CycosimAcknowledgementReceived>,
             Subscriptions<ActualMeasurement>,
             Subscriptions<ActualControl>,
             Subscriptions<TimeUpdate>,

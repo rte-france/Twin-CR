@@ -1,0 +1,33 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "AcknowledgementPublication",
+  "description": "Publication of control acknowledgements on topic 'Acknowledgement.<location>.<subtopic>'. <location> is to be replaced by the name of the cyber node at which the acknowledgement is received (the sender of the control once it has reached its destination), <subtopic> by the topic of the control. Acknowledgements of real_time_critical controls are not published (they are returned in the reply to the HMIControl request instead)",
+  "type": "object",
+  "properties": {
+    "control_uid": {
+      "type": "integer",
+      "description": "Unique identifier of the acknowledged control (returned in the reply to the HMIControl request)"
+    },
+    "id": {
+      "type": "string",
+      "description": "Identifier of the acknowledged control"
+    },
+    "value": {
+      "type": ["boolean", "integer", "number"],
+      "description": "Value of the acknowledged control (as received by its destination)"
+    },
+    "control_time_sent": {
+      "type": "number",
+      "description": "Simulation time at which the control was sent"
+    },
+    "time_sent": {
+      "type": "number",
+      "description": "Simulation time at which the control reached its destination, and the acknowledgement was sent"
+    },
+    "time_received": {
+      "type": "number",
+      "description": "Simulation time at which the acknowledgement was received"
+    }
+  },
+  "required": ["control_uid", "id", "value", "control_time_sent", "time_sent", "time_received"]
+}

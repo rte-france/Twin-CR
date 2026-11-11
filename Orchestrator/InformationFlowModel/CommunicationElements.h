@@ -52,6 +52,13 @@ class CommunicationElement {
         virtual bool apply(ControlReceived& info);
 
         /**
+         * Apply the delay, drop, and corruption functions of this element to info.
+         * Returns 1 if the info is dropped, else 0.
+         * The information (value, and time_received) is modified in place.
+         */
+        virtual bool apply(AcknowledgementReceived& info);
+
+        /**
          * Set the delay function of the element, based on the function_config json
          * If mode is set to Validate, the function_config is parsed (checking for errors), but not actually implemented
          * If mode is set to Execute, it is parsed and actually implemented
@@ -166,6 +173,9 @@ class MonitoredPath : public std::enable_shared_from_this<MonitoredPath> {
 
         bool isAvailable() const { return available_; }
 
+        // Restores the back-pointer to the graph owning this path after deserialization
+        void setNetworkGraph(NetworkGraph& network_graph) { network_graph_ = &network_graph; }
+
         template<class Archive>
         void serialize(Archive& ar) {
             ar(destination_, path_, available_, elements_);
@@ -183,6 +193,7 @@ class MonitoredPath : public std::enable_shared_from_this<MonitoredPath> {
         std::vector<graaf::vertex_id_t> path_;
         bool available_;
         std::vector<std::shared_ptr<CommunicationElement>> elements_;
+        NetworkGraph* network_graph_ = nullptr;  // Graph owning this path, used to get the uid of the CGs
 };
 
 #endif // COMMUNICATION_ELEMENTS_H

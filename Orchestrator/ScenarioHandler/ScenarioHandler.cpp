@@ -125,9 +125,10 @@ nlohmann::json ScenarioHandler::applyScenario(const nlohmann::json& scenario, Mo
             std::string destination = scenario["destination"];
             auto path = information_flow_model_.getPath(source, destination);
             std::string topic = "HMI";
-            auto control_signal = ControlSent(command_id, value, t_start, destination, path, topic, std::nullopt);
-
-            if (mode == Mode::Execute) emitNowOrLater(std::move(control_signal), t_start);
+            if (mode == Mode::Execute) {
+                auto control_signal = ControlSent(command_id, value, t_start, destination, path, topic, std::nullopt, information_flow_model_.nextControlUid());
+                emitNowOrLater(std::move(control_signal), t_start);
+            }
 
         } else if (scenario_type == "command_injection_received") {
             // Control signal directly sent to its destination
@@ -135,9 +136,10 @@ nlohmann::json ScenarioHandler::applyScenario(const nlohmann::json& scenario, Mo
             double value = scenario["value"];
             std::string destination = scenario["destination"];
             std::string topic = scenario["topic"];
-            auto control_signal = ControlReceived(command_id, value, t_start, destination, topic, std::nullopt);
-
-            if (mode == Mode::Execute) emitNowOrLater(std::move(control_signal), t_start);
+            if (mode == Mode::Execute) {
+                auto control_signal = ControlReceived(command_id, value, t_start, destination, topic, std::nullopt, information_flow_model_.nextControlUid());
+                emitNowOrLater(std::move(control_signal), t_start);
+            }
 
         } else if (scenario_type == "command_injection_game_master") {
             // Control signal as sent by the game master

@@ -15,6 +15,11 @@ project(orchestrator_project)
 
 # Set compile flags AFTER fetching dependencies to avoid warnings from them
 set (CMAKE_CXX_FLAGS "-O3 -Wall -Wextra -pedantic -pthread")
+# A class overriding some overloads of a virtual function must override all of them, so that none silently falls back
+# to the base class.
+# This is especially important when working with derived information types (from Information.h), e.g. in CommunicationElement::apply
+# Note: Only GCC catches all cases: clang does not warn when the hiding function is itself an override
+string(APPEND CMAKE_CXX_FLAGS " -Woverloaded-virtual -Werror=overloaded-virtual")
 
 # -O3
 # -fsanitize=thread -g -O1

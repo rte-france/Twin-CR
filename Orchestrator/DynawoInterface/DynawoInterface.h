@@ -156,6 +156,13 @@ class DynawoInterface : public DynawoInterfaceInterface {
         void onActualControl(const ActualControl& info);
 
         /**
+         * Fast TS return (control flag "with_fast_TS"). Directly return the TS to the control sender without waiting for the next Dynawo timestep.
+         * The other modules still receive the TS at the next Dynawo step (scada_output.value unchanged, so the value is still published on change at
+         * the next Dynawo time step).
+         */
+        void sendFastTS(const ControlReceived& info);
+
+        /**
          * Reset the Dynawo event used in applyControl(). Must be called one timestep after applyControl() so that the Dynawo event can be reused in the future.
          */
         void resetControl(const std::string& control_id);
@@ -210,6 +217,7 @@ class DynawoInterface : public DynawoInterfaceInterface {
         DynawoReceiver constraints_receiver_;
         ClickHouseLogger& logger_;
         ProcessLauncher& subprocess_;
+        const InformationFlowModel& information_flow_model_;
         std::unordered_map<std::string, DynawoInput> dynawo_input_by_id_;
         std::unordered_map<IIDM_key, std::string, IIDM_key_hash> iidm_to_dynawo_input_;
         std::unordered_map<IIDM_key, std::string, IIDM_key_hash> iidm_to_dynawo_output_;

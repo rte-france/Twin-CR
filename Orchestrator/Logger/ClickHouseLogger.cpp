@@ -43,6 +43,8 @@ config_path_(config_path), base_db_name_(base_db_name) {
         Orchestrator::get().subscribeTo<MeasurementReceived, &ClickHouseLogger::logInformation<MeasurementReceived>>(this);
         Orchestrator::get().subscribeTo<ControlSent, &ClickHouseLogger::logInformation<ControlSent>>(this);
         Orchestrator::get().subscribeTo<ControlReceived, &ClickHouseLogger::logInformation<ControlReceived>>(this);
+        Orchestrator::get().subscribeTo<AcknowledgementSent, &ClickHouseLogger::logInformation<AcknowledgementSent>>(this);
+        Orchestrator::get().subscribeTo<AcknowledgementReceived, &ClickHouseLogger::logInformation<AcknowledgementReceived>>(this);
         Orchestrator::get().subscribeTo<ActualMeasurement, &ClickHouseLogger::logInformation<ActualMeasurement>>(this);
         Orchestrator::get().subscribeTo<ActualControl, &ClickHouseLogger::logInformation<ActualControl>>(this);
     }
@@ -154,6 +156,9 @@ void ClickHouseLogger::createTables() {
         "cause Nullable(Int32), "
         "validity Nullable(Int32), "
         "operatorBlocked Nullable(Bool)";
+    const std::string control_flags_columns =
+        "with_fast_TS Bool, "
+        "real_time_critical Bool";
 
     std::ostringstream ss;
     // Tables starting with an underscore are "private", a "public" table view will be generated instead (without the leading underscore)
@@ -175,7 +180,9 @@ void ClickHouseLogger::createTables() {
         << "time_sent Float64, "
         << "destination String, "
         << "topic String, "
-        << tase2_columns
+        << tase2_columns << ", "
+        << "control_uid Int64, "
+        << control_flags_columns
         << ") ENGINE = MergeTree() ORDER BY (topic, time_sent)";
     execQuery(ss.str()); ss.str("");
 
@@ -199,7 +206,38 @@ void ClickHouseLogger::createTables() {
         << "destination String, "
         << "topic String, "
         << tase2_columns << ", "
-        << "time_received Float64"
+        << "time_received Float64, "
+        << "control_uid Int64, "
+        << control_flags_columns
+        << ") ENGINE = MergeTree() ORDER BY (topic, time_received)";
+    execQuery(ss.str()); ss.str("");
+
+    ss << "CREATE TABLE IF NOT EXISTS " << getFullTableName("_AcknowledgementSent") << " ("
+        << "id String, "
+        << "value_type UInt8, "
+        << "value Float64, "
+        << "time_sent Float64, "
+        << "destination String, "
+        << "topic String, "
+        << tase2_columns << ", "
+        << "control_time_sent Float64, "
+        << "control_uid Int64, "
+        << control_flags_columns
+        << ") ENGINE = MergeTree() ORDER BY (topic, time_sent)";
+    execQuery(ss.str()); ss.str("");
+
+    ss << "CREATE TABLE IF NOT EXISTS " << getFullTableName("_AcknowledgementReceived") << " ("
+        << "id String, "
+        << "value_type UInt8, "
+        << "value Float64, "
+        << "time_sent Float64, "
+        << "destination String, "
+        << "topic String, "
+        << tase2_columns << ", "
+        << "time_received Float64, "
+        << "control_time_sent Float64, "
+        << "control_uid Int64, "
+        << control_flags_columns
         << ") ENGINE = MergeTree() ORDER BY (topic, time_received)";
     execQuery(ss.str()); ss.str("");
 
@@ -299,9 +337,9 @@ void ClickHouseLogger::createTables() {
 }
 
 std::string getTimeKey(const std::string& table_name) {
-    if (table_name == "MeasurementReceived" || table_name == "ControlReceived") {
+    if (table_name == "MeasurementReceived" || table_name == "ControlReceived" || table_name == "AcknowledgementReceived") {
         return "time_received";
-    } else if (table_name == "MeasurementSent" || table_name == "ControlSent") {
+    } else if (table_name == "MeasurementSent" || table_name == "ControlSent" || table_name == "AcknowledgementSent") {
         return "time_sent";
     } else {
         return "time";
@@ -316,6 +354,17 @@ void ClickHouseLogger::createTableViews(const std::string& base_db_name, double 
     ss << "SELECT name FROM system.tables WHERE database = '" << db_name_ << "'";
     std::string tables = execQuery(ss.str()); ss.str("");
 
+    std::unordered_set<std::string> base_tables;
+    if (!base_db_name.empty()) {
+        // The base simulation may predate some tables (e.g. acknowledgements): those views only cover the current db
+        ss << "SELECT name FROM system.tables WHERE database = '" << base_db_name << "'";
+        std::istringstream base_iss(execQuery(ss.str())); ss.str("");
+        std::string base_table_name;
+        while (std::getline(base_iss, base_table_name)) {
+            base_tables.insert(base_table_name);
+        }
+    }
+
     std::istringstream iss(tables);
     std::string table_name;
 
@@ -324,7 +373,7 @@ void ClickHouseLogger::createTableViews(const std::string& base_db_name, double 
         if (*table_name.begin() != '_') continue;
         table_name.erase(table_name.begin());  // Erase leading underscore
 
-        if (!base_db_name.empty()) {
+        if (!base_db_name.empty() && base_tables.contains(table_name)) {
             // Simulation starts from a dump, so the table view is the union of the data from the dump (before start_time) and the current db
             ss << "CREATE OR REPLACE VIEW " << getFullTableName(table_name) << " AS "
                     << "SELECT * FROM `" << base_db_name << "`.`" << table_name << "` WHERE " << getTimeKey(table_name) << " < " << start_time << " "

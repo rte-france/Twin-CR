@@ -35,3 +35,12 @@ bool CycosimNode::apply(ControlReceived& info) {
     // Always drop since it is forwarded to Cycosim
     return true;
 }
+
+bool CycosimNode::apply(AcknowledgementReceived& info) {
+    // Don't apply own ifl functions and directly forward to Cycosim
+    auto acknowledgement = CycosimAcknowledgementReceived(name_, info);
+    Orchestrator::get().emitLater(std::move(acknowledgement), info.time_received);
+
+    // Always drop since it is forwarded to Cycosim
+    return true;
+}

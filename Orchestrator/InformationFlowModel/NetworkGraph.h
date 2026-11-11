@@ -18,7 +18,9 @@ co-simulation of power systems.
 #include <nlohmann/json.hpp>
 #include <spdlog/spdlog.h>
 
+#include <atomic>
 #include <cassert>
+#include <cstdint>
 #include <filesystem>
 #include <memory>
 #include <string>
@@ -69,6 +71,11 @@ class NetworkGraph {
         }
 
         void addMonitoredPaths(const std::string& scada_location);
+
+        /**
+         * New unique identifier for a control (ControlSent::control_uid). Thread-safe.
+         */
+        int64_t nextControlUid() { return next_control_uid_.fetch_add(1); }
 
         /**
          * Get the list of vertices (by vertex_id) from the CommunicationNode with name 'source' to the one with name 'destination'
@@ -142,14 +149,21 @@ class NetworkGraph {
         // Serialization
         template<class Archive>
         void save(Archive& ar) const {
-            ar(graph_.get_vertices(), graph_.get_edges(), graph_fast_node_accesser_, graph_fast_link_accesser_, node_name_to_id_, link_names_, monitored_paths_, computed_routes_);
+            int64_t next_control_uid = next_control_uid_.load();
+            ar(graph_.get_vertices(), graph_.get_edges(), graph_fast_node_accesser_, graph_fast_link_accesser_, node_name_to_id_, link_names_, monitored_paths_, computed_routes_, next_control_uid);
         }
 
         template <class Archive>
         void load(Archive& ar) {
             std::unordered_map<graaf::vertex_id_t, std::shared_ptr<CommunicationNode>> vertices;
             std::unordered_map<graaf::edge_id_t, std::shared_ptr<CommunicationLink>, graaf::edge_id_hash> edges;
-            ar(vertices, edges, graph_fast_node_accesser_, graph_fast_link_accesser_, node_name_to_id_, link_names_, monitored_paths_, computed_routes_);
+            int64_t next_control_uid;
+            ar(vertices, edges, graph_fast_node_accesser_, graph_fast_link_accesser_, node_name_to_id_, link_names_, monitored_paths_, computed_routes_, next_control_uid);
+            next_control_uid_.store(next_control_uid);
+            // The back-pointer of the monitored paths is not serialized
+            for (auto& monitored_path : monitored_paths_) {
+                monitored_path->setNetworkGraph(*this);
+            }
 
             // Rebuild graph manually as it cannot be automatically serialized
             for (graaf::vertex_id_t i = 0; i < graph_fast_node_accesser_.size(); i++) {
@@ -185,6 +199,7 @@ class NetworkGraph {
         std::vector<std::shared_ptr<MonitoredPath>> monitored_paths_;
         std::unordered_map<std::pair<graaf::vertex_id_t, graaf::vertex_id_t>, std::vector<graaf::vertex_id_t>, PairHash> computed_routes_;
         std::unordered_set<std::string> cycosim_nodes_;
+        std::atomic<int64_t> next_control_uid_ = 1;
 };
 
 #endif // NETWORK_GRAPH_H

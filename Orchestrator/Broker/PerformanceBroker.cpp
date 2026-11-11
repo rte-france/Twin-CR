@@ -76,6 +76,9 @@ void PerformanceBroker::handleMessage(const Message& message) {
         case MessageType::ControlReceived:
             handleScadaMessage(message);
             break;
+        case MessageType::AcknowledgementReceived:
+            handleAcknowledgementMessage(message);
+            break;
         default:
             throw std::runtime_error("Unknown message type");
     }
@@ -123,6 +126,31 @@ void PerformanceBroker::handleScadaMessage(const Message& message) {
     }
 
     fmt::format_to(std::back_inserter(message_string_buffer_), "}}");
+    message_string_buffer_.push_back('\0');
+
+    natsConnection_PublishString(nats_connection_, topic_buffer_.data(), message_string_buffer_.data());
+}
+
+void PerformanceBroker::handleAcknowledgementMessage(const Message& message) {
+    // Published on Acknowledgement.location.topic instead of HMI.location.topic
+    sanitized_topic_string_.assign(message.topic);
+    sanitizeNatsTopicName(sanitized_topic_string_);
+
+    if (message.has_location) {
+        sanitized_location_string_.assign(message.location);
+    } else {
+        sanitized_location_string_.assign(message.destination);
+    }
+    sanitizeNatsTopicName(sanitized_location_string_);
+
+    topic_buffer_.clear();
+    fmt::format_to(std::back_inserter(topic_buffer_), "Acknowledgement.{}.{}", sanitized_location_string_, sanitized_topic_string_);
+    topic_buffer_.push_back('\0');
+
+    message_string_buffer_.clear();
+    fmt::format_to(std::back_inserter(message_string_buffer_),
+        R"({{"control_uid":{},"id":"{}","value":{},"control_time_sent":{},"time_sent":{},"time_received":{}}})",
+        message.control_uid, message.id, message.value, message.control_time_sent, message.time_sent, message.time_received);
     message_string_buffer_.push_back('\0');
 
     natsConnection_PublishString(nats_connection_, topic_buffer_.data(), message_string_buffer_.data());

@@ -82,6 +82,15 @@ void Orchestrator::resetRealTimeClock(double elapsed_time) {
     real_start_time_ = steady_clock::now() - std::chrono::milliseconds(int(elapsed_time * 1000 / speedup_));
 }
 
+double Orchestrator::getClockTime() const {
+    double current_time = current_time_;
+    if (paused_) {
+        return current_time;
+    }
+    double elapsed_time = std::chrono::duration_cast<std::chrono::duration<double>>(steady_clock::now() - real_start_time_.load()).count();
+    return std::max(current_time, elapsed_time * speedup_);
+}
+
 void Orchestrator::run(std::optional<double> run_to_time) {
     paused_ = false;
     while (!event_queue_->isEmpty() && !SignalHandler::gotExitSignal() && current_time_ <= end_time_) {
@@ -144,7 +153,7 @@ void Orchestrator::waitUntilNextEvent() {
             continue;
         }
         double next_time = event_queue_->nextTimeStep();
-        double elapsed_time = std::chrono::duration_cast<std::chrono::duration<double>>(steady_clock::now() - real_start_time_).count();
+        double elapsed_time = std::chrono::duration_cast<std::chrono::duration<double>>(steady_clock::now() - real_start_time_.load()).count();
         elapsed_time *= speedup_;
         double waiting_time = (next_time - elapsed_time) / speedup_;
         // std::cout << "Waiting: " << waiting_time << ", next: " << next_time << ", elapsed: " << elapsed_time << std::endl;
