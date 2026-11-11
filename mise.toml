@@ -12,7 +12,8 @@
 python = "3.11"              # setup.sh, examples config.sh (dynawo_toolbox venv), NRT tests (same as the CI)
 uv = "latest"                # configurator_client, session-manager (they get their own Python 3.14 from uv)
 node = "24"                  # Argus native run (same as envs/Dockerfile.argus.AppImage)
-pnpm = "10.18.3"
+"npm:pnpm" = "12.14.0"
+pnpm = "latest"
 jq = "latest"                # envs/fetch_simulators.sh
 go = "1.23.6"                # pre-commit gitleaks hook
 "pipx:pre-commit" = "4.7.0"   # Pinned: the git hook stores the path of this install, which contains the version

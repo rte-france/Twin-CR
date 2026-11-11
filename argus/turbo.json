@@ -1,0 +1,37 @@
+{
+  "$schema": "https://turbo.build/schema.json",
+  "globalPassThroughEnv": [
+    "HTTP_PROXY",
+    "http_proxy",
+    "HTTPS_PROXY",
+    "https_proxy",
+    "NO_PROXY",
+    "no_proxy"
+  ],
+  "tasks": {
+    "build": {
+      "dependsOn": ["^build"],
+      "outputs": ["dist/**"]
+    },
+    "test:ui": {
+      "inputs": [
+        "src/**/*",
+        "tests/**/*",
+        "index.html",
+        "vite.config.ts",
+        "vitest.config.ts"
+      ],
+      "outputs": ["coverage/**"],
+      "cache": true
+    },
+    "test:tauri": {
+      "inputs": [
+        "src-tauri/src/**/*",
+        "src-tauri/Cargo.toml",
+        "src-tauri/Cargo.lock",
+        "src-tauri/tauri.conf.json"
+      ],
+      "cache": true
+    }
+  }
+}
