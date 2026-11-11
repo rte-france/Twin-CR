@@ -1,6 +1,5 @@
 node_modules
 dist
-build
-src-tauri/binaries
-
-build/
+.env
+.turbo
+.DS_Store

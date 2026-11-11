@@ -6,7 +6,19 @@
 # co-simulation of power systems.
 #
 
+packages:
+  - "apps/*"
+  - "packages/*"
+
+catalog:
+  "@tauri-apps/api": "^2.11.1"
+  effect: "^3.21.0"
+  tailwindcss: "^4.2.2"
+  typescript: "~6.0.3"
+  vite: "^8.0.8"
+  vite-plugin-dts: "^4.5.4"
+
 allowBuilds:
-  esbuild: set this to true or false
-  msgpackr-extract: set this to true or false
-  unrs-resolver: set this to true or false
+  esbuild: true
+  msgpackr-extract: true
+  unrs-resolver: true
