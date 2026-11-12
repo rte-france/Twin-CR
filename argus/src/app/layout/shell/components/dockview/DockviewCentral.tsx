@@ -15,7 +15,6 @@ import { DockviewTab } from "./DockviewTab";
 import { LeftHeaderActions } from "./LeftHeaderActions";
 import { usePlacement } from "../../providers/PlacementProvider";
 import { RightHeaderActions } from "./RightHeaderActions";
-import { listen } from "@tauri-apps/api/event";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import { PanelManifest } from "@/types";
 import { Watermark } from "./Watermark";
@@ -302,7 +301,7 @@ export const DockviewCentral = () => {
       group.panels[prevIndex].api.setActive();
     };
 
-    const unlistenReattachPromise = listen(
+    const unlistenReattachPromise = getCurrentWindow().listen(
       "argus:reattach-panel",
       (event: any) => {
         window.dispatchEvent(
