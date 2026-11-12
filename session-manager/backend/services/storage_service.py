@@ -7,11 +7,16 @@ co-simulation of power systems.
 """
 
 import json
-
-import boto3
-from botocore.exceptions import ClientError
-from backend.config import BUCKET, S3_ENDPOINT, S3_ACCESS_KEY, S3_PRIVATE_KEY
 from pathlib import Path
+from typing import Optional, List
+
+from botocore.exceptions import ClientError, BotoCoreError
+from fastapi import HTTPException
+
+from backend.config import CONTEXT_BUCKET, ARCHIVE_BUCKET
+from backend.db.s3_models import Scope, DynawoMetadata
+from backend.s3_client import make_s3_client, SIMULATOR_KEY_PREFIX
+from backend.simulator.simulator_cache_handler import METADATA_KEY_RE
 
 # A template's files live under DATA/, and the roles manifest sits beside it so
 # it never shows up in a listing of the files themselves.
@@ -32,19 +37,13 @@ def roles_key(template_uuid: str) -> str:
 
 class StorageService:
     def __init__(self):
-        self.s3 = boto3.client(
-            "s3",
-            endpoint_url=S3_ENDPOINT,
-            aws_access_key_id=S3_ACCESS_KEY,
-            aws_secret_access_key=S3_PRIVATE_KEY,
-            region_name="garage",
-        )
-        self.bucket = BUCKET
+        self.s3 = make_s3_client()
+        self.context_bucket = CONTEXT_BUCKET
 
     def upload_file(self, key: str, file_path: str | Path, content_type: str = "application/octet-stream"):
         with open(Path(file_path), "rb") as body:
             self.s3.put_object(
-                Bucket=self.bucket,
+                Bucket=self.context_bucket,
                 Key=key,
                 Body=body,
                 ContentType=content_type,
@@ -52,21 +51,21 @@ class StorageService:
 
     def download_file(self, key: str) -> bytes:
         response = self.s3.get_object(
-            Bucket=self.bucket,
+            Bucket=self.context_bucket,
             Key=key,
         )
         return response["Body"].read()
 
     def get_file_size(self, key: str) -> int:
         response = self.s3.head_object(
-            Bucket=self.bucket,
+            Bucket=self.context_bucket,
             Key=key,
         )
         return response["ContentLength"]
 
     def delete_file(self, key: str) -> None:
         self.s3.delete_object(
-            Bucket=self.bucket,
+            Bucket=self.context_bucket,
             Key=key,
         )
 
@@ -75,7 +74,7 @@ class StorageService:
         keys: list[str] = []
         token: str | None = None
         while True:
-            kwargs = {"Bucket": self.bucket, "Prefix": prefix}
+            kwargs = {"Bucket": self.context_bucket, "Prefix": prefix}
             if token:
                 kwargs["ContinuationToken"] = token
             response = self.s3.list_objects_v2(**kwargs)
@@ -96,7 +95,7 @@ class StorageService:
 
     def write_roles(self, template_uuid: str, roles: dict[str, str]) -> None:
         self.s3.put_object(
-            Bucket=self.bucket,
+            Bucket=self.context_bucket,
             Key=roles_key(template_uuid),
             Body=json.dumps(roles, indent=2, sort_keys=True).encode(),
             ContentType="application/json",
@@ -123,13 +122,13 @@ class StorageService:
     def delete_template(self, template_uuid: str) -> None:
         """Everything stored for a template, the roles manifest included."""
         for key in self.keys_under(f"{template_prefix(template_uuid)}/"):
-            self.s3.delete_object(Bucket=self.bucket, Key=key)
+            self.s3.delete_object(Bucket=self.context_bucket, Key=key)
 
     def list_templates(self, username: str) -> list[str]:
         prefix = f"{username}/"
 
         response = self.s3.list_objects_v2(
-            Bucket=self.bucket,
+            Bucket=self.context_bucket,
             Prefix=prefix,
             Delimiter="/",
         )
@@ -146,3 +145,51 @@ class StorageService:
                 templates.append(name)
 
         return templates
+
+    def list_dynawo_version(self,
+                            scope: Optional[Scope],
+                            version: Optional[str],
+                            tag: Optional[str]
+                            ):
+        if version and not version.startswith("v"):
+            version = f"v{version}"
+
+        prefix = f"{SIMULATOR_KEY_PREFIX}/{scope.value}/" if scope else f"{SIMULATOR_KEY_PREFIX}/"
+
+        items: List[DynawoMetadata] = []
+        try:
+            paginator = self.s3.get_paginator("list_objects_v2")
+            for page in paginator.paginate(Bucket=ARCHIVE_BUCKET, Prefix=prefix):
+                for obj in page.get("Contents", []):
+                    entry = _parse_object(obj)
+                    if entry is None:
+                        continue
+                    if version and entry.version != version:
+                        continue
+                    if tag is not None and entry.tag != tag:
+                        continue
+                    items.append(entry)
+        except (ClientError, BotoCoreError) as e:
+            raise HTTPException(status_code=502, detail=f"S3 error: {e}") from e
+        return items
+
+
+def _parse_object(obj: dict) -> Optional[DynawoMetadata]:
+    """Build an entry from a list_objects_v2 item, or None if the key
+    doesn't follow the expected layout."""
+    m = METADATA_KEY_RE.fullmatch(obj["Key"])
+    if not m:
+        return None
+    scope, major, minor, patch, tag = m.groups()
+    version = f"v{major}.{minor}.{patch}"
+    release = (f"dynawo{'RTE' if scope == 'RTE' else ''}{version}"
+               + (f"-{tag}" if tag else ""))
+    return DynawoMetadata(
+        scope=Scope(scope),
+        version=version,
+        tag=tag,
+        release=release,
+        key=obj["Key"],
+        size=obj["Size"],
+        last_modified=obj["LastModified"],
+    )

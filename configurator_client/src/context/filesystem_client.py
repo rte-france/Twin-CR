@@ -14,9 +14,8 @@ from pathlib import Path
 
 import toml
 from fastapi import HTTPException
-from lxml import etree
 
-from src.config import DSL_SERVER_URL, EXAMPLES_DIR
+from src.config import DSL_SERVER_URL, EXAMPLES_DIR, DYNAWO_FILE_NAME
 from src.game_master_client import GameMasterClient
 from src.context.context_client import Context_Client
 
@@ -50,6 +49,18 @@ class Filesystem_Client(Context_Client):
                     [(path, data)],
                     column_names=["input_file", "content"]
                 )
+
+    def init_dynawo_file(self, clickhouse_client, context_id, scenario_id, simulation_id, config_path):
+        dynawo_dir = Path(os.path.join(self.base_directory, "simulators"))
+        dynawo_file = dynawo_dir / DYNAWO_FILE_NAME
+        with open(dynawo_file, "rb") as f:
+            data = f.read()
+
+        clickhouse_client.insert(
+            f"{simulation_id}.InputFiles",
+            [("dynawo.zip", data)],
+            column_names=["input_file", "content"]
+        )
 
     def init_game_master(self, config_file_name, context_id, scenario_id, simulation_id):
         context_dir = os.path.join(self.base_directory, context_id)

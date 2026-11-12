@@ -16,6 +16,7 @@ from concurrent.futures import ProcessPoolExecutor
 from contextlib import asynccontextmanager
 from pathlib import Path
 from tempfile import TemporaryDirectory
+from typing import Optional
 from urllib.parse import quote
 from uuid import uuid4
 
@@ -23,50 +24,42 @@ import tomlkit
 import requests
 from botocore.exceptions import ClientError
 from dotenv import load_dotenv
-from fastapi import FastAPI, HTTPException, UploadFile, File, Form, Depends, APIRouter, Request, Response
+from fastapi import FastAPI, HTTPException, UploadFile, File, Form, Depends, APIRouter, Request, Response, Query
 from fastapi.responses import JSONResponse
 from sqlalchemy import case, func
 from sqlmodel import select, Session
 
-from backend.config import KEYCLOAK_CLIENT_ID, UPDATE_SESSION_STATE_TIMEOUT, CONFIGURATOR_CLIENT_ENDPOINT
+from backend.config import KEYCLOAK_CLIENT_ID, NO_AUTH, UPDATE_SESSION_STATE_TIMEOUT, CONFIGURATOR_CLIENT_ENDPOINT
 from backend.db.constants import USERS_FOLDER_ID, ROOT_FOLDER_ID
-from backend.db.engine import create_db_and_tables, SessionDep, StorageDep, SessionServiceDep, \
+from backend.db.engine import create_db_and_tables, SessionDep, StorageDep, USERS_FOLDER_ID, SessionServiceDep, \
     CurrentUserDep, principal_handler, engine
-from backend.db.models import GameSession, GameSessionCreate, GameSessionPrivate, User, TreeNode, \
+from backend.db.models import GameSession, GameSessionCreate, GameSessionPublic, GameSessionPrivate, User, TreeNode, \
     NodeType, NewFolder, SessionState, Template, TemplateFileRole, TemplateFilePublic, TemplateDetails, \
     TemplateFolder, AccessKey, AccessKeyTyped, GameSessionOwn, SessionConnect, TemplateRenamedResponse, TreeNodeResponse
+from backend.db.s3_models import DynawoMetadataList, Scope
 from backend.services import storage_service
 from backend.services.session_service import SessionService
 from backend.services.storage_service import StorageService
+from backend.simulator.simulator_cache_handler import get_or_retrieve
 
 TEMPLATE_NAME_RE = re.compile(r"[A-Za-z0-9 ._-]{1,100}")
 
-# Paths inside the orchestrator container, as in the example config.toml files.
-# RTE's build carries models the public one does not, so a context is tied to one.
-DYNAWO_SCRIPT_PATHS = {
-    "public": "/home/orchestrator/simulators/dynawo/dynawo.sh",
-    "rte": "/home/orchestrator/simulators/dynawo-rte/dynawo.sh",
-}
-
-DYNAWO_DDB_PATHS = {
-    "public": "/home/session-manager/simulators/dynawo/ddb",
-    "rte": "/home/session-manager/simulators/dynawo-rte/ddb",
-}
 
 # Configurator rules of the models only in RTE's build, merged over the default ones (mounted by the Twin-CR compose override)
 DYNAWO_EXTRA_RULES_DIRS = {
     "public": None,
     "rte": "/home/session-manager/dynawo_rules",
 }
-
 load_dotenv()
-import main_configure # need env var
+import main_configure  # need env var
 import dynawo_deps
 import jobs_editor
 
 template_router = APIRouter(prefix="/templates", tags=["Templates"])
 session_router = APIRouter(prefix="/sessions", tags=["Sessions"])
 tree_router = APIRouter(prefix="/tree", tags=["Tree"])
+s3_router = APIRouter(prefix="/dynawo", tags=["dynawo"])
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -82,9 +75,11 @@ async def lifespan(app: FastAPI):
         except asyncio.CancelledError:
             pass
 
+
 app = FastAPI(lifespan=lifespan)
 
 logger = logging.getLogger("uvicorn.error")
+
 
 # Unhandled errors as JSON with a detail, which the clients surface, instead of Starlette's plain-text 500
 @app.middleware("http")
@@ -139,7 +134,8 @@ def get_configurator_status() -> str:
 
 def require_role(role: str):
     """Reject unless the token grants this client role."""
-    def check(current_user:CurrentUserDep):
+
+    def check(current_user: CurrentUserDep):
         granted = (
             current_user.get("resource_access", {})
             .get(KEYCLOAK_CLIENT_ID, {})
@@ -148,6 +144,7 @@ def require_role(role: str):
         if role not in granted:
             raise HTTPException(status_code=403, detail=f"Requires the {role} role")
         return current_user
+
     return check
 
 
@@ -217,9 +214,11 @@ def safe_filename(upload_file: UploadFile) -> str:
 def read_root():
     return {"Message": "Session Manager online"}
 
+
 @app.get("/status")
 def status():
     return {"status": "ok"}
+
 
 ### TEMPLATE TREE VIEW MANAGEMENT ###
 
@@ -249,6 +248,7 @@ def init_user(session: SessionDep, current_user: CurrentUserDep):
             )
         )
         session.commit()
+
 
 @tree_router.get("/{folder_id}/children", response_model=list[TreeNode])
 def get_children(folder_id: int, session: SessionDep):
@@ -305,6 +305,7 @@ def get_subtree(folder_id: int, session: SessionDep) -> list[TreeNodeResponse]:
         result.append(node)
     return result
 
+
 @tree_router.post("/new_folder")
 def create_folder(new_folder: NewFolder, session: SessionDep,
                   current_user=Depends(require_role("template_manager"))):
@@ -331,6 +332,7 @@ def create_folder(new_folder: NewFolder, session: SessionDep,
     session.add(parent_folder)
     session.commit()
 
+
 @tree_router.get("/folders", response_model=list[TemplateFolder])
 def get_template_folders(session: SessionDep, current_user: CurrentUserDep):
     """
@@ -340,9 +342,11 @@ def get_template_folders(session: SessionDep, current_user: CurrentUserDep):
     :return: list of TemplateFolders
     """
     user_name = current_user["preferred_username"]
-    nodes = session.exec(select(TreeNode).where((TreeNode.owner == user_name) & (TreeNode.type == NodeType.folder))).all()
+    nodes = session.exec(
+        select(TreeNode).where((TreeNode.owner == user_name) & (TreeNode.type == NodeType.folder))).all()
     template_folders = build_template_folders(nodes)
     return template_folders
+
 
 def build_template_folders(nodes: list[TreeNode]) -> list[TemplateFolder]:
     """
@@ -355,9 +359,9 @@ def build_template_folders(nodes: list[TreeNode]) -> list[TemplateFolder]:
     :return: list of TemplateFolders
     """
     node_by_id: dict[int, TreeNode] = {
-       node.id: node
-       for node in nodes
-       if node.id is not None
+        node.id: node
+        for node in nodes
+        if node.id is not None
     }
     cache: dict[int, str] = {}
 
@@ -383,13 +387,14 @@ def build_template_folders(nodes: list[TreeNode]) -> list[TemplateFolder]:
         if node.type == NodeType.folder and node.id is not None
     ]
 
+
 @tree_router.delete("/{node_id}")
 def delete_folder(session: SessionDep, storage: StorageDep, node_id: int,
                   current_user=Depends(require_role("template_manager"))):
     user_name = current_user["preferred_username"]
     statement = select(TreeNode).where(TreeNode.id == node_id)
     node_to_delete = session.exec(statement).first()
-    if not node_to_delete :
+    if not node_to_delete:
         raise HTTPException(status_code=404, detail="Folder not found")
     elif node_to_delete.owner != user_name:
         raise HTTPException(status_code=403, detail="Can't delete a folder from another user")
@@ -398,6 +403,7 @@ def delete_folder(session: SessionDep, storage: StorageDep, node_id: int,
     else:
         delete_node(session, storage, node_to_delete)
         return {"parent_id": node_to_delete.parent_id}
+
 
 # Delete node and its content recursively
 def delete_template_of(session: SessionDep, storage: StorageDep, node: TreeNode) -> None:
@@ -429,6 +435,7 @@ def delete_node(session: SessionDep, storage: StorageDep, node: TreeNode) -> Non
     session.delete(node)
     session.commit()
 
+
 ### SESSIONS MANAGEMENT ###
 
 @session_router.get("", response_model=list[GameSession])
@@ -446,6 +453,7 @@ def list_sessions(session: SessionDep, live_only: bool = True):
         statement = statement.where(GameSession.state != SessionState.ENDED)
     return session.exec(statement).all()
 
+
 @session_router.get("/me", response_model=list[GameSessionOwn])
 def list_sessions_from_user(session: SessionDep, current_user: CurrentUserDep):
     """
@@ -458,6 +466,7 @@ def list_sessions_from_user(session: SessionDep, current_user: CurrentUserDep):
     statement = select(GameSession).where(GameSession.author == user_name)
     res = session.exec(statement).all()
     return res
+
 
 @session_router.post("/new_session", response_model=GameSessionPrivate)
 def create_session(game_session: GameSessionCreate, session_service: SessionServiceDep,
@@ -472,11 +481,13 @@ def create_session(game_session: GameSessionCreate, session_service: SessionServ
     db_session = session_service.create_session(current_user["preferred_username"], game_session)
     return db_session
 
+
 @session_router.get("/keys/{session_id}", response_model=list[AccessKeyTyped])
 def get_access_keys(session_id: int, session_service: SessionServiceDep, session: SessionDep,
                     current_user=Depends(require_role("session_launcher"))):
     game_session = own_session(session, session_id, current_user)
     return session_service.get_access_keys(game_session)
+
 
 @session_router.post("/key")
 def set_access_key(access_key_typed: AccessKeyTyped, session_service: SessionServiceDep, session: SessionDep,
@@ -506,12 +517,14 @@ def get_session(session_id: int, session: SessionDep):
         raise HTTPException(status_code=404, detail="Session not found")
     return game_session
 
+
 @session_router.post("/{session_id}/launch", response_model=GameSession)
 def launch_session(session_id: int, session_service: SessionServiceDep, session: SessionDep,
                    current_user=Depends(require_role("session_launcher"))):
     own_session(session, session_id, current_user)
     game_session = session_service.launch_session(session_id)
     return game_session
+
 
 @session_router.post("/{session_id}/stop", response_model=GameSession)
 def stop_session(session_id: int, session_service: SessionServiceDep, session: SessionDep,
@@ -520,11 +533,13 @@ def stop_session(session_id: int, session_service: SessionServiceDep, session: S
     game_session = session_service.stop_session(session_id)
     return game_session
 
+
 @session_router.delete("/{session_id}/delete")
 def delete_session(session_id: int, session_service: SessionServiceDep, session: SessionDep,
                    current_user=Depends(require_role("session_launcher"))):
     own_session(session, session_id, current_user)
     session_service.delete_session(session_id)
+
 
 def matching_key(password_gm: str, password_operator: str,
                  gm_key: AccessKey, op_key: AccessKey,
@@ -537,8 +552,8 @@ def matching_key(password_gm: str, password_operator: str,
     caller can check whether it is revoked, expired or single-use.
     """
     for password, role, own_key in (
-        (password_gm, "gm", gm_key),
-        (password_operator, "scada", op_key),
+            (password_gm, "gm", gm_key),
+            (password_operator, "scada", op_key),
     ):
         if not password:
             continue
@@ -655,14 +670,14 @@ def validate_template_name(name: str) -> None:
 
 
 def _store_template(
-    session,
-    storage,
-    *,
-    template_name: str,
-    folder_id: int,
-    owner: str,
-    working_dir: Path,
-    files: dict[Path, TemplateFileRole],
+        session,
+        storage,
+        *,
+        template_name: str,
+        folder_id: int,
+        owner: str,
+        working_dir: Path,
+        files: dict[Path, TemplateFileRole],
 ) -> Template:
     """
     Upload every file to S3 under one template prefix and record a row for each.
@@ -718,27 +733,25 @@ def guess_content_type(path: Path) -> str:
 
 @template_router.post("/new_template")
 def create_template(
-    storage: StorageDep,
-    session: SessionDep,
-    template_name: str = Form(...),
-    folder_id: int = Form(...),
-    job_file: UploadFile = File(...),
-    dynawo_files: list[UploadFile] = File(default_factory=list),
-    dynawo_relative_paths: list[str] = Form(default_factory=list),
-    dsl_file: UploadFile | None = File(None),
-    cyber_config_file: UploadFile | None = File(None),
-    asset_simulator_config_file: UploadFile | None = File(None),
-    extra_io_file: UploadFile | None = File(None),
-    geo_data: UploadFile | None = File(None),
-    scenario_file: UploadFile | None = File(None),
-    mapping_file: UploadFile | None = File(None),
-    scada_iidm_file: UploadFile | None = File(None),
-    gm_iidm_file: UploadFile | None = File(None),
-    other_files: list[UploadFile] = File(default_factory=list),
+        storage: StorageDep,
+        session: SessionDep,
+        template_name: str = Form(...),
+        folder_id: int = Form(...),
+        job_file: UploadFile = File(...),
+        dynawo_files: list[UploadFile] = File(default_factory=list),
+        dynawo_relative_paths: list[str] = Form(default_factory=list),
+        dsl_file: UploadFile | None = File(None),
+        cyber_config_file: UploadFile | None = File(None),
+        asset_simulator_config_file: UploadFile | None = File(None),
+        extra_io_file: UploadFile | None = File(None),geo_data: UploadFile | None = File(None),
+        scenario_file: UploadFile | None = File(None),
+        mapping_file: UploadFile | None = File(None),
+        scada_iidm_file: UploadFile | None = File(None),
+        gm_iidm_file: UploadFile | None = File(None),other_files: list[UploadFile] = File(default_factory=list),
     automata_commands: list[str] = Form(default_factory=list),
-    period: float = Form(1),
-    dynawo_variant: str = Form("public"),
-    current_user=Depends(require_role("template_manager")),
+        period: float = Form(1),
+        dynawo_version: str = Form("dynawov1.8.2"),
+        current_user=Depends(require_role("template_manager")),
 ):
     """
     Create a template from a minimal set of inputs and generate the rest.
@@ -751,10 +764,12 @@ def create_template(
     """
     user_name = current_user["preferred_username"]
     validate_template_name(template_name)
-    if dynawo_variant not in DYNAWO_SCRIPT_PATHS:
+    available_versions = storage_service.list_dynawo_version()
+    available_versions_string = [item.release for item in available_versions]
+    if dynawo_version not in available_versions_string:
         raise HTTPException(
             status_code=400,
-            detail=f"Unknown dynawo_variant {dynawo_variant!r}; expected one of {', '.join(DYNAWO_SCRIPT_PATHS)}",
+            detail=f"Unknown dynawo_variant {dynawo_version!r}; expected one of {', '.join(available_versions_string)}",
         )
     if len(dynawo_files) != len(dynawo_relative_paths):
         raise HTTPException(
@@ -836,7 +851,6 @@ def create_template(
                 status_code=400,
                 detail=f"{job_file.filename} declares no iidmFile",
             )
-
         # Run main_configure in a child process, not a thread, to
         # 1. avoid pypowsybl locking the GIL
         # 2. reclaim the lxml/pypowsybl memory on completion
@@ -845,7 +859,7 @@ def create_template(
                 generated_dyd, mock_cyber_config, generated_asset_simulator_config = pool.submit(
                     main_configure.main_from_jobs,
                     job_path,
-                    DYNAWO_DDB_PATHS[dynawo_variant],
+                    get_or_retrieve(dynawo_version, storage_service.s3),
                     paths.get(TemplateFileRole.cyber_config),
                     paths.get(TemplateFileRole.mapping),
                     None,
@@ -861,7 +875,8 @@ def create_template(
             # Invalid inputs, e.g. an extra io file with an unknown key or an id already generated
             raise HTTPException(status_code=400, detail=str(e))
 
-        scada_suffix = "" if (paths.get(TemplateFileRole.cyber_config) and paths.get(TemplateFileRole.mapping)) else "_no_map"
+        scada_suffix = "" if (
+                    paths.get(TemplateFileRole.cyber_config) and paths.get(TemplateFileRole.mapping)) else "_no_map"
         generated = [
             generated_dyd,
             "curves.xml",
@@ -885,7 +900,8 @@ def create_template(
                 cyber_config_file=stored_name(cyber_config_file) or mock_cyber_config,
                 scenario_file=stored_name(scenario_file),
                 geo_data=stored_name(geo_data),
-                asset_simulator_config_file=stored_name(asset_simulator_config_file) or generated_asset_simulator_config,
+                asset_simulator_config_file=stored_name(
+                    asset_simulator_config_file) or generated_asset_simulator_config,
                 extra_io_file=stored_name(extra_io_file),
                 other_files=other_names,
                 automata_commands=[c.strip() for c in automata_commands if c.strip()],
@@ -894,7 +910,7 @@ def create_template(
                 gm_iidm_file=stored_name(gm_iidm_file),
                 connectors_dyd=generated_dyd,
                 iidm_file=iidm_name,
-                dynawo_path=DYNAWO_SCRIPT_PATHS[dynawo_variant],
+                dynawo_path=dynawo_version,
                 scada_suffix=scada_suffix,
                 period=period,
             )
@@ -914,7 +930,7 @@ def build_config_toml(*, job_file: str, dsl_file: str | None, cyber_config_file:
                       asset_simulator_config_file: str | None, extra_io_file: str | None,
                       mapping_file: str | None,
                       scada_iidm_file: str | None, gm_iidm_file: str | None,
-                      connectors_dyd: str, iidm_file: str, dynawo_path: str,
+                      connectors_dyd: str, iidm_file: str, dynawo_version: str,
                       scada_suffix: str, period: float, other_files: list[str] | None = None,
                       automata_commands: list[str] | None = None) -> str:
     """
@@ -934,7 +950,7 @@ def build_config_toml(*, job_file: str, dsl_file: str | None, cyber_config_file:
     master = tomlkit.table()
     master["period"] = period
     master["speedup"] = 1
-    master["myEnvDynawo_path"] = dynawo_path
+    master["dynawo_version"] = dynawo_version
     config["master"] = master
 
     input_files = tomlkit.table()
@@ -1033,14 +1049,14 @@ def declared_inputs(input_files) -> tuple[dict[str, str], set[str]]:
 
 @template_router.post("/new_template_expert")
 def create_template_expert(
-    storage: StorageDep,
-    session: SessionDep,
-    template_name: str = Form(...),
-    folder_id: int = Form(...),
-    config_toml_file: UploadFile = File(...),
-    files: list[UploadFile] = File(default_factory=list),
-    relative_paths: list[str] = Form(default_factory=list),
-    current_user=Depends(require_role("template_manager")),
+        storage: StorageDep,
+        session: SessionDep,
+        template_name: str = Form(...),
+        folder_id: int = Form(...),
+        config_toml_file: UploadFile = File(...),
+        files: list[UploadFile] = File(default_factory=list),
+        relative_paths: list[str] = Form(default_factory=list),
+        current_user=Depends(require_role("template_manager")),
 ):
     """
     Create a template from an already-valid context: the config.toml is taken as
@@ -1152,6 +1168,7 @@ def rename_template(session: SessionDep, template_id: int, template_new_name: st
 def share_template():
     raise HTTPException(status_code=404, detail="Not implemented")
 
+
 ### STORAGE ###
 
 @app.get("/file/{key:path}")
@@ -1175,6 +1192,7 @@ def get_file_content(key: str, storage: StorageDep, session: SessionDep,
         headers={"Content-Disposition": f"attachment; filename*=UTF-8''{quote(filename)}"},
     )
 
+
 @app.get("/file-info/{key:path}")
 def get_file_info(key: str, storage: StorageDep, session: SessionDep,
                   current_user: CurrentUserDep):
@@ -1184,8 +1202,28 @@ def get_file_info(key: str, storage: StorageDep, session: SessionDep,
     except ClientError:
         raise HTTPException(status_code=404, detail="No such file")
 
+
+@s3_router.get(
+    "/metadata",
+    response_model=DynawoMetadataList,
+    summary="List available Dynawo metadata archives",
+)
+def list_dynawo_metadata(
+        scope: Optional[Scope] = Query(None, description="Only this scope"),
+        version: Optional[str] = Query(
+            None, description="Only this version, e.g. v1.6.0", examples=["v1.6.0"]),
+        tag: Optional[str] = Query(
+            None, description="Only this tag, e.g. rc1", examples=["rc1"]),
+) -> DynawoMetadataList:
+    items = app.state.storage_service.list_dynawo_version(scope, version, tag)
+    return DynawoMetadataList(count=len(items), items=items)
+
 # Attached here rather than per route, so a new endpoint is authenticated by
 # default and opting out has to be written down.
-app.include_router(template_router, dependencies=[Depends(principal_handler.get_current_user)])
-app.include_router(session_router, dependencies=[Depends(principal_handler.get_current_user)])
-app.include_router(tree_router, dependencies=[Depends(principal_handler.get_current_user)])
+dependencies_auth = [Depends(principal_handler.get_current_user)]
+if NO_AUTH:
+    dependencies_auth = []
+app.include_router(template_router, dependencies=dependencies_auth)
+app.include_router(session_router, dependencies=dependencies_auth)
+app.include_router(tree_router, dependencies=dependencies_auth)
+app.include_router(s3_router, dependencies=dependencies_auth)

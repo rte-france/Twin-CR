@@ -127,6 +127,9 @@ async def init(
         context_client.init_context_and_scenario_files(
             clickhouse_client, context_id, scenario_id, simulation_id, config_path
         )
+        context_client.init_dynawo_file(
+            clickhouse_client, context_id, scenario_id, simulation_id, config_path
+        )
 
     await asyncio.to_thread(prepare_clickhouse)
 

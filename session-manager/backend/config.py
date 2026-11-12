@@ -25,7 +25,11 @@ JWKS_URL = f"{KEYCLOAK_INTERNAL_URL}/realms/{KEYCLOAK_REALM}/protocol/openid-con
 # which buries everything else.
 DB_ECHO = os.getenv("DB_ECHO", "").strip().lower() in ("1", "true", "yes", "on")
 
-BUCKET = os.getenv("BUCKET", "")
+CONTEXT_BUCKET = os.getenv("CONTEXT_BUCKET", "context-library")
+ARCHIVE_BUCKET = os.getenv("ARCHIVE_BUCKET", "archive")
+
+CACHE_DIR = os.getenv("CACHE_DIR", ".cache")
+
 S3_ACCESS_KEY = os.getenv("AWS_ACCESS_KEY_ID", "")
 S3_PRIVATE_KEY = os.getenv("AWS_SECRET_ACCESS_KEY", "")
 GARAGE_HOST = os.getenv("GARAGE_HOST", "")
@@ -35,5 +39,7 @@ CONFIGURATOR_HOST = os.getenv("CONFIGURATOR_HOST", "")
 CONFIGURATOR_EXPOSED_PORT = os.getenv("CONFIGURATOR_EXPOSED_PORT", "")
 CONFIGURATOR_CLIENT_ENDPOINT = os.getenv("CONFIGURATOR_CLIENT_ENDPOINT", f"http://{CONFIGURATOR_HOST}:{CONFIGURATOR_EXPOSED_PORT}")
 S3_ENDPOINT = f"http://{GARAGE_HOST}:{GARAGE_PORT}"
+KEYCLOAK_HTTPS = os.getenv("KEYCLOAK_HTTPS", "false")
+NO_AUTH = os.getenv("NO_AUTH", "false")
 
 UPDATE_SESSION_STATE_TIMEOUT = 5

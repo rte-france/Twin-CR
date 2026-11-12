@@ -14,7 +14,7 @@ from dotenv import load_dotenv
 import toml
 import lxml.etree as ET
 
-from src.config import BUCKET, S3_EXPOSED_ENDPOINT
+from src.config import CONTEXT_BUCKET, S3_EXPOSED_ENDPOINT
 
 load_dotenv()
 
@@ -36,7 +36,7 @@ DYD_FILE_REFERENCES = (
 
 def upload_file(s3, local_path: Path, s3_key: str):
     print(f"Uploading {local_path} -> {s3_key}")
-    s3.upload_file(str(local_path), BUCKET, s3_key)
+    s3.upload_file(str(local_path), CONTEXT_BUCKET, s3_key)
 
 
 def collect_dynawo_files(jobs_file: Path) -> set:
@@ -122,11 +122,11 @@ def main():
 
     # First clean up the prefix key space
     paginator = s3.get_paginator("list_objects_v2")
-    pages = paginator.paginate(Bucket=BUCKET, Prefix=key_prefix)
+    pages = paginator.paginate(Bucket=CONTEXT_BUCKET, Prefix=key_prefix)
     for page in pages:
         for obj in page.get("Contents", []):
             key = obj["Key"]
-            s3.delete_object(Bucket=BUCKET, Key=key)
+            s3.delete_object(Bucket=CONTEXT_BUCKET, Key=key)
 
     # Upload all collected files, preserving paths relative to base_dir
     for file in to_upload:

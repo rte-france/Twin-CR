@@ -17,15 +17,18 @@ CLICKHOUSE_PORT = int(os.getenv("CLICKHOUSE_PORT", "8123"))
 DSL_SERVER_HOST = os.getenv("DSL_SERVER_HOST", "localhost")
 DSL_SERVER_PORT = os.getenv("DSL_SERVER_PORT", "8000")
 DSL_SERVER_URL = f"http://{DSL_SERVER_HOST}:{DSL_SERVER_PORT}"
+#Only for file system mode
 EXAMPLES_DIR = Path(__file__).parent / "../../docs/orchestrator/examples/"
+DYNAWO_FILE_NAME = "dynawo.zip"
+
 NATS_URL = os.getenv("NATS_URL", "nats://localhost:4222")
 
 STORAGE_TYPE=os.getenv("STORAGE_TYPE", S3)
 
-BUCKET = os.getenv("BUCKET", "context-library")
+CONTEXT_BUCKET = os.getenv("CONTEXT_BUCKET", "context-library")
+ARCHIVE_BUCKET = os.getenv("ARCHIVE_BUCKET", "archive")
 S3_ACCESS_KEY = os.getenv("AWS_ACCESS_KEY_ID", "")
 S3_PRIVATE_KEY = os.getenv("AWS_SECRET_ACCESS_KEY", "")
 S3_ENDPOINT = os.getenv("AWS_ENDPOINT_URL_S3", "http://localhost:3900")
 S3_EXPOSED_PORT = os.getenv("GARAGE_EXPOSED_PORT", "3900")
 S3_EXPOSED_ENDPOINT = f"http://localhost:{S3_EXPOSED_PORT}"
-BUCKET_ARCHIVE = os.getenv("BUCKET_ARCHIVE", "archive")

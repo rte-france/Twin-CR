@@ -42,6 +42,25 @@ Note that the uploaded template files live in the garage bucket, not in the
 database, so resetting one without the other leaves objects that nothing
 references.
 
+### Using the simulator archive tool
+First install the package :
+
+```bash
+uv run pip install -e .
+```
+Then run :
+```bash
+uv run tools/upload_dynawo.py path/to/your/dynawo.zip
+```
+
+The upload script expects a zip name like : dynawo(RTE)?vX.Y.Z(-(.*))?.zip
+
+You can then force the cache resolution using (or just let it get resolved automatically the first time):
+
+```bash
+uv run backend/simulator/simulator_cache_handler.py dynawov1.8.1
+```
+
 ### Troubleshooting
 
 Set `DB_ECHO=1` to log every SQL statement. It is off by default because the
