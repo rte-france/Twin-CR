@@ -8,7 +8,8 @@ co-simulation of power systems.
 
 import { FiExternalLink, FiMinus } from "solid-icons/fi";
 import { MfeLoader } from "../../MfeLoader";
-import { detachPanel, PanelState } from "./utils";
+import { detachPanel } from "../../../utils";
+import {  PanelState } from "../../../types";
 
 export const PanelView = (props: {
   panel: PanelState;

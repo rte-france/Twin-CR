@@ -12,7 +12,7 @@ import type { DockviewPanelApi } from "dockview-core";
 import { FiLayout, FiSidebar, FiArrowDown, FiX } from "solid-icons/fi";
 import { Effect } from "effect";
 import { WindowBootstrapper } from "@/services/window-bootstrap";
-import { buildPanelRoute } from "./panelUrlBuilder";
+import { buildPanelRoute } from "../../utils";
 import { getSystemRuntime } from "@/utils/getSystemRuntime";
 
 interface CustomTabProps {

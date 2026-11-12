@@ -12,7 +12,7 @@ import type { DockviewGroupPanel, DockviewComponent } from "dockview-core";
 import { Effect } from "effect";
 import { getSystemRuntime } from "@/utils/getSystemRuntime";
 import { WindowBootstrapper } from "@/services/window-bootstrap";
-import { buildPanelRoute } from "./panelUrlBuilder";
+import { buildPanelRoute } from "../../utils";
 
 interface RightHeaderActionsProps {
   group: DockviewGroupPanel;

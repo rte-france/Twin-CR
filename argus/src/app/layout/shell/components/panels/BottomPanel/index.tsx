@@ -22,15 +22,9 @@ import {
   setActiveBottomRightId,
   setIsLeftOpen,
   setIsRightOpen,
-} from "./utils";
+} from "../../../utils";
 import { PanelView } from "./PanelView";
 import { Resizer } from "./Resizer";
-
-export {
-  activeBottomLeftId,
-  activeBottomRightId,
-  hasVisibleBottomPanels,
-} from "./utils";
 
 export const BottomPanel = () => {
   const loadSavedPanel = (key: string): PanelState | null => {

@@ -7,7 +7,7 @@ co-simulation of power systems.
 */
 
 import { describe, it, expect } from "vitest";
-import { buildPanelRoute } from "@/app/layout/shell/components/dockview/panelUrlBuilder";
+import { buildPanelRoute } from "@/app/layout/shell/utils";
 
 describe("buildPanelRoute", () => {
   it("builds a complete URL with panel state and parameters", () => {

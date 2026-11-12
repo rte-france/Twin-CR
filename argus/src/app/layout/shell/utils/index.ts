@@ -7,15 +7,37 @@ co-simulation of power systems.
 */
 
 import { createSignal } from "solid-js";
-import { PanelManifest } from "@/types";
 import { getSystemRuntime } from "@/utils/getSystemRuntime";
+
 import { Effect } from "effect";
 import { WindowBootstrapper } from "@/services/window-bootstrap";
-import { buildPanelRoute } from "../../dockview/panelUrlBuilder";
 
-export interface PanelState {
-  manifest: PanelManifest;
-  params: any;
+import { DetachPanelOptions, PanelState } from "../types";
+
+export function buildPanelRoute(options: DetachPanelOptions): string {
+  const query = new URLSearchParams({
+    detached: "true",
+    viewType: options.viewType,
+    title: options.title,
+  });
+
+  if (options.panelLocation) {
+    query.set("panelLocation", options.panelLocation);
+  }
+  if (options.groupId) {
+    query.set("groupId", options.groupId);
+  }
+  if (options.entryUrl) {
+    query.set("entryUrl", options.entryUrl);
+  }
+  if (options.isLocalFile !== undefined) {
+    query.set("isLocalFile", String(options.isLocalFile));
+  }
+  if (options.props && Object.keys(options.props).length > 0) {
+    query.set("props", JSON.stringify(options.props));
+  }
+
+  return `/panels/${encodeURIComponent(options.id)}?${query.toString()}`;
 }
 
 export const [isLeftOpen, setIsLeftOpen] = createSignal(false);
@@ -45,7 +67,10 @@ export const detachPanel = (
     elementTag: viewType,
     params,
   };
-  localStorage.setItem(`detached_payload_${id}`, JSON.stringify(payloadToStore));
+  localStorage.setItem(
+    `detached_payload_${id}`,
+    JSON.stringify(payloadToStore),
+  );
 
   const targetRoute = buildPanelRoute({
     id,
