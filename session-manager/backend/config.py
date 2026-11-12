@@ -38,6 +38,6 @@ S3_ENDPOINT = f"http://{GARAGE_HOST}:{GARAGE_PORT}"
 
 UPDATE_SESSION_STATE_TIMEOUT = 5
 
-DEV_MODE = os.getenv("DEV_MODE", "FALSE").casefold() == "true"
+KEYCLOAK_VERIFY_TLS = os.getenv("KEYCLOAK_VERIFY_TLS", "FALSE").casefold() == "true"
 SIMULATORS_PATH = os.getenv("SIMULATORS_PATH", "/home/session-manager/simulators")
 EXTRA_RULES_PATH = os.getenv("EXTRA_RULES_PATH", "/home/session-manager/dynawo_rules")

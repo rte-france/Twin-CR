@@ -45,8 +45,8 @@ TEMPLATE_NAME_RE = re.compile(r"[A-Za-z0-9 ._-]{1,100}")
 # Paths inside the orchestrator container, as in the example config.toml files.
 # RTE's build carries models the public one does not, so a context is tied to one.
 DYNAWO_SCRIPT_PATHS = {
-    "public": SIMULATORS_PATH + "/dynawo/dynawo.sh",
-    "rte": SIMULATORS_PATH + "/dynawo-rte/dynawo.sh",
+    "public": "/home/orchestrator/simulators/dynawo/dynawo.sh",
+    "rte": "/home/orchestrator/simulators/dynawo-rte/dynawo.sh",
 }
 
 DYNAWO_DDB_PATHS = {

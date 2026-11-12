@@ -14,11 +14,12 @@ We describe here the installation process where the other services run with dock
 2. Copy the env-example file in a .env file in the session-manager folder. 
    - Uncomment the following variables and complete SIMULATORS_PATH and EXTRA_RULES_PATH.  
      ```
-     # variables to complete when running session-manager with uv (not with docker)
-     #DEV_MODE=TRUE
-     #KEYCLOAK_INTERNAL_URL=
-     #SIMULATORS_PATH=
-     #EXTRA_RULES_PATH=
+     # Native runs only (uv, other services in docker): uncomment and adapt.
+     # Defaults are the in-container paths used by docker.
+     #KEYCLOAK_VERIFY_TLS=false  # [native] Keycloak's host port serves a self-signed cert
+     #KEYCLOAK_INTERNAL_URL=https://localhost:8443  # [native] default http://keycloak:8080
+     #SIMULATORS_PATH=/home/session-manager/simulators  # [native]
+     #EXTRA_RULES_PATH=/home/session-manager/dynawo_rules  # [native]
      ```
    - Set the hosts to "localhost" 
      ```
