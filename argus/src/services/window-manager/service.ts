@@ -12,6 +12,7 @@ import { invoke } from "@tauri-apps/api/core";
 import { Effect, Context, Layer, Stream } from "effect";
 import { parseWindowError, WindowError } from "./error";
 import { getCurrentWindow } from "@tauri-apps/api/window";
+import { getParentLabelFromUrl } from "@/app/routes/routingUtils";
 
 export interface WindowConfig {
   label: string;
@@ -105,7 +106,7 @@ export const WindowManagerLive = Layer.succeed(
     getParentLabel: () =>
       Effect.sync(() => {
         const params = new URLSearchParams(window.location.search);
-        return params.get("parent");
+        return params.get("parent") || getParentLabelFromUrl();
       }),
   }),
 );

@@ -38,7 +38,8 @@ export const ThemeProvider: ParentComponent<ThemeProviderProps> = (props) => {
 
   createEffect(() => {
     if (isServer) return;
-    const saved = localStorage.getItem(getStorageKey()) as Theme;
+    const key = getStorageKey();
+    const saved = localStorage.getItem(key) as Theme;
     if (saved && saved !== theme()) {
       setThemeState(saved);
     }
