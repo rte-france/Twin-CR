@@ -17,12 +17,12 @@ import {
   activeBottomRightId,
   isLeftOpen,
   isRightOpen,
-  PanelState,
   setActiveBottomLeftId,
   setActiveBottomRightId,
   setIsLeftOpen,
   setIsRightOpen,
 } from "../../../utils";
+import { PanelState } from "../../../types";
 import { PanelView } from "./PanelView";
 import { Resizer } from "./Resizer";
 
