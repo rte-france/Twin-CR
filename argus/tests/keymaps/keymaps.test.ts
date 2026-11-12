@@ -64,4 +64,25 @@ describe("getEventString", () => {
     });
     expect(getEventString(spaceEvent)).toBe("mod+space");
   });
+
+  it("falls back to e.code when e.key is Unidentified", async () => {
+    const { getEventString } = await import("@/services/keymaps/utils");
+    const event = new KeyboardEvent("keydown", {
+      key: "Unidentified",
+      code: "Tab",
+      shiftKey: true,
+      ctrlKey: true,
+    });
+    expect(getEventString(event)).toBe("mod+shift+tab");
+  });
+
+  it("returns empty string if both key and code are unknown or unidentified", async () => {
+    const { getEventString } = await import("@/services/keymaps/utils");
+    const event = new KeyboardEvent("keydown", {
+      key: "Unidentified",
+      code: "",
+      shiftKey: true,
+    });
+    expect(getEventString(event)).toBe("");
+  });
 });
