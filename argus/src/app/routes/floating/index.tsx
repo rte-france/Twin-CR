@@ -6,80 +6,78 @@ This file is part of Twin-CR, a platform for real-time cyber-physical
 co-simulation of power systems.
 */
 
-import { useParams } from "@solidjs/router";
+import { useParams, useSearchParams } from "@solidjs/router";
 import { createSignal, onMount, onCleanup } from "solid-js";
 import { MfeLoader } from "@/app/layout/shell/components/MfeLoader";
+import { hydratePanelFromUrlAndStorage } from "./panelHydration";
 
-import { emitTo } from "@tauri-apps/api/event";
+import { emit, emitTo } from "@tauri-apps/api/event";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 
 export const Floating = (props: { parentLabel: string }) => {
   const params = useParams();
-  const [manifest, setManifest] = createSignal<any>(null);
-  const [componentProps, setComponentProps] = createSignal<any>(null);
+  const [searchParams] = useSearchParams();
+
+  // Hydrate synchronously on component creation so MfeLoader mounts on first render
+  const rawId = params.id || "";
+  const initialHydrated = hydratePanelFromUrlAndStorage(
+    rawId,
+    searchParams as Record<string, string | undefined>,
+    params.viewType,
+  );
+
+  const [manifest, setManifest] = createSignal<any>(initialHydrated.manifest);
+  const [componentProps, setComponentProps] = createSignal<any>(initialHydrated.componentProps);
+  const [originGroupId, setOriginGroupId] = createSignal<string | undefined>(
+    (searchParams as Record<string, string | undefined>).groupId,
+  );
+  const [panelLocation, setPanelLocation] = createSignal<string | undefined>(
+    (searchParams as Record<string, string | undefined>).panelLocation,
+  );
 
   onMount(() => {
-    const id = decodeURIComponent(params.id!!);
-    const storageKey = `detached_payload_${id}`;
-    const storedData = localStorage.getItem(storageKey);
-
-    if (storedData) {
-      const parsedData = JSON.parse(storedData);
-
-      const reconstructedManifest = {
-        id: parsedData.id || id,
-        label: parsedData.label || parsedData.title,
-        iconId: parsedData.iconId || "file",
-        elementTag: parsedData.elementTag,
-        entryUrl: parsedData.entryUrl,
-        isLocalFile: parsedData.isLocalFile,
-      };
-
-      setManifest(reconstructedManifest);
-      setComponentProps(parsedData.params || parsedData);
-
-      localStorage.removeItem(storageKey);
-    } else {
-      console.warn("No payload found for l'ID :", id);
-
-      if (params.viewType) {
-        setManifest({
-          id: id,
-          elementTag: params.viewType,
-        });
-      }
-    }
-
     const windowContext = getCurrentWindow();
+    let isClosing = false;
 
     const unlistenPromise = windowContext.onCloseRequested(async (event) => {
+      if (isClosing) return;
+      isClosing = true;
       event.preventDefault();
 
-      const currentManifest = manifest();
+      try {
+        const currentManifest = manifest();
 
-      if (currentManifest) {
-        const payload = {
-          id: currentManifest.id,
-          title: currentManifest.label,
-          elementTag: currentManifest.elementTag,
-          entryUrl: currentManifest.entryUrl,
-          isLocalFile: currentManifest.isLocalFile,
-          params: componentProps(),
-        };
+        if (currentManifest) {
+          const payload = {
+            id: currentManifest.id,
+            title: currentManifest.label,
+            elementTag: currentManifest.elementTag,
+            entryUrl: currentManifest.entryUrl,
+            isLocalFile: currentManifest.isLocalFile,
+            params: componentProps(),
+            groupId: originGroupId(),
+            panelLocation: panelLocation(),
+          };
 
-        const targetLabel = props.parentLabel || "main";
-        await emitTo(targetLabel, "argus:reattach-panel", payload);
+          if (props.parentLabel) {
+            await emitTo(props.parentLabel, "argus:reattach-panel", payload);
+          } else {
+            await emit("argus:reattach-panel", payload);
+          }
+        }
+      } catch (err) {
+        console.error("Failed to emit reattach event:", err);
+      } finally {
+        await windowContext.destroy();
       }
-
-      const unlisten = await unlistenPromise;
-      unlisten();
-
-      await windowContext.close();
     });
 
     onCleanup(() => {
-      unlistenPromise.then((unlisten) => unlisten());
+      unlistenPromise.then((unlisten) => unlisten()).catch(() => {});
     });
+
+    // Reveal the window immediately once mounted
+    windowContext.show().catch(() => {});
   });
 
   return (

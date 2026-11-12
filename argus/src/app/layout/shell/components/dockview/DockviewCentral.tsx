@@ -10,7 +10,11 @@ import { onMount, onCleanup } from "solid-js";
 import { render } from "solid-js/web";
 import { DockviewComponent } from "dockview-core";
 import { MfeLoader } from "../MfeLoader";
-import { type OpenCentralParams } from "@/utils/openInCentral";
+import {
+  type OpenCentralParams,
+  ADD_BOTTOM_LEFT_EVENT,
+  ADD_BOTTOM_RIGHT_EVENT,
+} from "@/utils/openInCentral";
 import { DockviewTab } from "./DockviewTab";
 import { LeftHeaderActions } from "./LeftHeaderActions";
 import { usePlacement } from "../../providers/PlacementProvider";
@@ -174,7 +178,7 @@ export const DockviewCentral = () => {
     });
 
     const handleAdd = (e: Event) => {
-      const payload = (e as CustomEvent<OpenCentralParams>).detail;
+      const payload = (e as CustomEvent<OpenCentralParams & { groupId?: string }>).detail;
 
       const existing = dockview.getGroupPanel(payload.id);
       if (existing) {
@@ -185,7 +189,16 @@ export const DockviewCentral = () => {
       let targetPosition: any = undefined;
       const currentMode = placement();
 
-      if (dockview.activeGroup) {
+      const targetGroup = payload.groupId
+        ? dockview.groups.find((g) => g.id === payload.groupId)
+        : undefined;
+
+      if (targetGroup) {
+        targetPosition = {
+          referenceGroup: targetGroup,
+          direction: "within",
+        };
+      } else if (dockview.activeGroup) {
         const activeGroup = dockview.activeGroup;
         const currentTab = activeGroup.activePanel;
         const insertIndex = currentTab
@@ -295,9 +308,20 @@ export const DockviewCentral = () => {
     const unlistenReattachPromise = getCurrentWindow().listen(
       "argus:reattach-panel",
       (event: any) => {
-        window.dispatchEvent(
-          new CustomEvent("argus:add-central", { detail: event.payload }),
-        );
+        const payload = event.payload;
+        if (payload?.panelLocation === "bottom-left") {
+          window.dispatchEvent(
+            new CustomEvent(ADD_BOTTOM_LEFT_EVENT, { detail: payload }),
+          );
+        } else if (payload?.panelLocation === "bottom-right") {
+          window.dispatchEvent(
+            new CustomEvent(ADD_BOTTOM_RIGHT_EVENT, { detail: payload }),
+          );
+        } else {
+          window.dispatchEvent(
+            new CustomEvent("argus:add-central", { detail: payload }),
+          );
+        }
       },
     );
 

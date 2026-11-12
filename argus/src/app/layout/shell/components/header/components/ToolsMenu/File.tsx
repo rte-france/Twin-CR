@@ -35,7 +35,7 @@ export const File: Component = () => {
       <Menubar.Portal>
         <Menubar.Content class={contentClass}>
           <Menubar.Item class={itemClass} onSelect={handleNewParent}>
-            Open Workspace
+            Open New Window
           </Menubar.Item>
         </Menubar.Content>
       </Menubar.Portal>

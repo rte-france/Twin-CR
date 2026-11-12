@@ -21,8 +21,8 @@ import { ActivityBar } from "../sidebars/ActivityBar";
 import { Sidebar } from "../sidebars/Sidebar";
 import { IconResolver } from "../IconResolver";
 import { Separator } from "@kobalte/core/separator";
-import { activeBottomLeftId } from "./BottomPanel";
 import { ADD_BOTTOM_LEFT_EVENT } from "@/utils/openInCentral";
+import { activeBottomLeftId } from "../../utils";
 
 export const LeftPanel = () => {
   const layout = useLayout();

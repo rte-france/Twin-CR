@@ -17,20 +17,14 @@ import {
   activeBottomRightId,
   isLeftOpen,
   isRightOpen,
-  PanelState,
   setActiveBottomLeftId,
   setActiveBottomRightId,
   setIsLeftOpen,
   setIsRightOpen,
-} from "./utils";
+} from "../../../utils";
+import { PanelState } from "../../../types";
 import { PanelView } from "./PanelView";
 import { Resizer } from "./Resizer";
-
-export {
-  activeBottomLeftId,
-  activeBottomRightId,
-  hasVisibleBottomPanels,
-} from "./utils";
 
 export const BottomPanel = () => {
   const loadSavedPanel = (key: string): PanelState | null => {
@@ -178,6 +172,7 @@ export const BottomPanel = () => {
         {(panel) => (
           <PanelView
             panel={panel()}
+            location="bottom-left"
             style={{
               width: isRightOpen() && rightData() ? `${leftWidth()}%` : "100%",
               "flex-shrink": 0,
@@ -198,6 +193,7 @@ export const BottomPanel = () => {
         {(panel) => (
           <PanelView
             panel={panel()}
+            location="bottom-right"
             class="flex-1"
             onClose={() => setIsRightOpen(false)}
           />
