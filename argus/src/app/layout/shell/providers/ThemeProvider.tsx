@@ -115,6 +115,6 @@ export const ThemeProvider: ParentComponent<ThemeProviderProps> = (props) => {
 export const useTheme = () => {
   const context = useContext(ThemeContext);
   if (!context)
-    throw new Error("useTheme doit être utilisé dans un ThemeProvider");
+    throw new Error("useTheme should be use in ThemeProvider");
   return context;
 };
