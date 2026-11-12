@@ -15,6 +15,10 @@ import { useNavigate } from "@solidjs/router";
 
 import { openInCentral } from "@/utils/openInCentral";
 
+const itemClass =
+  "px-3 py-1.5 text-xs text-fg hover:bg-sidebar-active-bg hover:text-sidebar-active outline-none cursor-default flex justify-between items-center transition-colors";
+const separatorClass = "h-px bg-divider my-1 mx-2";
+
 export const Argus: Component = () => {
   const [appWindow, setAppWindow] = createSignal<WebviewWindow | null>(null);
   const navigate = useNavigate();
@@ -43,9 +47,13 @@ export const Argus: Component = () => {
     });
   };
 
-  const itemClass =
-    "px-3 py-1.5 text-xs text-fg hover:bg-sidebar-active-bg hover:text-sidebar-active outline-none cursor-default flex justify-between items-center transition-colors";
-  const separatorClass = "h-px bg-divider my-1 mx-2";
+  const handleKeymaps = () => {
+    openInCentral({
+      id: "keymaps",
+      title: "Keymaps",
+      elementTag: "panel-keymaps",
+    });
+  };
 
   return (
     <Menubar.Menu>
@@ -64,6 +72,10 @@ export const Argus: Component = () => {
           </Menubar.Item>
 
           <Menubar.Separator class={separatorClass} />
+
+          <Menubar.Item class={itemClass} onSelect={handleKeymaps}>
+            Keymaps
+          </Menubar.Item>
 
           <Menubar.Item class={itemClass} onSelect={handleSettings}>
             Settings

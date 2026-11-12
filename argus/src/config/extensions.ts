@@ -24,3 +24,4 @@ import "@/features/notifications";
 import "@/features/ifl-diagram";
 import "@/features/vnc-viewer";
 import "@/features/network-properties-viewer";
+import "@/features/keymaps";
