@@ -31,6 +31,9 @@ export const Floating = (props: { parentLabel: string }) => {
   const [originGroupId, setOriginGroupId] = createSignal<string | undefined>(
     (searchParams as Record<string, string | undefined>).groupId,
   );
+  const [panelLocation, setPanelLocation] = createSignal<string | undefined>(
+    (searchParams as Record<string, string | undefined>).panelLocation,
+  );
 
   onMount(() => {
     const windowContext = getCurrentWindow();
@@ -53,6 +56,7 @@ export const Floating = (props: { parentLabel: string }) => {
             isLocalFile: currentManifest.isLocalFile,
             params: componentProps(),
             groupId: originGroupId(),
+            panelLocation: panelLocation(),
           };
 
           if (props.parentLabel) {

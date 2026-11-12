@@ -14,6 +14,7 @@ export interface DetachPanelOptions {
   isLocalFile?: boolean;
   props?: Record<string, any>;
   groupId?: string;
+  panelLocation?: "central" | "bottom-left" | "bottom-right";
 }
 
 export function buildPanelRoute(options: DetachPanelOptions): string {
@@ -23,6 +24,9 @@ export function buildPanelRoute(options: DetachPanelOptions): string {
     title: options.title,
   });
 
+  if (options.panelLocation) {
+    query.set("panelLocation", options.panelLocation);
+  }
   if (options.groupId) {
     query.set("groupId", options.groupId);
   }

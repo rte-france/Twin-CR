@@ -30,15 +30,22 @@ export const [activeBottomRightId, setActiveBottomRightId] = createSignal<
 
 export const hasVisibleBottomPanels = () => isLeftOpen() || isRightOpen();
 
-export const detachPanel = (panel: PanelState, closeFn: () => void) => {
+export const detachPanel = (
+  panel: PanelState,
+  closeFn: () => void,
+  location: "bottom-left" | "bottom-right" = "bottom-left",
+) => {
   const { manifest, params } = panel;
   const id = manifest.id;
-  const viewType = manifest.elementTag || "default";
+  const viewType = manifest.elementTag || id;
   const title = manifest.label || "Detached view";
 
-  if (params) {
-    localStorage.setItem(`detached_payload_${id}`, JSON.stringify(params));
-  }
+  const payloadToStore = {
+    ...manifest,
+    elementTag: viewType,
+    params,
+  };
+  localStorage.setItem(`detached_payload_${id}`, JSON.stringify(payloadToStore));
 
   const targetRoute = buildPanelRoute({
     id,
@@ -47,6 +54,7 @@ export const detachPanel = (panel: PanelState, closeFn: () => void) => {
     entryUrl: manifest.entryUrl,
     isLocalFile: manifest.isLocalFile,
     props: params,
+    panelLocation: location,
   });
 
   const program = Effect.gen(function* () {

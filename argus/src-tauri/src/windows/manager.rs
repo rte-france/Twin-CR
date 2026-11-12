@@ -64,7 +64,8 @@ impl WindowManager {
         .await
         .map_err(|e| e.to_string())?;
 
-        let url = format!("/?route={}", route);
+        let encoded_route = url::form_urlencoded::byte_serialize(route.as_bytes()).collect::<String>();
+        let url = format!("/?route={}", encoded_route);
         WebviewWindowBuilder::new(&self.app_handle, &label, WebviewUrl::App(url.into()))
             .title(title)
             .decorations(false)
@@ -91,7 +92,8 @@ impl WindowManager {
         .await
         .map_err(|e| e.to_string())?;
 
-        let url = format!("/?parent={}&route={}", parent_label, route);
+        let encoded_route = url::form_urlencoded::byte_serialize(route.as_bytes()).collect::<String>();
+        let url = format!("/?parent={}&route={}", parent_label, encoded_route);
         WebviewWindowBuilder::new(&self.app_handle, &label, WebviewUrl::App(url.into()))
             .title(title)
             .visible(false)

@@ -178,6 +178,7 @@ export const BottomPanel = () => {
         {(panel) => (
           <PanelView
             panel={panel()}
+            location="bottom-left"
             style={{
               width: isRightOpen() && rightData() ? `${leftWidth()}%` : "100%",
               "flex-shrink": 0,
@@ -198,6 +199,7 @@ export const BottomPanel = () => {
         {(panel) => (
           <PanelView
             panel={panel()}
+            location="bottom-right"
             class="flex-1"
             onClose={() => setIsRightOpen(false)}
           />
