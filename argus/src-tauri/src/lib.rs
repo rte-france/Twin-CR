@@ -58,6 +58,21 @@ pub fn run() {
         .plugin(tauri_plugin_http::init())
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_dialog::init())
+        .plugin({
+            #[allow(unused_mut)]
+            let mut prevent_builder = tauri_plugin_prevent_default::Builder::new()
+                .with_flags(tauri_plugin_prevent_default::Flags::keyboard());
+
+            #[cfg(target_os = "windows")]
+            {
+                prevent_builder = prevent_builder.platform(
+                    tauri_plugin_prevent_default::PlatformOptions::new()
+                        .browser_accelerator_keys(false),
+                );
+            }
+
+            prevent_builder.build()
+        })
         .plugin(
             tauri_plugin_log::Builder::new()
                 .level_for("async_nats", log::LevelFilter::Info)
