@@ -6,9 +6,11 @@ This file is part of Twin-CR, a platform for real-time cyber-physical
 co-simulation of power systems.
 """
 
+import os
+
 import jwt
 from jwt.exceptions import PyJWKClientError
-from fastapi import Depends, HTTPException
+from fastapi import HTTPException, Depends
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 
 from backend.config import JWKS_URL, KEYCLOAK_CLIENT_ID
