@@ -8,6 +8,12 @@ co-simulation of power systems.
 
 package org.TwinCR.argus_backends.common.telemetry;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.Executors;
@@ -19,6 +25,7 @@ import org.TwinCR.argus_backends.common.core.bridge.SseNatsBridge;
 import io.nats.client.*;
 
 public abstract class TelemetryConsumerCommon {
+    private static final Logger LOGGER = LoggerFactory.getLogger(TelemetryConsumerCommon.class);
     private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
 
     public TelemetryConsumerCommon(Connection conn, SseNatsBridge bridge) {}
@@ -42,6 +49,23 @@ public abstract class TelemetryConsumerCommon {
     /** Prefix of the NATS subjects of the sub-topics ("<prefix>.<sub-topic>") */
     public abstract String subjectPrefix();
 
-    /** Latest message of each id of a sub-topic, sent to new SSE subscribers after registering them */
-    public abstract List<String> latestPayloads(String subTopic);
+    /** Latest value of each id of a sub-topic, as a JSON array of messages (from Clickhouse) */
+    protected abstract String queryLatestValues(String subTopic) throws Exception;
+
+    /**
+     * Latest message of each id of a sub-topic, sent to new SSE subscribers before the live messages
+     * (TS are only published on change). Empty if they cannot be fetched.
+     */
+    public List<String> latestPayloads(String subTopic) {
+        List<String> payloads = new ArrayList<>();
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            for (JsonNode item : mapper.readValue(queryLatestValues(subTopic), JsonNode[].class)) {
+                payloads.add(mapper.writeValueAsString(item));
+            }
+        } catch (Exception e) {
+            LOGGER.error("Error while fetching latest values for topic {}: {}", subTopic, e);
+        }
+        return payloads;
+    }
 }

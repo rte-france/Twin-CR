@@ -372,18 +372,7 @@ public class TelemetryConsumer extends TelemetryConsumerCommon {
     }
 
     @Override
-    public List<String> latestPayloads(String subTopic) {
-        // TS are only published on change: a new subscriber gets the latest value of each id from Clickhouse
-        List<String> payloads = new ArrayList<>();
-        try {
-            String data = clickhouseClient.queryLatestMeasurementsReceived(this.location, subTopic);
-            ObjectMapper mapper = new ObjectMapper();
-            for (JsonNode item : mapper.readValue(data, JsonNode[].class)) {
-                payloads.add(mapper.writeValueAsString(item));
-            }
-        } catch (Exception e) {
-            LOGGER.error("Error while fetching latest values for topic {}: {}", subTopic, e);
-        }
-        return payloads;
+    protected String queryLatestValues(String subTopic) throws Exception {
+        return clickhouseClient.queryLatestMeasurementsReceived(location, subTopic);
     }
 }
