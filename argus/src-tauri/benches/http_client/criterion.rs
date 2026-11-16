@@ -234,16 +234,21 @@ fn bench_payload_scaling(c: &mut Criterion) {
 }
 
 pub fn run(args: Vec<String>) {
-    let mut c = Criterion::default()
-        .with_profiler(PProfProfiler::new(100, Output::Flamegraph(None)))
-        .configure_from_args();
+    let mut builder = Criterion::default()
+        .with_profiler(PProfProfiler::new(100, Output::Flamegraph(None)));
 
-    // If custom args were passed (e.g. --quick), re-parse or configure if needed
     if !args.is_empty() {
-        // Criterion doesn't expose a direct method to parse arbitrary Vec<String>,
-        // but configure_from_args reads std::env::args(). When run via `cargo bench -- ...`,
-        // std::env::args already has the CLI flags!
+        if args.iter().any(|a| a == "--quick") {
+            builder = builder
+                .sample_size(10)
+                .warm_up_time(Duration::from_millis(500))
+                .measurement_time(Duration::from_secs(1));
+        }
+    } else {
+        builder = builder.configure_from_args();
     }
+
+    let mut c = builder;
 
     bench_http_methods_roundtrip(&mut c);
     bench_payload_scaling(&mut c);
