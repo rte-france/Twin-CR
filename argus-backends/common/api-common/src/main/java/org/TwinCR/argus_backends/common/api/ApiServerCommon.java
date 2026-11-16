@@ -1405,6 +1405,7 @@ public abstract class ApiServerCommon {
 
     private static class SseTopicSubscriber {
         private final AsyncContext async;
+        private final HttpServletResponse resp;  // Lock shared with sseClient(resp): messages and keepalives are sent from several threads
         private final OutputStream os;
         private final TelemetryConsumerCommon telemetryConsumer;
         private final String topic;
@@ -1412,6 +1413,7 @@ public abstract class ApiServerCommon {
         SseTopicSubscriber(AsyncContext async, HttpServletResponse resp,
                            TelemetryConsumerCommon telemetryConsumer, String topic) throws IOException {
             this.async = async;
+            this.resp = resp;
             this.os = resp.getOutputStream();
             this.topic = topic;
             this.telemetryConsumer = telemetryConsumer;
@@ -1420,8 +1422,10 @@ public abstract class ApiServerCommon {
         }
 
         void sendKeepAlive() throws IOException {
-            os.write(":keepalive\n\n".getBytes(StandardCharsets.UTF_8));
-            os.flush();
+            synchronized (resp) {
+                os.write(":keepalive\n\n".getBytes(StandardCharsets.UTF_8));
+                os.flush();
+            }
         }
 
         void close() {
