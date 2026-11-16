@@ -53,7 +53,13 @@ export const makeTauriHttpClient = (clientId: string) =>
 
       const acceptHeader =
         request.headers["accept"] || request.headers["Accept"];
-      const isSSE = acceptHeader === "text/event-stream";
+      // Any media range of the header, e.g. "text/event-stream" or "text/event-stream; charset=utf-8, */*".
+      const isSSE = (acceptHeader ?? "")
+        .split(",")
+        .some(
+          (range) =>
+            range.split(";")[0].trim().toLowerCase() === "text/event-stream",
+        );
 
       const finalRequest = HttpClientRequest.setUrl(finalUrl)(request);
 

@@ -18,7 +18,13 @@ export {
   executeStandardRequest,
   fetchManifestsFromRust,
 } from "./http-service/utils";
-export { SseError, sseData, sseJsonStream } from "./sse";
+export {
+  BackendRequestError,
+  makeBackendClient,
+  sseData,
+  sseJsonStream,
+  type BackendClient,
+} from "./sse";
 export {
   ExtensionNotFoundError,
   TauriInvokeError,
