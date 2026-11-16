@@ -18,6 +18,7 @@ export {
   executeStandardRequest,
   fetchManifestsFromRust,
 } from "./http-service/utils";
+export { SseError, sseData, sseJsonStream } from "./sse";
 export {
   ExtensionNotFoundError,
   TauriInvokeError,

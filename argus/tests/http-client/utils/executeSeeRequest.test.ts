@@ -72,4 +72,28 @@ describe("executeSSERequest", () => {
       );
     }),
   );
+
+  it.effect("ignores messages after the terminal error", () =>
+    Effect.gen(function* () {
+      mockIPC((cmd, args: any) => {
+        if (cmd === "sse") {
+          const channel = args.onEvent;
+          setTimeout(() => {
+            channel.onmessage("ERROR: API request failed with status 404: ");
+            // Must not throw on the already errored stream.
+            channel.onmessage("[CLOSE]");
+            channel.onmessage("data: late\n\n");
+          }, 10);
+        }
+      });
+
+      const req = HttpClientRequest.get("https://api.test/stream");
+      const res = yield* executeSSERequest("client-1", "req-err-close", req, {});
+
+      const err = yield* Effect.flip(Stream.runCollect(res.stream));
+      expect(String((err as HttpClientError.ResponseError).cause)).toContain(
+        "status 404",
+      );
+    }),
+  );
 });

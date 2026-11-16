@@ -74,9 +74,12 @@ export const executeSSERequest = (
         channel.onmessage = (event) => {
           if (isStreamAborted) return;
 
+          // "[CLOSE]" and "ERROR: ..." are terminal: ignore anything after them.
           if (event === "[CLOSE]") {
+            isStreamAborted = true;
             controller.close();
           } else if (event.startsWith("ERROR: ")) {
+            isStreamAborted = true;
             controller.error(new Error(event));
           } else {
             // Receive a W3C standart SSE (data:, id:, \n\n)
