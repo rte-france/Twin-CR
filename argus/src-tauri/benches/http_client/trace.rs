@@ -11,6 +11,7 @@ use std::sync::Arc;
 use std::time::Duration;
 
 use argus_lib::http_client::utils::http_client::client::{Client, Connected};
+use tracing::Instrument;
 
 use super::common::{setup_client, start_hyper_echo_server};
 
@@ -82,12 +83,14 @@ async fn run_async() {
                 }
 
                 let span = tracing::info_span!("http_request_span", req_id = idx);
-                let _enter = span.enter();
-
-                let req_id = format!("trace-req-{}", idx);
-                if let Ok(rx) = client.get(req_id, "/test", HashMap::new()).await {
-                    let _ = Client::<Connected>::wait_for_response(rx).await;
+                async {
+                    let req_id = format!("trace-req-{}", idx);
+                    if let Ok(rx) = client.get(req_id, "/test", HashMap::new()).await {
+                        let _ = Client::<Connected>::wait_for_response(rx).await;
+                    }
                 }
+                .instrument(span)
+                .await;
             }
         }));
     }
