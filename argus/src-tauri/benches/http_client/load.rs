@@ -91,7 +91,20 @@ async fn run_async() {
 
             if should_cancel {
                 let _ = client.cancel_request(req_id).await;
-                cancelled.fetch_add(1, Ordering::Relaxed);
+                // Wait to observe terminal outcome
+                match Client::<Connected>::wait_for_response(rx).await {
+                    Ok(_) => {
+                        // Completed before cancellation took effect
+                        let service_micros = service_start.elapsed().as_micros() as u64;
+                        let total_micros = scheduled_time.elapsed().as_micros() as u64;
+                        let _ = tx.send((service_micros, total_micros));
+                        completed.fetch_add(1, Ordering::Relaxed);
+                    }
+                    Err(_) => {
+                        // Cancelled in-flight (channel dropped/aborted by actor)
+                        cancelled.fetch_add(1, Ordering::Relaxed);
+                    }
+                }
                 return;
             }
 
