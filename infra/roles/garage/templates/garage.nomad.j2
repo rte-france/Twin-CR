@@ -24,7 +24,8 @@ job "garage" {
       tags = [
         "traefik.enable=true",
         "traefik.http.routers.garage-s3.rule=Host(`s3.{{ base_domain }}`) || HostRegexp(`{subdomain:[a-zA-Z0-9-]+}.s3.{{ base_domain }}`)",
-        "traefik.http.routers.garage-s3.entrypoints=web",
+        "traefik.http.routers.garage-s3.entrypoints=web,websecure",
+        "traefik.http.routers.garage-s3.tls=true",
         "traefik.http.services.garage-s3.loadbalancer.server.port=${NOMAD_PORT_s3_api}"
       ]
 
