@@ -63,51 +63,14 @@ pub fn run() {
     rt.block_on(run_async());
 }
 
-async fn run_async() {
-    let (base_url, _) = start_hyper_echo_server().await;
-    let client = Arc::new(setup_client(&base_url));
-
-    let total_requests: usize = std::env::var("PROFILE_TOTAL")
-        .ok()
-        .and_then(|v| v.parse().ok())
-        .unwrap_or(200_000);
-
-    let concurrency: usize = 100;
-    let completed = Arc::new(AtomicUsize::new(0));
-
-    let rss_initial = get_rss_bytes();
-    let mut rss_peak = rss_initial;
-
-    println!("============================================================");
-    println!("  HTTP ENGINE PROFILE: CPU, RAM & MEMORY LEAK ANALYSIS");
-    println!("  Total requests : {}", total_requests);
-    println!("  Concurrency    : {}", concurrency);
-    println!("============================================================");
-
-    let completed_monitor = completed.clone();
-    let monitor_handle = tokio::spawn(async move {
-        let mut peak = 0;
-        let mut history = Vec::new();
-        let start = Instant::now();
-        loop {
-            let rss = get_rss_bytes();
-            if rss > peak {
-                peak = rss;
-            }
-            let done = completed_monitor.load(Ordering::Relaxed);
-            history.push((start.elapsed(), done, rss));
-            if done >= total_requests {
-                break;
-            }
-            tokio::time::sleep(Duration::from_millis(100)).await;
-        }
-        (peak, history)
-    });
-
-    let start_instant = Instant::now();
+async fn run_batch(
+    client: &Arc<Client<Connected>>,
+    current_idx: &Arc<AtomicUsize>,
+    target_idx: usize,
+    concurrency: usize,
+    completed: &Arc<AtomicUsize>,
+) {
     let mut handles = Vec::with_capacity(concurrency);
-    let current_idx = Arc::new(AtomicUsize::new(0));
-
     for _ in 0..concurrency {
         let client = client.clone();
         let completed = completed.clone();
@@ -116,7 +79,7 @@ async fn run_async() {
         handles.push(tokio::spawn(async move {
             loop {
                 let i = current_idx.fetch_add(1, Ordering::Relaxed);
-                if i >= total_requests {
+                if i >= target_idx {
                     break;
                 }
                 let req_id = format!("req-{}", i);
@@ -132,17 +95,53 @@ async fn run_async() {
     for h in handles {
         let _ = h.await;
     }
+}
+
+async fn run_async() {
+    let (base_url, _) = start_hyper_echo_server().await;
+    let client = Arc::new(setup_client(&base_url));
+
+    let total_requests: usize = std::env::var("PROFILE_TOTAL")
+        .ok()
+        .and_then(|v| v.parse().ok())
+        .unwrap_or(200_000);
+
+    let n = total_requests / 2;
+    let concurrency: usize = 100;
+    let completed = Arc::new(AtomicUsize::new(0));
+
+    let rss_initial = get_rss_bytes();
+
+    println!("============================================================");
+    println!("  HTTP ENGINE PROFILE: CPU, RAM & MEMORY LEAK ANALYSIS");
+    println!("  Total requests : {} (Phase 1: {}, Phase 2: {})", total_requests, n, n);
+    println!("  Concurrency    : {}", concurrency);
+    println!("============================================================");
+
+    let current_idx = Arc::new(AtomicUsize::new(0));
+    let start_instant = Instant::now();
+
+    // Phase 1: N requests (warmup / reach steady-state)
+    println!("Running Phase 1 (0 -> N requests: warmup & steady-state)...");
+    run_batch(&client, &current_idx, n, concurrency, &completed).await;
+    tokio::time::sleep(Duration::from_millis(200)).await;
+    let rss_at_n = get_rss_bytes();
+
+    // Phase 2: N additional requests (steady-state measurement: N -> 2N)
+    println!("Running Phase 2 (N -> 2N requests: steady-state leak measurement)...");
+    run_batch(&client, &current_idx, 2 * n, concurrency, &completed).await;
+    tokio::time::sleep(Duration::from_millis(200)).await;
+    let rss_at_2n = get_rss_bytes();
 
     let elapsed = start_instant.elapsed();
-    let (peak, _history) = monitor_handle.await.unwrap();
-    rss_peak = rss_peak.max(peak);
-
-    // Yield runtime to let completed futures drop and GC settle
-    tokio::time::sleep(Duration::from_millis(500)).await;
     let rss_after_cooldown = get_rss_bytes();
 
     let success_count = completed.load(Ordering::Relaxed);
     let rps = (success_count as f64) / elapsed.as_secs_f64();
+
+    // Steady-state drift (RAM difference between N and 2N requests)
+    let steady_drift_bytes = (rss_at_2n as i64) - (rss_at_n as i64);
+    let bytes_per_req_drift = (steady_drift_bytes as f64) / (n as f64);
 
     println!("\n--- MEMORY & RESOURCE MEASUREMENTS ---");
     println!("Total time           : {:.2?}", elapsed);
@@ -153,15 +152,20 @@ async fn run_async() {
         (rss_initial as f64) / (1024.0 * 1024.0)
     );
     println!(
-        "Peak RAM (Peak RSS)  : {:.2} MB",
-        (rss_peak as f64) / (1024.0 * 1024.0)
+        "Steady RAM @ N req   : {:.2} MB",
+        (rss_at_n as f64) / (1024.0 * 1024.0)
+    );
+    println!(
+        "Steady RAM @ 2N req  : {:.2} MB",
+        (rss_at_2n as f64) / (1024.0 * 1024.0)
     );
     println!(
         "Post-cooldown RAM    : {:.2} MB",
         (rss_after_cooldown as f64) / (1024.0 * 1024.0)
     );
     println!(
-        "Memory / Request     : {:.2} bytes (in-flight)",
-        ((rss_peak - rss_initial) as f64) / (concurrency as f64)
+        "Steady drift (N->2N) : {:+.2} MB ({:+.2} bytes/req)",
+        (steady_drift_bytes as f64) / (1024.0 * 1024.0),
+        bytes_per_req_drift
     );
 }
