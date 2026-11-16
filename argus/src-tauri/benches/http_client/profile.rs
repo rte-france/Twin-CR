@@ -78,10 +78,14 @@ async fn run_batch(
 
         handles.push(tokio::spawn(async move {
             loop {
-                let i = current_idx.fetch_add(1, Ordering::Relaxed);
-                if i >= target_idx {
-                    break;
-                }
+                let i = match current_idx.fetch_update(
+                    Ordering::Relaxed,
+                    Ordering::Relaxed,
+                    |i| (i < target_idx).then(|| i + 1),
+                ) {
+                    Ok(i) => i,
+                    Err(_) => break,
+                };
                 let req_id = format!("req-{}", i);
                 if let Ok(rx) = client.get(req_id, "/test", HashMap::new()).await {
                     if Client::<Connected>::wait_for_response(rx).await.is_ok() {
@@ -119,21 +123,24 @@ async fn run_async() {
     println!("============================================================");
 
     let current_idx = Arc::new(AtomicUsize::new(0));
-    let start_instant = Instant::now();
 
     // Phase 1: N requests (warmup / reach steady-state)
     println!("Running Phase 1 (0 -> N requests: warmup & steady-state)...");
+    let p1_start = Instant::now();
     run_batch(&client, &current_idx, n, concurrency, &completed).await;
+    let p1_elapsed = p1_start.elapsed();
     tokio::time::sleep(Duration::from_millis(200)).await;
     let rss_at_n = get_rss_bytes();
 
     // Phase 2: N additional requests (steady-state measurement: N -> 2N)
     println!("Running Phase 2 (N -> 2N requests: steady-state leak measurement)...");
+    let p2_start = Instant::now();
     run_batch(&client, &current_idx, 2 * n, concurrency, &completed).await;
+    let p2_elapsed = p2_start.elapsed();
     tokio::time::sleep(Duration::from_millis(200)).await;
     let rss_at_2n = get_rss_bytes();
 
-    let elapsed = start_instant.elapsed();
+    let elapsed = p1_elapsed + p2_elapsed;
     let rss_after_cooldown = get_rss_bytes();
 
     let success_count = completed.load(Ordering::Relaxed);

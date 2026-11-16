@@ -86,6 +86,7 @@ pub async fn start_hyper_echo_server() -> (String, SocketAddr) {
 pub fn setup_client(base_url: &str) -> Client<Connected> {
     let (cmd_tx, cmd_rx) = tokio::sync::mpsc::channel(2048);
     let reqwest_client = reqwest::Client::builder()
+        .no_proxy()
         .pool_max_idle_per_host(200)
         .pool_idle_timeout(Duration::from_secs(60))
         .tcp_nodelay(true)

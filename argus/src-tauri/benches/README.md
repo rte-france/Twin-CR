@@ -128,10 +128,10 @@ Open `trace.json` in [https://ui.perfetto.dev/](https://ui.perfetto.dev/) or `ch
 
 #### Tokio Console (Live async task monitor)
 
-Start the benchmark with Tokio Console support:
+Start the benchmark with Tokio Console support (requires `--cfg tokio_unstable`):
 
 ```bash
-TOKIO_CONSOLE=1 cargo bench --bench http_client -- trace
+RUSTFLAGS="--cfg tokio_unstable" TOKIO_CONSOLE=1 cargo bench --bench http_client -- trace
 ```
 
 In another terminal, connect using:

@@ -13,6 +13,7 @@ use std::hint::black_box;
 
 use argus_lib::http_client::utils::http_client::client::{Client, Connected};
 use criterion::{BenchmarkId, Criterion, Throughput};
+#[cfg(unix)]
 use pprof::criterion::{Output, PProfProfiler};
 
 use super::common::{setup_client, start_hyper_echo_server};
@@ -234,8 +235,11 @@ fn bench_payload_scaling(c: &mut Criterion) {
 }
 
 pub fn run(args: Vec<String>) {
-    let mut builder = Criterion::default()
-        .with_profiler(PProfProfiler::new(100, Output::Flamegraph(None)));
+    let mut builder = Criterion::default();
+    #[cfg(unix)]
+    {
+        builder = builder.with_profiler(PProfProfiler::new(100, Output::Flamegraph(None)));
+    }
 
     if !args.is_empty() {
         if args.iter().any(|a| a == "--quick") {
