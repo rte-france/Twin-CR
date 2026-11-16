@@ -100,7 +100,7 @@ public class Main {
         StateEstimator.init(clickhouseClient, estimatedValuesBridge);
 
         new CommandRequestHandler().start(conn);
-        TelemetryConsumer telemetryConsumer = new TelemetryConsumer(conn, natsBridge, engine, config.estimPeriod());
+        TelemetryConsumer telemetryConsumer = new TelemetryConsumer(conn, natsBridge, engine, config.estimPeriod(), clickhouseClient, config.location());
         new ApiServer(config, natsBridge, estimatedValuesBridge, conn, appName, engine, telemetryConsumer, controlSender);
     }
 }

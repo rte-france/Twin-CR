@@ -38,6 +38,14 @@
         "type": "number",
         "description": "Scaling factor from Dynawo units to raw units (MW, kV, Hz) (value published in raw units). Defaults to 1"
       },
+      "publish_on_change": {
+        "type": "boolean",
+        "description": "Only publish when the value changes, instead of at every time step. Defaults to false"
+      },
+      "last_value": {
+        "type": "number",
+        "description": "Initial last published value for publish_on_change (the first value is published if it differs). Defaults to -999"
+      },
       "simulator": {
         "type": "string",
         "enum": ["dynawo", "asset_simulator"],

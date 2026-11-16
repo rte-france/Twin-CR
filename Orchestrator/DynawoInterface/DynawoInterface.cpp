@@ -193,7 +193,9 @@ subprocess_(process_launcher) {
                                             + game_master_outputs_file_.string());
             }
 
-            auto game_master_output = GameMaster_output(id, topic, factor);
+            bool publish_on_change = get_or_default(dynawo_output, {"publish_on_change"}, false);
+            double last_value = get_or_default(dynawo_output, {"last_value"}, -999);
+            auto game_master_output = GameMaster_output(id, topic, factor, publish_on_change, last_value);
             game_master_outputs_by_curve_name_[curve_name].push_back(game_master_output);
         } catch (const nlohmann::detail::type_error& e) {
             throw std::invalid_argument("Invalid Dynawo game master output: " + std::string(e.what()) + " in:\n" + dynawo_output.dump());
@@ -403,8 +405,15 @@ void DynawoInterface::goToNextTimeStep() {
         // Generate measurement for the Game Master
         for (int _ = 0; _ < game_master_outputs_per_curve_[i]; _++) {
             GameMaster_output& game_master_output = game_master_outputs_by_curve_index_[game_master_i];
-            Orchestrator::get().emit(ActualMeasurement(game_master_output.id, value * game_master_output.factor, current_time_, game_master_output.topic));
             game_master_i++;
+            double local_value = value * game_master_output.factor;
+            if (game_master_output.publish_on_change) {
+                if (game_master_output.last_value == local_value) {
+                    continue;
+                }
+                game_master_output.last_value = local_value;
+            }
+            Orchestrator::get().emit(ActualMeasurement(game_master_output.id, local_value, current_time_, game_master_output.topic));
         }
 
         // Generate measurement for the SCADA

@@ -191,6 +191,24 @@ void ClickHouseLogger::createTables() {
         << ") ENGINE = MergeTree() ORDER BY (topic, time_received)";
     execQuery(ss.str()); ss.str("");
 
+    // Latest received value of each measurement (TS are only published on change, clients fetch them on connection)
+    ss << "CREATE TABLE IF NOT EXISTS " << getFullTableName("Latest_MeasurementReceived") << " ("
+        << "id String, "
+        << "value_type UInt8, "
+        << "value Float64, "
+        << "time_sent Float64, "
+        << "destination String, "
+        << "topic String, "
+        << tase2_columns << ", "
+        << "time_received Float64"
+        << ") ENGINE = ReplacingMergeTree(time_received) ORDER BY (topic, destination, id)";
+    execQuery(ss.str()); ss.str("");
+
+    ss << "CREATE MATERIALIZED VIEW IF NOT EXISTS " << getFullTableName("mv_Latest_MeasurementReceived")
+        << " TO " << getFullTableName("Latest_MeasurementReceived")
+        << " AS SELECT * FROM " << getFullTableName("_MeasurementReceived");
+    execQuery(ss.str()); ss.str("");
+
     ss << "CREATE TABLE IF NOT EXISTS " << getFullTableName("_ControlReceived") << " ("
         << "id String, "
         << "value_type UInt8, "
@@ -344,6 +362,11 @@ void ClickHouseLogger::createTableViews(const std::string& base_db_name, double 
         // so that they are always overwritten when new values arrive
         ss << "INSERT INTO " << getFullTableName("Latest_ActualMeasurement")
             << " SELECT id, value_type, value, time, topic, 0 AS count FROM `" << base_db_name << "`.`Latest_ActualMeasurement`";
+        execQuery(ss.str()); ss.str("");
+
+        // Same for Latest_MeasurementReceived (versioned by time_received, older than the new values)
+        ss << "INSERT INTO " << getFullTableName("Latest_MeasurementReceived")
+            << " SELECT * FROM `" << base_db_name << "`.`Latest_MeasurementReceived`";
         execQuery(ss.str()); ss.str("");
     }
 }

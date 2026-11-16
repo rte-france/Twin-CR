@@ -16,6 +16,7 @@ class Clickhouse_Tables(Enum):
     MeasurementSent = "MeasurementSent"
     ControlSent = "ControlSent"
     MeasurementReceived = "MeasurementReceived"
+    Latest_MeasurementReceived = "Latest_MeasurementReceived"
     ControlReceived = "ControlReceived"
     ActualMeasurement = "ActualMeasurement"
     Latest_ActualMeasurement = "Latest_ActualMeasurement"

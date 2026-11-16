@@ -34,12 +34,14 @@ struct DynawoInput {
 };
 
 struct GameMaster_output {
-    GameMaster_output(const std::string& id_, const std::string& topic_, double factor_) :
-        id(id_), topic(topic_), factor(factor_) {}
+    GameMaster_output(const std::string& id_, const std::string& topic_, double factor_, bool publish_on_change_, double last_value_) :
+        id(id_), topic(topic_), factor(factor_), publish_on_change(publish_on_change_), last_value(last_value_) {}
 
     std::string id;
     std::string topic;
     double factor;
+    bool publish_on_change;  // Only published when the value changes
+    double last_value;
 };
 
 struct SCADA_output {
