@@ -34,19 +34,19 @@ struct DynawoInput {
 };
 
 struct GameMaster_output {
-    GameMaster_output(const std::string& id_, const std::string& topic_, double factor_, bool publish_on_change_, double last_value_) :
+    GameMaster_output(const std::string& id_, const std::string& topic_, double factor_, bool publish_on_change_, std::optional<double> last_value_) :
         id(id_), topic(topic_), factor(factor_), publish_on_change(publish_on_change_), last_value(last_value_) {}
 
     std::string id;
     std::string topic;
     double factor;
     bool publish_on_change;  // Only published when the value changes
-    double last_value;
+    std::optional<double> last_value;
 };
 
 struct SCADA_output {
     SCADA_output(const std::string& id_, const std::string& destination_, std::vector<graaf::vertex_id_t> routing_, const std::string& topic_,
-                const std::optional<std::string>& tase2_id_, double factor_, bool publish_on_change_, double last_value_, double period_, double period_offset, double start_time) :
+                const std::optional<std::string>& tase2_id_, double factor_, bool publish_on_change_, std::optional<double> last_value_, double period_, double period_offset, double start_time) :
         id(id_), destination(destination_), routing(routing_), topic(topic_), tase2_id(tase2_id_),
         factor(factor_), publish_on_change(publish_on_change_), last_value(last_value_), period(period_) {
             last_publication_time = (start_time + period_offset) - period_;  // Last publication time is initially before start time
@@ -59,7 +59,7 @@ struct SCADA_output {
     std::optional<std::string> tase2_id;
     double factor;
     bool publish_on_change;
-    double last_value;
+    std::optional<double> last_value;
     double period;
     double last_publication_time;
     std::atomic_bool requested = false;

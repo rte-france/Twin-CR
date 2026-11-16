@@ -44,7 +44,7 @@
       },
       "last_value": {
         "type": "number",
-        "description": "Initial last published value for publish_on_change (the first value is published if it differs). Defaults to -999"
+        "description": "Initial last published value for publish_on_change (the first value is published if it differs). If absent, the first value is always published"
       },
       "simulator": {
         "type": "string",

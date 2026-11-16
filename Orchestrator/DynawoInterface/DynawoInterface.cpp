@@ -194,7 +194,7 @@ subprocess_(process_launcher) {
             }
 
             bool publish_on_change = get_or_default(dynawo_output, {"publish_on_change"}, false);
-            double last_value = get_or_default(dynawo_output, {"last_value"}, -999);
+            auto last_value = get_optional<double>(dynawo_output, {"last_value"});
             auto game_master_output = GameMaster_output(id, topic, factor, publish_on_change, last_value);
             game_master_outputs_by_curve_name_[curve_name].push_back(game_master_output);
         } catch (const nlohmann::detail::type_error& e) {
@@ -224,7 +224,7 @@ subprocess_(process_launcher) {
             }
             double factor = get_or_default(dynawo_output, {"factor"}, 1.0);
             bool publish_on_change = get_or_default(dynawo_output, {"publish_on_change"}, false);
-            double last_value = get_or_default(dynawo_output, {"last_value"}, -999);
+            auto last_value = get_optional<double>(dynawo_output, {"last_value"});
             double period = get_or_default(dynawo_output, {"period"}, 0);
             double period_offset;
             if (dynawo_output.contains("period_offset")) {
