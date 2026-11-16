@@ -27,8 +27,6 @@ import org.slf4j.LoggerFactory;
 import io.nats.client.*;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
@@ -135,12 +133,7 @@ public class TelemetryConsumer extends TelemetryConsumerCommon {
         Dispatcher clock = conn.createDispatcher(msg -> {
             try {
                 JsonNode node = mapper.readTree(msg.getData());
-                double newTime = node.path("current_time").asDouble();
-                if (newTime < currentTime) {
-                    // Simulation time went back (new run), clear previous values
-                    lastTimeById.clear();
-                }
-                currentTime = newTime;
+                currentTime = node.path("current_time").asDouble();
                 LOGGER.info("Current time: {}", currentTime);
             } catch (IOException e) {
                 LOGGER.warn("Invalid time message", e);
@@ -208,18 +201,7 @@ public class TelemetryConsumer extends TelemetryConsumerCommon {
     }
 
     @Override
-    public List<String> latestPayloads(String subTopic) {
-        // TS are only published on change: a new subscriber gets the latest value of each id from Clickhouse
-        List<String> payloads = new ArrayList<>();
-        try {
-            String data = clickhouseClient.queryLatestActualMeasurements(Optional.of(subTopic));
-            ObjectMapper mapper = new ObjectMapper();
-            for (JsonNode item : mapper.readValue(data, JsonNode[].class)) {
-                payloads.add(mapper.writeValueAsString(item));
-            }
-        } catch (Exception e) {
-            LOGGER.error("Error while fetching latest values for topic {}: {}", subTopic, e);
-        }
-        return payloads;
+    protected String queryLatestValues(String subTopic) throws Exception {
+        return clickhouseClient.queryLatestActualMeasurements(Optional.of(subTopic));
     }
 }
