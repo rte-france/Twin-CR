@@ -24,29 +24,34 @@ pub fn run() {
 }
 
 async fn run_async() {
-    // 1. Optional Tokio Console Server (set TOKIO_CONSOLE=1)
-    if std::env::var("TOKIO_CONSOLE").is_ok() {
-        console_subscriber::init();
+    let console_layer = if std::env::var("TOKIO_CONSOLE").is_ok() {
         println!(
             ">>> Tokio Console listener started on 127.0.0.1:6669 (run `tokio-console` to connect)"
         );
-    }
-
-    // 2. Optional Chrome Tracing / Perfetto JSON exporter (set TRACE_FILE=trace.json)
-    let _flush_guard = if let Ok(trace_path) = std::env::var("TRACE_FILE") {
-        let (chrome_layer, guard) = tracing_chrome::ChromeLayerBuilder::new()
-            .file(&trace_path)
-            .include_args(true)
-            .build();
-        use tracing_subscriber::layer::SubscriberExt;
-        let subscriber = tracing_subscriber::Registry::default().with(chrome_layer);
-        tracing::subscriber::set_global_default(subscriber).expect("set global subscriber");
-        println!(">>> Chrome trace recording to: {}", trace_path);
-        println!("    Open in https://ui.perfetto.dev/ or chrome://tracing to view async spans");
-        Some(guard)
+        Some(console_subscriber::spawn())
     } else {
         None
     };
+
+    let (chrome_layer, _flush_guard) = if let Ok(trace_path) = std::env::var("TRACE_FILE") {
+        let (layer, guard) = tracing_chrome::ChromeLayerBuilder::new()
+            .file(&trace_path)
+            .include_args(true)
+            .build();
+        println!(">>> Chrome trace recording to: {}", trace_path);
+        println!("    Open in https://ui.perfetto.dev/ or chrome://tracing to view async spans");
+        (Some(layer), Some(guard))
+    } else {
+        (None, None)
+    };
+
+    if console_layer.is_some() || chrome_layer.is_some() {
+        use tracing_subscriber::layer::SubscriberExt;
+        let subscriber = tracing_subscriber::Registry::default()
+            .with(console_layer)
+            .with(chrome_layer);
+        tracing::subscriber::set_global_default(subscriber).expect("set global subscriber");
+    }
 
     let total: usize = std::env::var("TRACE_TOTAL")
         .ok()
