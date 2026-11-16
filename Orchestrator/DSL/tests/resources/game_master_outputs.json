@@ -13903,6 +13903,7 @@
         "dynawo_id": "NETWORK_L1011-1013a_state_value",
         "id": "NETWORK_L1011-1013a_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -14008,6 +14009,7 @@
         "dynawo_id": "NETWORK_L1011-1013b_state_value",
         "id": "NETWORK_L1011-1013b_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -14113,6 +14115,7 @@
         "dynawo_id": "NETWORK_L1012-1014a_state_value",
         "id": "NETWORK_L1012-1014a_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -14218,6 +14221,7 @@
         "dynawo_id": "NETWORK_L1012-1014b_state_value",
         "id": "NETWORK_L1012-1014b_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -14323,6 +14327,7 @@
         "dynawo_id": "NETWORK_L1013-1014a_state_value",
         "id": "NETWORK_L1013-1014a_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -14428,6 +14433,7 @@
         "dynawo_id": "NETWORK_L1013-1014b_state_value",
         "id": "NETWORK_L1013-1014b_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -14533,6 +14539,7 @@
         "dynawo_id": "NETWORK_L1021-1022a_state_value",
         "id": "NETWORK_L1021-1022a_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -14638,6 +14645,7 @@
         "dynawo_id": "NETWORK_L1021-1022b_state_value",
         "id": "NETWORK_L1021-1022b_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -14743,6 +14751,7 @@
         "dynawo_id": "NETWORK_L1041-1043a_state_value",
         "id": "NETWORK_L1041-1043a_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -14848,6 +14857,7 @@
         "dynawo_id": "NETWORK_L1041-1043b_state_value",
         "id": "NETWORK_L1041-1043b_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -14953,6 +14963,7 @@
         "dynawo_id": "NETWORK_L1041-1045a_state_value",
         "id": "NETWORK_L1041-1045a_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -15058,6 +15069,7 @@
         "dynawo_id": "NETWORK_L1041-1045b_state_value",
         "id": "NETWORK_L1041-1045b_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -15163,6 +15175,7 @@
         "dynawo_id": "NETWORK_L1042-1044a_state_value",
         "id": "NETWORK_L1042-1044a_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -15268,6 +15281,7 @@
         "dynawo_id": "NETWORK_L1042-1044b_state_value",
         "id": "NETWORK_L1042-1044b_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -15373,6 +15387,7 @@
         "dynawo_id": "NETWORK_L1042-1045_state_value",
         "id": "NETWORK_L1042-1045_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -15478,6 +15493,7 @@
         "dynawo_id": "NETWORK_L1043-1044a_state_value",
         "id": "NETWORK_L1043-1044a_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -15583,6 +15599,7 @@
         "dynawo_id": "NETWORK_L1043-1044b_state_value",
         "id": "NETWORK_L1043-1044b_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -15688,6 +15705,7 @@
         "dynawo_id": "NETWORK_L2031-2032a_state_value",
         "id": "NETWORK_L2031-2032a_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -15793,6 +15811,7 @@
         "dynawo_id": "NETWORK_L2031-2032b_state_value",
         "id": "NETWORK_L2031-2032b_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -15898,6 +15917,7 @@
         "dynawo_id": "NETWORK_L4011-4012_state_value",
         "id": "NETWORK_L4011-4012_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -16003,6 +16023,7 @@
         "dynawo_id": "NETWORK_L4011-4021_state_value",
         "id": "NETWORK_L4011-4021_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -16108,6 +16129,7 @@
         "dynawo_id": "NETWORK_L4011-4022_state_value",
         "id": "NETWORK_L4011-4022_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -16213,6 +16235,7 @@
         "dynawo_id": "NETWORK_L4011-4071_state_value",
         "id": "NETWORK_L4011-4071_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -16318,6 +16341,7 @@
         "dynawo_id": "NETWORK_L4012-4022_state_value",
         "id": "NETWORK_L4012-4022_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -16423,6 +16447,7 @@
         "dynawo_id": "NETWORK_L4012-4071_state_value",
         "id": "NETWORK_L4012-4071_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -16528,6 +16553,7 @@
         "dynawo_id": "NETWORK_L4021-4032_state_value",
         "id": "NETWORK_L4021-4032_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -16633,6 +16659,7 @@
         "dynawo_id": "NETWORK_L4021-4042_state_value",
         "id": "NETWORK_L4021-4042_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -16738,6 +16765,7 @@
         "dynawo_id": "NETWORK_L4022-4031a_state_value",
         "id": "NETWORK_L4022-4031a_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -16843,6 +16871,7 @@
         "dynawo_id": "NETWORK_L4022-4031b_state_value",
         "id": "NETWORK_L4022-4031b_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -16948,6 +16977,7 @@
         "dynawo_id": "NETWORK_L4031-4032_state_value",
         "id": "NETWORK_L4031-4032_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -17053,6 +17083,7 @@
         "dynawo_id": "NETWORK_L4031-4041a_state_value",
         "id": "NETWORK_L4031-4041a_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -17158,6 +17189,7 @@
         "dynawo_id": "NETWORK_L4031-4041b_state_value",
         "id": "NETWORK_L4031-4041b_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -17263,6 +17295,7 @@
         "dynawo_id": "NETWORK_L4032-4042_state_value",
         "id": "NETWORK_L4032-4042_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -17368,6 +17401,7 @@
         "dynawo_id": "NETWORK_L4032-4044_state_value",
         "id": "NETWORK_L4032-4044_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -17473,6 +17507,7 @@
         "dynawo_id": "NETWORK_L4041-4044_state_value",
         "id": "NETWORK_L4041-4044_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -17578,6 +17613,7 @@
         "dynawo_id": "NETWORK_L4041-4061_state_value",
         "id": "NETWORK_L4041-4061_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -17683,6 +17719,7 @@
         "dynawo_id": "NETWORK_L4042-4043_state_value",
         "id": "NETWORK_L4042-4043_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -17788,6 +17825,7 @@
         "dynawo_id": "NETWORK_L4042-4044_state_value",
         "id": "NETWORK_L4042-4044_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -17893,6 +17931,7 @@
         "dynawo_id": "NETWORK_L4043-4044_state_value",
         "id": "NETWORK_L4043-4044_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -17998,6 +18037,7 @@
         "dynawo_id": "NETWORK_L4043-4046_state_value",
         "id": "NETWORK_L4043-4046_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -18103,6 +18143,7 @@
         "dynawo_id": "NETWORK_L4043-4047_state_value",
         "id": "NETWORK_L4043-4047_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -18208,6 +18249,7 @@
         "dynawo_id": "NETWORK_L4044-4045a_state_value",
         "id": "NETWORK_L4044-4045a_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -18313,6 +18355,7 @@
         "dynawo_id": "NETWORK_L4044-4045b_state_value",
         "id": "NETWORK_L4044-4045b_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -18418,6 +18461,7 @@
         "dynawo_id": "NETWORK_L4045-4051a_state_value",
         "id": "NETWORK_L4045-4051a_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -18523,6 +18567,7 @@
         "dynawo_id": "NETWORK_L4045-4051b_state_value",
         "id": "NETWORK_L4045-4051b_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -18628,6 +18673,7 @@
         "dynawo_id": "NETWORK_L4045-4062_state_value",
         "id": "NETWORK_L4045-4062_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -18733,6 +18779,7 @@
         "dynawo_id": "NETWORK_L4046-4047_state_value",
         "id": "NETWORK_L4046-4047_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -18838,6 +18885,7 @@
         "dynawo_id": "NETWORK_L4061-4062_state_value",
         "id": "NETWORK_L4061-4062_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -18943,6 +18991,7 @@
         "dynawo_id": "NETWORK_L4062-4063a_state_value",
         "id": "NETWORK_L4062-4063a_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -19048,6 +19097,7 @@
         "dynawo_id": "NETWORK_L4062-4063b_state_value",
         "id": "NETWORK_L4062-4063b_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -19153,6 +19203,7 @@
         "dynawo_id": "NETWORK_L4071-4072a_state_value",
         "id": "NETWORK_L4071-4072a_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -19258,6 +19309,7 @@
         "dynawo_id": "NETWORK_L4071-4072b_state_value",
         "id": "NETWORK_L4071-4072b_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -19874,6 +19926,7 @@
         "dynawo_id": "NETWORK_Tr1011-4011_breaker2_state_value",
         "id": "NETWORK_Tr1011-4011_breaker2_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -19885,6 +19938,7 @@
         "dynawo_id": "NETWORK_Tr11-1011_breaker1_state_value",
         "id": "NETWORK_Tr11-1011_breaker1_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -19896,6 +19950,7 @@
         "dynawo_id": "NETWORK_L1011-1013a_breaker1_state_value",
         "id": "NETWORK_L1011-1013a_breaker1_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -19907,6 +19962,7 @@
         "dynawo_id": "NETWORK_L1011-1013b_breaker1_state_value",
         "id": "NETWORK_L1011-1013b_breaker1_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -19918,6 +19974,7 @@
         "dynawo_id": "NETWORK_Tr1011-4011_breaker1_state_value",
         "id": "NETWORK_Tr1011-4011_breaker1_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -19929,6 +19986,7 @@
         "dynawo_id": "NETWORK_Tr4011-g9_breaker1_state_value",
         "id": "NETWORK_Tr4011-g9_breaker1_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -19940,6 +19998,7 @@
         "dynawo_id": "NETWORK_L4011-4012_breaker1_state_value",
         "id": "NETWORK_L4011-4012_breaker1_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -19951,6 +20010,7 @@
         "dynawo_id": "NETWORK_L4011-4021_breaker2_state_value",
         "id": "NETWORK_L4011-4021_breaker2_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -19962,6 +20022,7 @@
         "dynawo_id": "NETWORK_L4011-4022_breaker1_state_value",
         "id": "NETWORK_L4011-4022_breaker1_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -19973,6 +20034,7 @@
         "dynawo_id": "NETWORK_L4011-4071_breaker2_state_value",
         "id": "NETWORK_L4011-4071_breaker2_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -19984,6 +20046,7 @@
         "dynawo_id": "NETWORK_11_1_breaker_state_value",
         "id": "NETWORK_11_1_breaker_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -19995,6 +20058,7 @@
         "dynawo_id": "NETWORK_Tr11-1011_breaker2_state_value",
         "id": "NETWORK_Tr11-1011_breaker2_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -20006,6 +20070,7 @@
         "dynawo_id": "NETWORK_g09_breaker_state_value",
         "id": "NETWORK_g09_breaker_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -20017,6 +20082,7 @@
         "dynawo_id": "NETWORK_Tr4011-g9_breaker2_state_value",
         "id": "NETWORK_Tr4011-g9_breaker2_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -20028,6 +20094,7 @@
         "dynawo_id": "NETWORK_Tr1012-4012_breaker2_state_value",
         "id": "NETWORK_Tr1012-4012_breaker2_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -20039,6 +20106,7 @@
         "dynawo_id": "NETWORK_Tr1012-g1_breaker1_state_value",
         "id": "NETWORK_Tr1012-g1_breaker1_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -20050,6 +20118,7 @@
         "dynawo_id": "NETWORK_Tr12-1012_breaker1_state_value",
         "id": "NETWORK_Tr12-1012_breaker1_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -20061,6 +20130,7 @@
         "dynawo_id": "NETWORK_L1012-1014a_breaker2_state_value",
         "id": "NETWORK_L1012-1014a_breaker2_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -20072,6 +20142,7 @@
         "dynawo_id": "NETWORK_L1012-1014b_breaker2_state_value",
         "id": "NETWORK_L1012-1014b_breaker2_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -20083,6 +20154,7 @@
         "dynawo_id": "NETWORK_4012-Ind_breaker_state_value",
         "id": "NETWORK_4012-Ind_breaker_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -20094,6 +20166,7 @@
         "dynawo_id": "NETWORK_Tr1012-4012_breaker1_state_value",
         "id": "NETWORK_Tr1012-4012_breaker1_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -20105,6 +20178,7 @@
         "dynawo_id": "NETWORK_Tr4012-g10_breaker1_state_value",
         "id": "NETWORK_Tr4012-g10_breaker1_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -20116,6 +20190,7 @@
         "dynawo_id": "NETWORK_L4011-4012_breaker2_state_value",
         "id": "NETWORK_L4011-4012_breaker2_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -20127,6 +20202,7 @@
         "dynawo_id": "NETWORK_L4012-4022_breaker1_state_value",
         "id": "NETWORK_L4012-4022_breaker1_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -20138,6 +20214,7 @@
         "dynawo_id": "NETWORK_L4012-4071_breaker2_state_value",
         "id": "NETWORK_L4012-4071_breaker2_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -20149,6 +20226,7 @@
         "dynawo_id": "NETWORK_12_1_breaker_state_value",
         "id": "NETWORK_12_1_breaker_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -20160,6 +20238,7 @@
         "dynawo_id": "NETWORK_Tr12-1012_breaker2_state_value",
         "id": "NETWORK_Tr12-1012_breaker2_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -20171,6 +20250,7 @@
         "dynawo_id": "NETWORK_g01_breaker_state_value",
         "id": "NETWORK_g01_breaker_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -20182,6 +20262,7 @@
         "dynawo_id": "NETWORK_Tr1012-g1_breaker2_state_value",
         "id": "NETWORK_Tr1012-g1_breaker2_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -20193,6 +20274,7 @@
         "dynawo_id": "NETWORK_g10_breaker_state_value",
         "id": "NETWORK_g10_breaker_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -20204,6 +20286,7 @@
         "dynawo_id": "NETWORK_Tr4012-g10_breaker2_state_value",
         "id": "NETWORK_Tr4012-g10_breaker2_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -20215,6 +20298,7 @@
         "dynawo_id": "NETWORK_Tr1013-g2_breaker1_state_value",
         "id": "NETWORK_Tr1013-g2_breaker1_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -20226,6 +20310,7 @@
         "dynawo_id": "NETWORK_Tr13-1013_breaker1_state_value",
         "id": "NETWORK_Tr13-1013_breaker1_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -20237,6 +20322,7 @@
         "dynawo_id": "NETWORK_L1011-1013a_breaker2_state_value",
         "id": "NETWORK_L1011-1013a_breaker2_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -20248,6 +20334,7 @@
         "dynawo_id": "NETWORK_L1011-1013b_breaker2_state_value",
         "id": "NETWORK_L1011-1013b_breaker2_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -20259,6 +20346,7 @@
         "dynawo_id": "NETWORK_L1013-1014a_breaker1_state_value",
         "id": "NETWORK_L1013-1014a_breaker1_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -20270,6 +20358,7 @@
         "dynawo_id": "NETWORK_L1013-1014b_breaker1_state_value",
         "id": "NETWORK_L1013-1014b_breaker1_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -20281,6 +20370,7 @@
         "dynawo_id": "NETWORK_13_1_breaker_state_value",
         "id": "NETWORK_13_1_breaker_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -20292,6 +20382,7 @@
         "dynawo_id": "NETWORK_Tr13-1013_breaker2_state_value",
         "id": "NETWORK_Tr13-1013_breaker2_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -20303,6 +20394,7 @@
         "dynawo_id": "NETWORK_g02_breaker_state_value",
         "id": "NETWORK_g02_breaker_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -20314,6 +20406,7 @@
         "dynawo_id": "NETWORK_Tr1013-g2_breaker2_state_value",
         "id": "NETWORK_Tr1013-g2_breaker2_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -20325,6 +20418,7 @@
         "dynawo_id": "NETWORK_Tr1014-g3_breaker1_state_value",
         "id": "NETWORK_Tr1014-g3_breaker1_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -20336,6 +20430,7 @@
         "dynawo_id": "NETWORK_L1012-1014a_breaker1_state_value",
         "id": "NETWORK_L1012-1014a_breaker1_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -20347,6 +20442,7 @@
         "dynawo_id": "NETWORK_L1012-1014b_breaker1_state_value",
         "id": "NETWORK_L1012-1014b_breaker1_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -20358,6 +20454,7 @@
         "dynawo_id": "NETWORK_L1013-1014a_breaker2_state_value",
         "id": "NETWORK_L1013-1014a_breaker2_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -20369,6 +20466,7 @@
         "dynawo_id": "NETWORK_L1013-1014b_breaker2_state_value",
         "id": "NETWORK_L1013-1014b_breaker2_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -20380,6 +20478,7 @@
         "dynawo_id": "NETWORK_g03_breaker_state_value",
         "id": "NETWORK_g03_breaker_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -20391,6 +20490,7 @@
         "dynawo_id": "NETWORK_Tr1014-g3_breaker2_state_value",
         "id": "NETWORK_Tr1014-g3_breaker2_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -20402,6 +20502,7 @@
         "dynawo_id": "NETWORK_Tr1021-g4_breaker1_state_value",
         "id": "NETWORK_Tr1021-g4_breaker1_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -20413,6 +20514,7 @@
         "dynawo_id": "NETWORK_L1021-1022a_breaker2_state_value",
         "id": "NETWORK_L1021-1022a_breaker2_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -20424,6 +20526,7 @@
         "dynawo_id": "NETWORK_L1021-1022b_breaker2_state_value",
         "id": "NETWORK_L1021-1022b_breaker2_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -20435,6 +20538,7 @@
         "dynawo_id": "NETWORK_g04_breaker_state_value",
         "id": "NETWORK_g04_breaker_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -20446,6 +20550,7 @@
         "dynawo_id": "NETWORK_Tr1021-g4_breaker2_state_value",
         "id": "NETWORK_Tr1021-g4_breaker2_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -20457,6 +20562,7 @@
         "dynawo_id": "NETWORK_1022-Cap_breaker_state_value",
         "id": "NETWORK_1022-Cap_breaker_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -20468,6 +20574,7 @@
         "dynawo_id": "NETWORK_Tr1022-4022_breaker2_state_value",
         "id": "NETWORK_Tr1022-4022_breaker2_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -20479,6 +20586,7 @@
         "dynawo_id": "NETWORK_Tr1022-g5_breaker1_state_value",
         "id": "NETWORK_Tr1022-g5_breaker1_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -20490,6 +20598,7 @@
         "dynawo_id": "NETWORK_Tr22-1022_breaker1_state_value",
         "id": "NETWORK_Tr22-1022_breaker1_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -20501,6 +20610,7 @@
         "dynawo_id": "NETWORK_L1021-1022a_breaker1_state_value",
         "id": "NETWORK_L1021-1022a_breaker1_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -20512,6 +20622,7 @@
         "dynawo_id": "NETWORK_L1021-1022b_breaker1_state_value",
         "id": "NETWORK_L1021-1022b_breaker1_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -20523,6 +20634,7 @@
         "dynawo_id": "NETWORK_Tr1022-4022_breaker1_state_value",
         "id": "NETWORK_Tr1022-4022_breaker1_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -20534,6 +20646,7 @@
         "dynawo_id": "NETWORK_L4011-4022_breaker2_state_value",
         "id": "NETWORK_L4011-4022_breaker2_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -20545,6 +20658,7 @@
         "dynawo_id": "NETWORK_L4012-4022_breaker2_state_value",
         "id": "NETWORK_L4012-4022_breaker2_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -20556,6 +20670,7 @@
         "dynawo_id": "NETWORK_L4022-4031a_breaker2_state_value",
         "id": "NETWORK_L4022-4031a_breaker2_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -20567,6 +20682,7 @@
         "dynawo_id": "NETWORK_L4022-4031b_breaker2_state_value",
         "id": "NETWORK_L4022-4031b_breaker2_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -20578,6 +20694,7 @@
         "dynawo_id": "NETWORK_22_1_breaker_state_value",
         "id": "NETWORK_22_1_breaker_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -20589,6 +20706,7 @@
         "dynawo_id": "NETWORK_Tr22-1022_breaker2_state_value",
         "id": "NETWORK_Tr22-1022_breaker2_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -20600,6 +20718,7 @@
         "dynawo_id": "NETWORK_g05_breaker_state_value",
         "id": "NETWORK_g05_breaker_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -20611,6 +20730,7 @@
         "dynawo_id": "NETWORK_Tr1022-g5_breaker2_state_value",
         "id": "NETWORK_Tr1022-g5_breaker2_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -20622,6 +20742,7 @@
         "dynawo_id": "NETWORK_1041-Cap_breaker_state_value",
         "id": "NETWORK_1041-Cap_breaker_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -20633,6 +20754,7 @@
         "dynawo_id": "NETWORK_Tr1-1041_breaker1_state_value",
         "id": "NETWORK_Tr1-1041_breaker1_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -20644,6 +20766,7 @@
         "dynawo_id": "NETWORK_L1041-1043a_breaker1_state_value",
         "id": "NETWORK_L1041-1043a_breaker1_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -20655,6 +20778,7 @@
         "dynawo_id": "NETWORK_L1041-1043b_breaker1_state_value",
         "id": "NETWORK_L1041-1043b_breaker1_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -20666,6 +20790,7 @@
         "dynawo_id": "NETWORK_L1041-1045a_breaker1_state_value",
         "id": "NETWORK_L1041-1045a_breaker1_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -20677,6 +20802,7 @@
         "dynawo_id": "NETWORK_L1041-1045b_breaker2_state_value",
         "id": "NETWORK_L1041-1045b_breaker2_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -20688,6 +20814,7 @@
         "dynawo_id": "NETWORK_01_1_breaker_state_value",
         "id": "NETWORK_01_1_breaker_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -20699,6 +20826,7 @@
         "dynawo_id": "NETWORK_Tr1-1041_breaker2_state_value",
         "id": "NETWORK_Tr1-1041_breaker2_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -20710,6 +20838,7 @@
         "dynawo_id": "NETWORK_Tr1042-g6_breaker1_state_value",
         "id": "NETWORK_Tr1042-g6_breaker1_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -20721,6 +20850,7 @@
         "dynawo_id": "NETWORK_Tr2-1042_breaker1_state_value",
         "id": "NETWORK_Tr2-1042_breaker1_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -20732,6 +20862,7 @@
         "dynawo_id": "NETWORK_L1042-1044a_breaker2_state_value",
         "id": "NETWORK_L1042-1044a_breaker2_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -20743,6 +20874,7 @@
         "dynawo_id": "NETWORK_L1042-1044b_breaker2_state_value",
         "id": "NETWORK_L1042-1044b_breaker2_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -20754,6 +20886,7 @@
         "dynawo_id": "NETWORK_L1042-1045_breaker1_state_value",
         "id": "NETWORK_L1042-1045_breaker1_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -20765,6 +20898,7 @@
         "dynawo_id": "NETWORK_02_1_breaker_state_value",
         "id": "NETWORK_02_1_breaker_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -20776,6 +20910,7 @@
         "dynawo_id": "NETWORK_Tr2-1042_breaker2_state_value",
         "id": "NETWORK_Tr2-1042_breaker2_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -20787,6 +20922,7 @@
         "dynawo_id": "NETWORK_g06_breaker_state_value",
         "id": "NETWORK_g06_breaker_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -20798,6 +20934,7 @@
         "dynawo_id": "NETWORK_Tr1042-g6_breaker2_state_value",
         "id": "NETWORK_Tr1042-g6_breaker2_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -20809,6 +20946,7 @@
         "dynawo_id": "NETWORK_1043-Cap_breaker_state_value",
         "id": "NETWORK_1043-Cap_breaker_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -20820,6 +20958,7 @@
         "dynawo_id": "NETWORK_Tr1043-g7_breaker1_state_value",
         "id": "NETWORK_Tr1043-g7_breaker1_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -20831,6 +20970,7 @@
         "dynawo_id": "NETWORK_Tr3-1043_breaker1_state_value",
         "id": "NETWORK_Tr3-1043_breaker1_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -20842,6 +20982,7 @@
         "dynawo_id": "NETWORK_L1041-1043a_breaker2_state_value",
         "id": "NETWORK_L1041-1043a_breaker2_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -20853,6 +20994,7 @@
         "dynawo_id": "NETWORK_L1041-1043b_breaker2_state_value",
         "id": "NETWORK_L1041-1043b_breaker2_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -20864,6 +21006,7 @@
         "dynawo_id": "NETWORK_L1043-1044a_breaker1_state_value",
         "id": "NETWORK_L1043-1044a_breaker1_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -20875,6 +21018,7 @@
         "dynawo_id": "NETWORK_L1043-1044b_breaker1_state_value",
         "id": "NETWORK_L1043-1044b_breaker1_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -20886,6 +21030,7 @@
         "dynawo_id": "NETWORK_03_1_breaker_state_value",
         "id": "NETWORK_03_1_breaker_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -20897,6 +21042,7 @@
         "dynawo_id": "NETWORK_Tr3-1043_breaker2_state_value",
         "id": "NETWORK_Tr3-1043_breaker2_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -20908,6 +21054,7 @@
         "dynawo_id": "NETWORK_g07_breaker_state_value",
         "id": "NETWORK_g07_breaker_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -20919,6 +21066,7 @@
         "dynawo_id": "NETWORK_Tr1043-g7_breaker2_state_value",
         "id": "NETWORK_Tr1043-g7_breaker2_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -20930,6 +21078,7 @@
         "dynawo_id": "NETWORK_1044-Cap_breaker_state_value",
         "id": "NETWORK_1044-Cap_breaker_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -20941,6 +21090,7 @@
         "dynawo_id": "NETWORK_Tr1044-4044a_breaker2_state_value",
         "id": "NETWORK_Tr1044-4044a_breaker2_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -20952,6 +21102,7 @@
         "dynawo_id": "NETWORK_Tr1044-4044b_breaker2_state_value",
         "id": "NETWORK_Tr1044-4044b_breaker2_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -20963,6 +21114,7 @@
         "dynawo_id": "NETWORK_Tr4-1044_breaker1_state_value",
         "id": "NETWORK_Tr4-1044_breaker1_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -20974,6 +21126,7 @@
         "dynawo_id": "NETWORK_L1042-1044a_breaker1_state_value",
         "id": "NETWORK_L1042-1044a_breaker1_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -20985,6 +21138,7 @@
         "dynawo_id": "NETWORK_L1042-1044b_breaker1_state_value",
         "id": "NETWORK_L1042-1044b_breaker1_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -20996,6 +21150,7 @@
         "dynawo_id": "NETWORK_L1043-1044a_breaker2_state_value",
         "id": "NETWORK_L1043-1044a_breaker2_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -21007,6 +21162,7 @@
         "dynawo_id": "NETWORK_L1043-1044b_breaker2_state_value",
         "id": "NETWORK_L1043-1044b_breaker2_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -21018,6 +21174,7 @@
         "dynawo_id": "NETWORK_Tr1044-4044a_breaker1_state_value",
         "id": "NETWORK_Tr1044-4044a_breaker1_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -21029,6 +21186,7 @@
         "dynawo_id": "NETWORK_Tr1044-4044b_breaker1_state_value",
         "id": "NETWORK_Tr1044-4044b_breaker1_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -21040,6 +21198,7 @@
         "dynawo_id": "NETWORK_L4032-4044_breaker2_state_value",
         "id": "NETWORK_L4032-4044_breaker2_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -21051,6 +21210,7 @@
         "dynawo_id": "NETWORK_L4041-4044_breaker2_state_value",
         "id": "NETWORK_L4041-4044_breaker2_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -21062,6 +21222,7 @@
         "dynawo_id": "NETWORK_L4042-4044_breaker2_state_value",
         "id": "NETWORK_L4042-4044_breaker2_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -21073,6 +21234,7 @@
         "dynawo_id": "NETWORK_L4043-4044_breaker2_state_value",
         "id": "NETWORK_L4043-4044_breaker2_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -21084,6 +21246,7 @@
         "dynawo_id": "NETWORK_L4044-4045a_breaker2_state_value",
         "id": "NETWORK_L4044-4045a_breaker2_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -21095,6 +21258,7 @@
         "dynawo_id": "NETWORK_L4044-4045b_breaker2_state_value",
         "id": "NETWORK_L4044-4045b_breaker2_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -21106,6 +21270,7 @@
         "dynawo_id": "NETWORK_04_1_breaker_state_value",
         "id": "NETWORK_04_1_breaker_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -21117,6 +21282,7 @@
         "dynawo_id": "NETWORK_Tr4-1044_breaker2_state_value",
         "id": "NETWORK_Tr4-1044_breaker2_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -21128,6 +21294,7 @@
         "dynawo_id": "NETWORK_1045-Cap_breaker_state_value",
         "id": "NETWORK_1045-Cap_breaker_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -21139,6 +21306,7 @@
         "dynawo_id": "NETWORK_Tr1045-4045a_breaker2_state_value",
         "id": "NETWORK_Tr1045-4045a_breaker2_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -21150,6 +21318,7 @@
         "dynawo_id": "NETWORK_Tr1045-4045b_breaker2_state_value",
         "id": "NETWORK_Tr1045-4045b_breaker2_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -21161,6 +21330,7 @@
         "dynawo_id": "NETWORK_Tr5-1045_breaker1_state_value",
         "id": "NETWORK_Tr5-1045_breaker1_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -21172,6 +21342,7 @@
         "dynawo_id": "NETWORK_L1041-1045a_breaker2_state_value",
         "id": "NETWORK_L1041-1045a_breaker2_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -21183,6 +21354,7 @@
         "dynawo_id": "NETWORK_L1041-1045b_breaker1_state_value",
         "id": "NETWORK_L1041-1045b_breaker1_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -21194,6 +21366,7 @@
         "dynawo_id": "NETWORK_L1042-1045_breaker2_state_value",
         "id": "NETWORK_L1042-1045_breaker2_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -21205,6 +21378,7 @@
         "dynawo_id": "NETWORK_Tr1045-4045a_breaker1_state_value",
         "id": "NETWORK_Tr1045-4045a_breaker1_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -21216,6 +21390,7 @@
         "dynawo_id": "NETWORK_Tr1045-4045b_breaker1_state_value",
         "id": "NETWORK_Tr1045-4045b_breaker1_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -21227,6 +21402,7 @@
         "dynawo_id": "NETWORK_L4044-4045a_breaker1_state_value",
         "id": "NETWORK_L4044-4045a_breaker1_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -21238,6 +21414,7 @@
         "dynawo_id": "NETWORK_L4044-4045b_breaker1_state_value",
         "id": "NETWORK_L4044-4045b_breaker1_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -21249,6 +21426,7 @@
         "dynawo_id": "NETWORK_L4045-4051a_breaker1_state_value",
         "id": "NETWORK_L4045-4051a_breaker1_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -21260,6 +21438,7 @@
         "dynawo_id": "NETWORK_L4045-4051b_breaker2_state_value",
         "id": "NETWORK_L4045-4051b_breaker2_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -21271,6 +21450,7 @@
         "dynawo_id": "NETWORK_L4045-4062_breaker1_state_value",
         "id": "NETWORK_L4045-4062_breaker1_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -21282,6 +21462,7 @@
         "dynawo_id": "NETWORK_05_1_breaker_state_value",
         "id": "NETWORK_05_1_breaker_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -21293,6 +21474,7 @@
         "dynawo_id": "NETWORK_Tr5-1045_breaker2_state_value",
         "id": "NETWORK_Tr5-1045_breaker2_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -21304,6 +21486,7 @@
         "dynawo_id": "NETWORK_Tr2031-4031_breaker2_state_value",
         "id": "NETWORK_Tr2031-4031_breaker2_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -21315,6 +21498,7 @@
         "dynawo_id": "NETWORK_Tr31-2031_breaker1_state_value",
         "id": "NETWORK_Tr31-2031_breaker1_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -21326,6 +21510,7 @@
         "dynawo_id": "NETWORK_L2031-2032a_breaker1_state_value",
         "id": "NETWORK_L2031-2032a_breaker1_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -21337,6 +21522,7 @@
         "dynawo_id": "NETWORK_L2031-2032b_breaker2_state_value",
         "id": "NETWORK_L2031-2032b_breaker2_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -21348,6 +21534,7 @@
         "dynawo_id": "NETWORK_Tr2031-4031_breaker1_state_value",
         "id": "NETWORK_Tr2031-4031_breaker1_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -21359,6 +21546,7 @@
         "dynawo_id": "NETWORK_Tr4031-g12_breaker1_state_value",
         "id": "NETWORK_Tr4031-g12_breaker1_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -21370,6 +21558,7 @@
         "dynawo_id": "NETWORK_L4022-4031a_breaker1_state_value",
         "id": "NETWORK_L4022-4031a_breaker1_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -21381,6 +21570,7 @@
         "dynawo_id": "NETWORK_L4022-4031b_breaker1_state_value",
         "id": "NETWORK_L4022-4031b_breaker1_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -21392,6 +21582,7 @@
         "dynawo_id": "NETWORK_L4031-4032_breaker2_state_value",
         "id": "NETWORK_L4031-4032_breaker2_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -21403,6 +21594,7 @@
         "dynawo_id": "NETWORK_L4031-4041a_breaker1_state_value",
         "id": "NETWORK_L4031-4041a_breaker1_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -21414,6 +21606,7 @@
         "dynawo_id": "NETWORK_L4031-4041b_breaker1_state_value",
         "id": "NETWORK_L4031-4041b_breaker1_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -21425,6 +21618,7 @@
         "dynawo_id": "NETWORK_31_1_breaker_state_value",
         "id": "NETWORK_31_1_breaker_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -21436,6 +21630,7 @@
         "dynawo_id": "NETWORK_Tr31-2031_breaker2_state_value",
         "id": "NETWORK_Tr31-2031_breaker2_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -21447,6 +21642,7 @@
         "dynawo_id": "NETWORK_g12_breaker_state_value",
         "id": "NETWORK_g12_breaker_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -21458,6 +21654,7 @@
         "dynawo_id": "NETWORK_Tr4031-g12_breaker2_state_value",
         "id": "NETWORK_Tr4031-g12_breaker2_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -21469,6 +21666,7 @@
         "dynawo_id": "NETWORK_Tr2032-g8_breaker1_state_value",
         "id": "NETWORK_Tr2032-g8_breaker1_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -21480,6 +21678,7 @@
         "dynawo_id": "NETWORK_Tr32-2032_breaker1_state_value",
         "id": "NETWORK_Tr32-2032_breaker1_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -21491,6 +21690,7 @@
         "dynawo_id": "NETWORK_L2031-2032a_breaker2_state_value",
         "id": "NETWORK_L2031-2032a_breaker2_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -21502,6 +21702,7 @@
         "dynawo_id": "NETWORK_L2031-2032b_breaker1_state_value",
         "id": "NETWORK_L2031-2032b_breaker1_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -21513,6 +21714,7 @@
         "dynawo_id": "NETWORK_32_1_breaker_state_value",
         "id": "NETWORK_32_1_breaker_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -21524,6 +21726,7 @@
         "dynawo_id": "NETWORK_Tr32-2032_breaker2_state_value",
         "id": "NETWORK_Tr32-2032_breaker2_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -21535,6 +21738,7 @@
         "dynawo_id": "NETWORK_g08_breaker_state_value",
         "id": "NETWORK_g08_breaker_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -21546,6 +21750,7 @@
         "dynawo_id": "NETWORK_Tr2032-g8_breaker2_state_value",
         "id": "NETWORK_Tr2032-g8_breaker2_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -21557,6 +21762,7 @@
         "dynawo_id": "NETWORK_Tr4021-g11_breaker1_state_value",
         "id": "NETWORK_Tr4021-g11_breaker1_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -21568,6 +21774,7 @@
         "dynawo_id": "NETWORK_L4011-4021_breaker1_state_value",
         "id": "NETWORK_L4011-4021_breaker1_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -21579,6 +21786,7 @@
         "dynawo_id": "NETWORK_L4021-4032_breaker2_state_value",
         "id": "NETWORK_L4021-4032_breaker2_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -21590,6 +21798,7 @@
         "dynawo_id": "NETWORK_L4021-4042_breaker2_state_value",
         "id": "NETWORK_L4021-4042_breaker2_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -21601,6 +21810,7 @@
         "dynawo_id": "NETWORK_g11_breaker_state_value",
         "id": "NETWORK_g11_breaker_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -21612,6 +21822,7 @@
         "dynawo_id": "NETWORK_Tr4021-g11_breaker2_state_value",
         "id": "NETWORK_Tr4021-g11_breaker2_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -21623,6 +21834,7 @@
         "dynawo_id": "NETWORK_L4021-4032_breaker1_state_value",
         "id": "NETWORK_L4021-4032_breaker1_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -21634,6 +21846,7 @@
         "dynawo_id": "NETWORK_L4031-4032_breaker1_state_value",
         "id": "NETWORK_L4031-4032_breaker1_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -21645,6 +21858,7 @@
         "dynawo_id": "NETWORK_L4032-4042_breaker1_state_value",
         "id": "NETWORK_L4032-4042_breaker1_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -21656,6 +21870,7 @@
         "dynawo_id": "NETWORK_L4032-4044_breaker1_state_value",
         "id": "NETWORK_L4032-4044_breaker1_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -21667,6 +21882,7 @@
         "dynawo_id": "NETWORK_4041-Cap_breaker_state_value",
         "id": "NETWORK_4041-Cap_breaker_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -21678,6 +21894,7 @@
         "dynawo_id": "NETWORK_Tr4041-g13_breaker1_state_value",
         "id": "NETWORK_Tr4041-g13_breaker1_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -21689,6 +21906,7 @@
         "dynawo_id": "NETWORK_Tr41-4041_breaker1_state_value",
         "id": "NETWORK_Tr41-4041_breaker1_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -21700,6 +21918,7 @@
         "dynawo_id": "NETWORK_L4031-4041a_breaker2_state_value",
         "id": "NETWORK_L4031-4041a_breaker2_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -21711,6 +21930,7 @@
         "dynawo_id": "NETWORK_L4031-4041b_breaker2_state_value",
         "id": "NETWORK_L4031-4041b_breaker2_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -21722,6 +21942,7 @@
         "dynawo_id": "NETWORK_L4041-4044_breaker1_state_value",
         "id": "NETWORK_L4041-4044_breaker1_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -21733,6 +21954,7 @@
         "dynawo_id": "NETWORK_L4041-4061_breaker1_state_value",
         "id": "NETWORK_L4041-4061_breaker1_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -21744,6 +21966,7 @@
         "dynawo_id": "NETWORK_41_1_breaker_state_value",
         "id": "NETWORK_41_1_breaker_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -21755,6 +21978,7 @@
         "dynawo_id": "NETWORK_Tr41-4041_breaker2_state_value",
         "id": "NETWORK_Tr41-4041_breaker2_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -21766,6 +21990,7 @@
         "dynawo_id": "NETWORK_g13_breaker_state_value",
         "id": "NETWORK_g13_breaker_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -21777,6 +22002,7 @@
         "dynawo_id": "NETWORK_Tr4041-g13_breaker2_state_value",
         "id": "NETWORK_Tr4041-g13_breaker2_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -21788,6 +22014,7 @@
         "dynawo_id": "NETWORK_Tr4042-g14_breaker1_state_value",
         "id": "NETWORK_Tr4042-g14_breaker1_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -21799,6 +22026,7 @@
         "dynawo_id": "NETWORK_Tr42-4042_breaker1_state_value",
         "id": "NETWORK_Tr42-4042_breaker1_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -21810,6 +22038,7 @@
         "dynawo_id": "NETWORK_L4021-4042_breaker1_state_value",
         "id": "NETWORK_L4021-4042_breaker1_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -21821,6 +22050,7 @@
         "dynawo_id": "NETWORK_L4032-4042_breaker2_state_value",
         "id": "NETWORK_L4032-4042_breaker2_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -21832,6 +22062,7 @@
         "dynawo_id": "NETWORK_L4042-4043_breaker1_state_value",
         "id": "NETWORK_L4042-4043_breaker1_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -21843,6 +22074,7 @@
         "dynawo_id": "NETWORK_L4042-4044_breaker1_state_value",
         "id": "NETWORK_L4042-4044_breaker1_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -21854,6 +22086,7 @@
         "dynawo_id": "NETWORK_42_1_breaker_state_value",
         "id": "NETWORK_42_1_breaker_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -21865,6 +22098,7 @@
         "dynawo_id": "NETWORK_Tr42-4042_breaker2_state_value",
         "id": "NETWORK_Tr42-4042_breaker2_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -21876,6 +22110,7 @@
         "dynawo_id": "NETWORK_g14_breaker_state_value",
         "id": "NETWORK_g14_breaker_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -21887,6 +22122,7 @@
         "dynawo_id": "NETWORK_Tr4042-g14_breaker2_state_value",
         "id": "NETWORK_Tr4042-g14_breaker2_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -21898,6 +22134,7 @@
         "dynawo_id": "NETWORK_4043-Cap_breaker_state_value",
         "id": "NETWORK_4043-Cap_breaker_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -21909,6 +22146,7 @@
         "dynawo_id": "NETWORK_Tr43-4043_breaker1_state_value",
         "id": "NETWORK_Tr43-4043_breaker1_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -21920,6 +22158,7 @@
         "dynawo_id": "NETWORK_L4042-4043_breaker2_state_value",
         "id": "NETWORK_L4042-4043_breaker2_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -21931,6 +22170,7 @@
         "dynawo_id": "NETWORK_L4043-4044_breaker1_state_value",
         "id": "NETWORK_L4043-4044_breaker1_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -21942,6 +22182,7 @@
         "dynawo_id": "NETWORK_L4043-4046_breaker2_state_value",
         "id": "NETWORK_L4043-4046_breaker2_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -21953,6 +22194,7 @@
         "dynawo_id": "NETWORK_L4043-4047_breaker1_state_value",
         "id": "NETWORK_L4043-4047_breaker1_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -21964,6 +22206,7 @@
         "dynawo_id": "NETWORK_43_1_breaker_state_value",
         "id": "NETWORK_43_1_breaker_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -21975,6 +22218,7 @@
         "dynawo_id": "NETWORK_Tr43-4043_breaker2_state_value",
         "id": "NETWORK_Tr43-4043_breaker2_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -21986,6 +22230,7 @@
         "dynawo_id": "NETWORK_4046-Cap_breaker_state_value",
         "id": "NETWORK_4046-Cap_breaker_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -21997,6 +22242,7 @@
         "dynawo_id": "NETWORK_Tr46-4046_breaker1_state_value",
         "id": "NETWORK_Tr46-4046_breaker1_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -22008,6 +22254,7 @@
         "dynawo_id": "NETWORK_L4043-4046_breaker1_state_value",
         "id": "NETWORK_L4043-4046_breaker1_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -22019,6 +22266,7 @@
         "dynawo_id": "NETWORK_L4046-4047_breaker1_state_value",
         "id": "NETWORK_L4046-4047_breaker1_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -22030,6 +22278,7 @@
         "dynawo_id": "NETWORK_46_1_breaker_state_value",
         "id": "NETWORK_46_1_breaker_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -22041,6 +22290,7 @@
         "dynawo_id": "NETWORK_Tr46-4046_breaker2_state_value",
         "id": "NETWORK_Tr46-4046_breaker2_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -22052,6 +22302,7 @@
         "dynawo_id": "NETWORK_Tr4047-g15_breaker1_state_value",
         "id": "NETWORK_Tr4047-g15_breaker1_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -22063,6 +22314,7 @@
         "dynawo_id": "NETWORK_Tr47-4047_breaker1_state_value",
         "id": "NETWORK_Tr47-4047_breaker1_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -22074,6 +22326,7 @@
         "dynawo_id": "NETWORK_L4043-4047_breaker2_state_value",
         "id": "NETWORK_L4043-4047_breaker2_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -22085,6 +22338,7 @@
         "dynawo_id": "NETWORK_L4046-4047_breaker2_state_value",
         "id": "NETWORK_L4046-4047_breaker2_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -22096,6 +22350,7 @@
         "dynawo_id": "NETWORK_47_1_breaker_state_value",
         "id": "NETWORK_47_1_breaker_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -22107,6 +22362,7 @@
         "dynawo_id": "NETWORK_Tr47-4047_breaker2_state_value",
         "id": "NETWORK_Tr47-4047_breaker2_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -22118,6 +22374,7 @@
         "dynawo_id": "NETWORK_g15_breaker_state_value",
         "id": "NETWORK_g15_breaker_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -22129,6 +22386,7 @@
         "dynawo_id": "NETWORK_Tr4047-g15_breaker2_state_value",
         "id": "NETWORK_Tr4047-g15_breaker2_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -22140,6 +22398,7 @@
         "dynawo_id": "NETWORK_4051-Cap_breaker_state_value",
         "id": "NETWORK_4051-Cap_breaker_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -22151,6 +22410,7 @@
         "dynawo_id": "NETWORK_Tr4051-g16_breaker1_state_value",
         "id": "NETWORK_Tr4051-g16_breaker1_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -22162,6 +22422,7 @@
         "dynawo_id": "NETWORK_Tr51-4051_breaker1_state_value",
         "id": "NETWORK_Tr51-4051_breaker1_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -22173,6 +22434,7 @@
         "dynawo_id": "NETWORK_L4045-4051a_breaker2_state_value",
         "id": "NETWORK_L4045-4051a_breaker2_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -22184,6 +22446,7 @@
         "dynawo_id": "NETWORK_L4045-4051b_breaker1_state_value",
         "id": "NETWORK_L4045-4051b_breaker1_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -22195,6 +22458,7 @@
         "dynawo_id": "NETWORK_51_1_breaker_state_value",
         "id": "NETWORK_51_1_breaker_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -22206,6 +22470,7 @@
         "dynawo_id": "NETWORK_Tr51-4051_breaker2_state_value",
         "id": "NETWORK_Tr51-4051_breaker2_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -22217,6 +22482,7 @@
         "dynawo_id": "NETWORK_g16_breaker_state_value",
         "id": "NETWORK_g16_breaker_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -22228,6 +22494,7 @@
         "dynawo_id": "NETWORK_Tr4051-g16_breaker2_state_value",
         "id": "NETWORK_Tr4051-g16_breaker2_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -22239,6 +22506,7 @@
         "dynawo_id": "NETWORK_Tr61-4061_breaker1_state_value",
         "id": "NETWORK_Tr61-4061_breaker1_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -22250,6 +22518,7 @@
         "dynawo_id": "NETWORK_L4041-4061_breaker2_state_value",
         "id": "NETWORK_L4041-4061_breaker2_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -22261,6 +22530,7 @@
         "dynawo_id": "NETWORK_L4061-4062_breaker1_state_value",
         "id": "NETWORK_L4061-4062_breaker1_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -22272,6 +22542,7 @@
         "dynawo_id": "NETWORK_61_1_breaker_state_value",
         "id": "NETWORK_61_1_breaker_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -22283,6 +22554,7 @@
         "dynawo_id": "NETWORK_Tr61-4061_breaker2_state_value",
         "id": "NETWORK_Tr61-4061_breaker2_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -22294,6 +22566,7 @@
         "dynawo_id": "NETWORK_Tr4061-g17_breaker1_state_value",
         "id": "NETWORK_Tr4061-g17_breaker1_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -22305,6 +22578,7 @@
         "dynawo_id": "NETWORK_Tr62-4062_breaker1_state_value",
         "id": "NETWORK_Tr62-4062_breaker1_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -22316,6 +22590,7 @@
         "dynawo_id": "NETWORK_L4045-4062_breaker2_state_value",
         "id": "NETWORK_L4045-4062_breaker2_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -22327,6 +22602,7 @@
         "dynawo_id": "NETWORK_L4061-4062_breaker2_state_value",
         "id": "NETWORK_L4061-4062_breaker2_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -22338,6 +22614,7 @@
         "dynawo_id": "NETWORK_L4062-4063a_breaker2_state_value",
         "id": "NETWORK_L4062-4063a_breaker2_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -22349,6 +22626,7 @@
         "dynawo_id": "NETWORK_L4062-4063b_breaker2_state_value",
         "id": "NETWORK_L4062-4063b_breaker2_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -22360,6 +22638,7 @@
         "dynawo_id": "NETWORK_62_1_breaker_state_value",
         "id": "NETWORK_62_1_breaker_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -22371,6 +22650,7 @@
         "dynawo_id": "NETWORK_Tr62-4062_breaker2_state_value",
         "id": "NETWORK_Tr62-4062_breaker2_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -22382,6 +22662,7 @@
         "dynawo_id": "NETWORK_g17_breaker_state_value",
         "id": "NETWORK_g17_breaker_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -22393,6 +22674,7 @@
         "dynawo_id": "NETWORK_Tr4061-g17_breaker2_state_value",
         "id": "NETWORK_Tr4061-g17_breaker2_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -22404,6 +22686,7 @@
         "dynawo_id": "NETWORK_Tr4063-g18_breaker1_state_value",
         "id": "NETWORK_Tr4063-g18_breaker1_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -22415,6 +22698,7 @@
         "dynawo_id": "NETWORK_Tr63-4063_breaker1_state_value",
         "id": "NETWORK_Tr63-4063_breaker1_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -22426,6 +22710,7 @@
         "dynawo_id": "NETWORK_L4062-4063a_breaker1_state_value",
         "id": "NETWORK_L4062-4063a_breaker1_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -22437,6 +22722,7 @@
         "dynawo_id": "NETWORK_L4062-4063b_breaker1_state_value",
         "id": "NETWORK_L4062-4063b_breaker1_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -22448,6 +22734,7 @@
         "dynawo_id": "NETWORK_63_1_breaker_state_value",
         "id": "NETWORK_63_1_breaker_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -22459,6 +22746,7 @@
         "dynawo_id": "NETWORK_Tr63-4063_breaker2_state_value",
         "id": "NETWORK_Tr63-4063_breaker2_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -22470,6 +22758,7 @@
         "dynawo_id": "NETWORK_g18_breaker_state_value",
         "id": "NETWORK_g18_breaker_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -22481,6 +22770,7 @@
         "dynawo_id": "NETWORK_Tr4063-g18_breaker2_state_value",
         "id": "NETWORK_Tr4063-g18_breaker2_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -22492,6 +22782,7 @@
         "dynawo_id": "NETWORK_4071-Ind_breaker_state_value",
         "id": "NETWORK_4071-Ind_breaker_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -22503,6 +22794,7 @@
         "dynawo_id": "NETWORK_Tr4071-g19_breaker1_state_value",
         "id": "NETWORK_Tr4071-g19_breaker1_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -22514,6 +22806,7 @@
         "dynawo_id": "NETWORK_Tr71-4071_breaker1_state_value",
         "id": "NETWORK_Tr71-4071_breaker1_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -22525,6 +22818,7 @@
         "dynawo_id": "NETWORK_L4011-4071_breaker1_state_value",
         "id": "NETWORK_L4011-4071_breaker1_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -22536,6 +22830,7 @@
         "dynawo_id": "NETWORK_L4012-4071_breaker1_state_value",
         "id": "NETWORK_L4012-4071_breaker1_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -22547,6 +22842,7 @@
         "dynawo_id": "NETWORK_L4071-4072a_breaker1_state_value",
         "id": "NETWORK_L4071-4072a_breaker1_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -22558,6 +22854,7 @@
         "dynawo_id": "NETWORK_L4071-4072b_breaker1_state_value",
         "id": "NETWORK_L4071-4072b_breaker1_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -22569,6 +22866,7 @@
         "dynawo_id": "NETWORK_71_1_breaker_state_value",
         "id": "NETWORK_71_1_breaker_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -22580,6 +22878,7 @@
         "dynawo_id": "NETWORK_Tr71-4071_breaker2_state_value",
         "id": "NETWORK_Tr71-4071_breaker2_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -22591,6 +22890,7 @@
         "dynawo_id": "NETWORK_g19_breaker_state_value",
         "id": "NETWORK_g19_breaker_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -22602,6 +22902,7 @@
         "dynawo_id": "NETWORK_Tr4071-g19_breaker2_state_value",
         "id": "NETWORK_Tr4071-g19_breaker2_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -22613,6 +22914,7 @@
         "dynawo_id": "NETWORK_Tr4072-g20_breaker1_state_value",
         "id": "NETWORK_Tr4072-g20_breaker1_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -22624,6 +22926,7 @@
         "dynawo_id": "NETWORK_Tr72-4072_breaker1_state_value",
         "id": "NETWORK_Tr72-4072_breaker1_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -22635,6 +22938,7 @@
         "dynawo_id": "NETWORK_L4071-4072a_breaker2_state_value",
         "id": "NETWORK_L4071-4072a_breaker2_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -22646,6 +22950,7 @@
         "dynawo_id": "NETWORK_L4071-4072b_breaker2_state_value",
         "id": "NETWORK_L4071-4072b_breaker2_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -22657,6 +22962,7 @@
         "dynawo_id": "NETWORK_72_1_breaker_state_value",
         "id": "NETWORK_72_1_breaker_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -22668,6 +22974,7 @@
         "dynawo_id": "NETWORK_Tr72-4072_breaker2_state_value",
         "id": "NETWORK_Tr72-4072_breaker2_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -22679,6 +22986,7 @@
         "dynawo_id": "NETWORK_g20_breaker_state_value",
         "id": "NETWORK_g20_breaker_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     },
     {
@@ -22690,6 +22998,7 @@
         "dynawo_id": "NETWORK_Tr4072-g20_breaker2_state_value",
         "id": "NETWORK_Tr4072-g20_breaker2_state_value",
         "factor": 1.0,
+        "publish_on_change": true,
         "simulator": "dynawo"
     }
 ]
