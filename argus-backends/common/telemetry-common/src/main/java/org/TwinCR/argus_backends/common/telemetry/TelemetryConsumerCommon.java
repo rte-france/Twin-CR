@@ -8,6 +8,7 @@ co-simulation of power systems.
 
 package org.TwinCR.argus_backends.common.telemetry;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -37,4 +38,10 @@ public abstract class TelemetryConsumerCommon {
     }
 
     public abstract void updateNetwork(Optional<String> subject);
+
+    /** Prefix of the NATS subjects of the sub-topics ("<prefix>.<sub-topic>") */
+    public abstract String subjectPrefix();
+
+    /** Latest message of each id of a sub-topic, sent to new SSE subscribers after registering them */
+    public abstract List<String> latestPayloads(String subTopic);
 }

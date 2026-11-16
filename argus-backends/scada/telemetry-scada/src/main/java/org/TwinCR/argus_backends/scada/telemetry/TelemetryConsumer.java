@@ -20,6 +20,8 @@ import org.TwinCR.argus_backends.scada.gridmodel.TiMapping;
 import org.TwinCR.argus_backends.scada.model.TelemetryMessage;
 import org.TwinCR.argus_backends.scada.model.TelemetryMessage.Tase2Extension;
 import org.TwinCR.argus_backends.scada.util.JsonUtil;
+import org.TwinCR.argus_backends.common.api.ApiServerCommon;
+import org.TwinCR.argus_backends.common.api.ClickhouseClient;
 import org.TwinCR.argus_backends.common.core.bridge.SseNatsBridge;
 import org.TwinCR.argus_backends.common.datamodel.Value;
 import org.TwinCR.argus_backends.common.gridmodel.GridModel;
@@ -50,6 +52,8 @@ public class TelemetryConsumer extends TelemetryConsumerCommon {
     private boolean estimRunnning = false;
     private final ExecutorService estimExecutor = Executors.newSingleThreadExecutor();
     private final Set<String> mappingNotFound = Collections.synchronizedSet(new HashSet<>());
+    private final ClickhouseClient clickhouseClient;
+    private final String location;  // Cyber location (destination) of the received measurements: "HMI.<location>.>" subjects
 
     public double getSecondsSinceLastEstimTime() {
         return currentTime-lastEstimTime;
@@ -205,8 +209,11 @@ public class TelemetryConsumer extends TelemetryConsumerCommon {
         }
     }
 
-    public TelemetryConsumer(Connection conn, SseNatsBridge bridge, AlarmEngine alarmEngine, double estimPeriod) throws Exception {
+    public TelemetryConsumer(Connection conn, SseNatsBridge bridge, AlarmEngine alarmEngine, double estimPeriod,
+                             ClickhouseClient clickhouseClient, String location) throws Exception {
         super(conn, bridge);
+        this.clickhouseClient = clickhouseClient;
+        this.location = location;
         this.estimPeriod = estimPeriod;
         this.lastEstimTime = 0;
         this.estimRunnning = false;
@@ -247,7 +254,7 @@ public class TelemetryConsumer extends TelemetryConsumerCommon {
             }
         });
 
-        dispatcher.subscribe("HMI.SCADA.>");
+        dispatcher.subscribe(subjectPrefix() + ".>");
 
         Dispatcher forwarder = conn.createDispatcher(msg -> {
             String subject = msg.getSubject();
@@ -255,8 +262,8 @@ public class TelemetryConsumer extends TelemetryConsumerCommon {
         });
         // TODO: remove Dynawo.Constraints subscription from SCADA once alarms are implemented
         forwarder.subscribe("Dynawo.Constraints");
-        // HMI.SCADA.> subscription common with dispatcher to avoid lagging on synchronized called during state estimation
-        forwarder.subscribe("HMI.SCADA.>");
+        // HMI.<location>.> subscription common with dispatcher to avoid lagging on synchronized called during state estimation
+        forwarder.subscribe(subjectPrefix() + ".>");
         forwarder.subscribe("HMIControl.>");
         forwarder.subscribe("time");
 
@@ -345,17 +352,38 @@ public class TelemetryConsumer extends TelemetryConsumerCommon {
     }
 
     @Override
+    public String subjectPrefix() {
+        return "HMI." + ApiServerCommon.sanitizeNatsTopicName(location);
+    }
+
+    @Override
     public void acquireSubTopic(String subTopic) {
-        // Always subscribe to the full "HMI.SCADA.>" -> Nothing to do
+        // Always subscribe to the full "HMI.<location>.>" -> Nothing to do
     }
 
     @Override
     public void releaseSubTopic(String subTopic) {
-        // Always subscribe to the full "HMI.SCADA.>" -> Nothing to do
+        // Always subscribe to the full "HMI.<location>.>" -> Nothing to do
     }
 
     @Override
     public void updateNetwork(Optional<String> subject) {
         // Network is always up to date -> Nothing to do
+    }
+
+    @Override
+    public List<String> latestPayloads(String subTopic) {
+        // TS are only published on change: a new subscriber gets the latest value of each id from Clickhouse
+        List<String> payloads = new ArrayList<>();
+        try {
+            String data = clickhouseClient.queryLatestMeasurementsReceived(this.location, subTopic);
+            ObjectMapper mapper = new ObjectMapper();
+            for (JsonNode item : mapper.readValue(data, JsonNode[].class)) {
+                payloads.add(mapper.writeValueAsString(item));
+            }
+        } catch (Exception e) {
+            LOGGER.error("Error while fetching latest values for topic {}: {}", subTopic, e);
+        }
+        return payloads;
     }
 }

@@ -27,6 +27,8 @@ import org.slf4j.LoggerFactory;
 import io.nats.client.*;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
@@ -42,6 +44,19 @@ public class TelemetryConsumer extends TelemetryConsumerCommon {
     private final Map<String, AtomicInteger> refCounts = new ConcurrentHashMap<>();
     private final ClickhouseClient clickhouseClient;
     private double currentTime = 0;
+    // Time of the last value applied to the network model. Used to ensure values fetched from Clickhouse (which lags behind NATS values) do not overwrite newer values
+    private final Map<String, Double> lastTimeById = new ConcurrentHashMap<>();
+
+    /** Returns true if the value of this id at this time is not older than the last one applied (and records it) */
+    private boolean isLatest(String id, JsonNode node) {
+        JsonNode timeNode = node.get("time");
+        if (timeNode == null) {
+            return true;
+        }
+        double time = timeNode.asDouble();
+        // Keeps the most recent time: the value is the latest one if its time is the one kept
+        return lastTimeById.merge(id, time, Math::max) == time;
+    }
 
     public void handleMsg(JsonNode natsNode, GmOutput gmOutput) {
         if (gmOutput.equipmentId() == null || gmOutput.kind() == null) {
@@ -94,6 +109,9 @@ public class TelemetryConsumer extends TelemetryConsumerCommon {
             }
 
             String id = node.get("id").asText();
+            if (!isLatest(id, node)) {
+                return;
+            }
             GmOutput gmOutput = GmMapping.id_2_gmOutput.get(id);
             if (gmOutput != null) {
                 handleMsg(node, gmOutput);
@@ -117,13 +135,23 @@ public class TelemetryConsumer extends TelemetryConsumerCommon {
         Dispatcher clock = conn.createDispatcher(msg -> {
             try {
                 JsonNode node = mapper.readTree(msg.getData());
-                currentTime = node.path("current_time").asDouble();
+                double newTime = node.path("current_time").asDouble();
+                if (newTime < currentTime) {
+                    // Simulation time went back (new run), clear previous values
+                    lastTimeById.clear();
+                }
+                currentTime = newTime;
                 LOGGER.info("Current time: {}", currentTime);
             } catch (IOException e) {
                 LOGGER.warn("Invalid time message", e);
             }
         });
         clock.subscribe("time");
+    }
+
+    @Override
+    public String subjectPrefix() {
+        return "GameMaster";
     }
 
     @Override
@@ -162,6 +190,9 @@ public class TelemetryConsumer extends TelemetryConsumerCommon {
             JsonNode[] array = mapper.readValue(data, JsonNode[].class);
             for (JsonNode item : array) {
                 String id = item.get("id").asText();
+                if (!isLatest(id, item)) {
+                    continue;
+                }
                 Value value = mapper.treeToValue(item.get("value"), Value.class);
 
                 GmOutput gmOutput = GmMapping.id_2_gmOutput.get(id);
@@ -174,5 +205,21 @@ public class TelemetryConsumer extends TelemetryConsumerCommon {
         } catch (Exception e) {
             LOGGER.error("Error while fetching history for topic {}: {}", subject, e);
         }
+    }
+
+    @Override
+    public List<String> latestPayloads(String subTopic) {
+        // TS are only published on change: a new subscriber gets the latest value of each id from Clickhouse
+        List<String> payloads = new ArrayList<>();
+        try {
+            String data = clickhouseClient.queryLatestActualMeasurements(Optional.of(subTopic));
+            ObjectMapper mapper = new ObjectMapper();
+            for (JsonNode item : mapper.readValue(data, JsonNode[].class)) {
+                payloads.add(mapper.writeValueAsString(item));
+            }
+        } catch (Exception e) {
+            LOGGER.error("Error while fetching latest values for topic {}: {}", subTopic, e);
+        }
+        return payloads;
     }
 }

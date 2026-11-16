@@ -28,6 +28,7 @@ import com.powsybl.sld.SldParameters;
 import com.powsybl.sld.svg.styles.DefaultStyleProviderFactory;
 import com.powsybl.sld.svg.styles.StyleProvidersList;
 
+import org.TwinCR.argus_backends.common.core.bridge.DeferredSseClient;
 import org.TwinCR.argus_backends.common.core.bridge.SseClient;
 import org.TwinCR.argus_backends.common.core.bridge.SseNatsBridge;
 import org.TwinCR.argus_backends.common.core.config.ConfigCommon;
@@ -770,19 +771,21 @@ public abstract class ApiServerCommon {
                 respondError(resp, 405, "Method Not Allowed");
                 return;
             }
-            String subPrefix = switch (appName) {
-                case "backend_GM" -> "GameMaster";
-                case "backend_SCADA" -> "HMI.SCADA";
-                default -> throw new IllegalArgumentException("appName should be backend_GM or backend_SCADA");
-            };
             String suffix = target.substring("/sub/".length());
             LOGGER.info("Retaining {}", suffix);
 
             AsyncContext async = req.startAsync();
             async.setTimeout(0);
             respondSse(resp);
-            bridge.register(subPrefix + "." + sanitizeNatsTopicName(suffix), sseClient(resp));
+            // TS are only published on change: the latest values are sent first, the live messages being held back in the meantime
+            DeferredSseClient client = new DeferredSseClient(sseClient(resp));
+            bridge.register(telemetryConsumer.subjectPrefix() + "." + sanitizeNatsTopicName(suffix), client);
             clients.add(new SseTopicSubscriber(async, resp, telemetryConsumer, suffix));
+            try {
+                client.start(telemetryConsumer.latestPayloads(suffix));
+            } catch (IOException e) {
+                bridge.remove(client);
+            }
         }
     }
 
@@ -906,7 +909,7 @@ public abstract class ApiServerCommon {
             double min = Double.parseDouble(params.get("min"));
             double max = Double.parseDouble(params.get("max"));
 
-            String json = clickhouseClient.queryHistory(Optional.of(topic), min, max);
+            String json = clickhouseClient.queryHistory(topic, min, max);
             respondjson(resp, 200, json);
         }
     }
@@ -1432,9 +1435,12 @@ public abstract class ApiServerCommon {
     protected static SseClient sseClient(HttpServletResponse resp) {
         // SSE must follow format "data: <payload>\n\n"
         return data -> {
-            OutputStream os = resp.getOutputStream();
-            os.write(("data: " + data + "\n\n").getBytes(StandardCharsets.UTF_8));
-            os.flush();
+            // Synchronized: latest values (HTTP Clickhouse thread) and live messages (NATS thread) can be sent concurrently
+            synchronized (resp) {
+                OutputStream os = resp.getOutputStream();
+                os.write(("data: " + data + "\n\n").getBytes(StandardCharsets.UTF_8));
+                os.flush();
+            }
         };
     }
 
