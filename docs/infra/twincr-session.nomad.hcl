@@ -12,7 +12,7 @@ variable "context_id" {
 
 variable "config_path" {
   type        = string
-  default     = "docs/orchestrator/examples/Nordic/config.toml"
+  default     = "config.toml"
   description = "Path to the configuration file inside context"
 }
 
@@ -204,6 +204,24 @@ EOT
       }
     }
 
+    task "session-init" {
+      driver = "docker"
+
+      config {
+        image   = "curlimages/curl:latest"
+        command = "/bin/sh"
+        args = [
+          "-c",
+          "echo 'Waiting for configurator-client...'; until curl -sf http://127.0.0.1:8080/status >/dev/null; do sleep 1; done; echo 'Initializing context ${var.context_id}...'; until curl -fsSL -X GET 'http://127.0.0.1:8080/init/${var.context_id}?config_path=${var.config_path}' >/dev/null; do sleep 2; done; echo 'Session initialized!'"
+        ]
+      }
+
+      resources {
+        cpu    = 50
+        memory = 64
+      }
+    }
+
     task "twincr-core" {
       driver = "docker"
 
@@ -218,6 +236,10 @@ EOT
         command = "/usr/local/bin/orchestrator_exec"
         args    = ["--from-clickhouse"]
         ports   = ["core_dsl"]
+
+        volumes = [
+          "/opt/twincr/simulators:/home/orchestrator/simulators:ro"
+        ]
       }
 
       resources {
