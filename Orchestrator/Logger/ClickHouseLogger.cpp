@@ -358,15 +358,17 @@ void ClickHouseLogger::createTableViews(const std::string& base_db_name, double 
     }
 
     if (!base_db_name.empty()) {
-        // Initially fill Latest_ActualMeasurement with values from the previous run, setting the count number of all old values to 0
-        // so that they are always overwritten when new values arrive
+        // Initially fill the Latest_ tables with the values of the previous run at start_time (its db can contain values
+        // after start_time, e.g. when restarting from a dump taken before its end), setting the count number of all old
+        // actual measurements to 0 so that they are always overwritten when new values arrive
         ss << "INSERT INTO " << getFullTableName("Latest_ActualMeasurement")
-            << " SELECT id, value_type, value, time, topic, 0 AS count FROM `" << base_db_name << "`.`Latest_ActualMeasurement`";
+            << " SELECT id, value_type, value, time, topic, 0 AS count FROM `" << base_db_name << "`.`ActualMeasurement`"
+            << " WHERE time < " << start_time << " ORDER BY time DESC, count DESC LIMIT 1 BY topic, id";
         execQuery(ss.str()); ss.str("");
 
-        // Same for Latest_MeasurementReceived (versioned by time_received, older than the new values)
         ss << "INSERT INTO " << getFullTableName("Latest_MeasurementReceived")
-            << " SELECT * FROM `" << base_db_name << "`.`Latest_MeasurementReceived`";
+            << " SELECT * FROM `" << base_db_name << "`.`MeasurementReceived`"
+            << " WHERE time_received < " << start_time << " ORDER BY time_received DESC LIMIT 1 BY topic, destination, id";
         execQuery(ss.str()); ss.str("");
     }
 }
