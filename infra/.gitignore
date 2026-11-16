@@ -1,0 +1,13 @@
+.vault_pass.txt
+.generated_secrets/
+.venv/
+
+# Ignore dynamic and private inventories, keep only examples
+inventories/*.ini
+environments/
+
+**/secrets.yml
+
+*.retry
+*.log
+.venv

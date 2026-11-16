@@ -1,0 +1,174 @@
+#
+# Copyright (c) 2026, RTE (https://www.rte-france.com)
+# See AUTHORS.md
+# SPDX-License-Identifier: MPL-2.0
+# This file is part of Twin-CR, a platform for real-time cyber-physical
+# co-simulation of power systems.
+#
+
+---
+- name: Ensure jq and curl are installed for Keycloak script
+  ansible.builtin.package:
+    name:
+      - jq
+      - curl
+    state: present
+  environment: "{{ proxy_env | default({}) }}"
+
+- name: Ensure Postgres init directory exists
+  ansible.builtin.file:
+    path: /opt/twincr/postgres/init
+    state: directory
+    mode: "0755"
+
+- name: Copy Keycloak DB initialization script
+  ansible.builtin.copy:
+    src: files/init_kc.sql
+    dest: /opt/twincr/postgres/init/init_kc.sql
+    mode: "0644"
+
+- name: Create directories for Keycloak data and config
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    mode: "0755"
+  loop:
+    - /opt/keycloak/data
+    - /opt/keycloak/meta
+    - /opt/keycloak/config
+    - /opt/keycloak/themes
+
+- name: Copy Keycloak themes from repository
+  ansible.builtin.copy:
+    src: files/themes/
+    dest: /opt/keycloak/themes/
+    mode: "0755"
+
+- name: Template Keycloak realm file
+  ansible.builtin.template:
+    src: realm.json.j2
+    dest: /opt/keycloak/config/realm.json
+    mode: "0644"
+
+- name: Template Keycloak job file
+  ansible.builtin.template:
+    src: keycloak.nomad.hcl.j2
+    dest: /tmp/keycloak.nomad.hcl
+
+- name: Deploy Keycloak via Nomad CLI
+  ansible.builtin.command: nomad job run -detach /tmp/keycloak.nomad.hcl
+  register: nomad_run_keycloak
+  changed_when: "'Job registration successful' in nomad_run_keycloak.stdout"
+
+- name: Wait for Keycloak HTTP endpoint to be ready
+  ansible.builtin.uri:
+    url: "http://{{ ansible_facts['default_ipv4']['address'] }}:8081/realms/twincr/protocol/openid-connect/certs"
+    status_code: 200
+  environment: "{{ no_proxy_env }}"
+  register: keycloak_ready
+  until: keycloak_ready.status == 200
+  retries: 30
+  delay: 5
+
+- name: Read Vault token
+  ansible.builtin.slurp:
+    src: /etc/vault.d/vault.creds
+  register: vault_creds_raw
+  failed_when: false
+
+- name: Set Vault root token fact
+  ansible.builtin.set_fact:
+    vault_root_token: "{{ (vault_creds_raw.content | b64decode | regex_search('VAULT_ROOT_TOKEN=\"(.*)\"', '\\1'))[0] | default(vault_token | default('root')) }}"
+
+- name: Enable OIDC auth method in Vault
+  ansible.builtin.command: vault auth enable oidc
+  environment: &vault_env
+    VAULT_ADDR: "http://127.0.0.1:8200"
+    VAULT_TOKEN: "{{ vault_root_token }}"
+  register: enable_vault_oidc
+  failed_when: enable_vault_oidc.rc != 0 and "path is already in use" not in enable_vault_oidc.stderr
+  changed_when: enable_vault_oidc.rc == 0
+
+- name: Configure Vault OIDC method pointing to Keycloak
+  ansible.builtin.command: >
+    vault write auth/oidc/config
+    jwks_url="http://{{ ansible_facts['default_ipv4']['address'] }}:8081/realms/twincr/protocol/openid-connect/certs"
+    bound_issuer="https://keycloak.{{ base_domain | default('twin.local') }}/realms/twincr"
+    default_role="admin"
+  environment: *vault_env
+  changed_when: false
+
+- name: Create Vault admin policy for infra_admin
+  ansible.builtin.command: >
+    vault policy write infra-admin -
+  args:
+    stdin: |
+      path "*" {
+        capabilities = ["create", "read", "update", "delete", "list", "sudo"]
+      }
+  environment: *vault_env
+  changed_when: false
+
+- name: Create Vault OIDC role for Keycloak users
+  ansible.builtin.command: >
+    vault write auth/oidc/role/admin
+    role_type="jwt"
+    user_claim="preferred_username"
+    bound_audiences="session-manager-client,vault-oidc"
+    policies="infra-admin"
+    token_ttl="1h"
+    groups_claim=""
+  environment: *vault_env
+  changed_when: false
+
+- name: Retrieve Vault Internal CA certificate
+  ansible.builtin.command: vault read -field=certificate pki/cert/ca
+  environment: *vault_env
+  register: vault_internal_ca
+  changed_when: false
+
+- name: Template Nomad OIDC config
+  ansible.builtin.copy:
+    dest: /tmp/nomad-oidc-config.json
+    content: |
+      {
+        "OIDCDiscoveryURL": "https://keycloak.{{ base_domain | default('twin.local') }}/realms/twincr",
+        "OIDCClientID": "nomad-oidc",
+        "OIDCClientSecret": "{{ nomad_oidc_secret | default('nomad-oidc-secret') }}",
+        "OIDCScopes": ["roles"],
+        "AllowedRedirectURIs": [
+          "http://localhost:4649/oidc/callback",
+          "https://nomad.{{ base_domain | default('twin.local') }}/ui/settings/tokens",
+          "http://localhost:4646/ui/settings/tokens",
+          "http://127.0.0.1:4646/ui/settings/tokens"
+        ],
+        "DiscoveryCAPEM": [
+          {{ vault_internal_ca.stdout | trim | to_json }}
+        ]
+      }
+    mode: "0600"
+
+- name: Create or update Nomad OIDC Auth Method
+  ansible.builtin.command: >
+    nomad acl auth-method create
+    -name="keycloak"
+    -type="OIDC"
+    -default=true
+    -token-locality="global"
+    -max-token-ttl="24h"
+    -config=@/tmp/nomad-oidc-config.json
+  register: nomad_oidc_create
+  failed_when: nomad_oidc_create.rc != 0 and "already exists" not in nomad_oidc_create.stderr
+  changed_when: nomad_oidc_create.rc == 0
+
+- name: Create Nomad Binding Rule for Keycloak admin users
+  ansible.builtin.command: >
+    nomad acl binding-rule create
+    -auth-method=keycloak
+    -description="Keycloak admin binding"
+    -selector='value.preferred_username != ""'
+    -bind-type="management"
+  register: nomad_bind_create
+  failed_when: nomad_bind_create.rc != 0 and "already exists" not in nomad_bind_create.stderr
+  changed_when: nomad_bind_create.rc == 0
+

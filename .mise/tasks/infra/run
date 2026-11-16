@@ -1,0 +1,58 @@
+#!/usr/bin/env bash
+#MISE description="Deploy and manage the Twin-CR Nomad/Consul/Vault infrastructure (OS auto-detect)"
+#MISE depends=["setup"]
+#USAGE flag "-h --help" help="Show infra help"
+#USAGE arg "[args]..." help="Options forwarded to make (e.g. NODES=2 ENV=opf)"
+
+set -euo pipefail
+
+cd infra
+
+if [ ! -f .vault_pass.txt ]; then
+    echo "dev" > .vault_pass.txt
+fi
+
+TARGET_ENV="dev"
+NODES_COUNT="1"
+FORWARD_ARGS=()
+
+while [ $# -gt 0 ]; do
+    case "$1" in
+        --env)
+            TARGET_ENV="$2"
+            shift 2
+            ;;
+        --env=*|ENV=*)
+            TARGET_ENV="${1#*=}"
+            shift
+            ;;
+        --node|--nodes)
+            NODES_COUNT="$2"
+            shift 2
+            ;;
+        --node=*|--nodes=*)
+            NODES_COUNT="${1#*=}"
+            shift
+            ;;
+        NODES=*)
+            NODES_COUNT="${1#NODES=}"
+            shift
+            ;;
+        *)
+            FORWARD_ARGS+=("$1")
+            shift
+            ;;
+    esac
+done
+
+if [ "$TARGET_ENV" = "dev" ]; then
+    if [ "$(uname -s)" = "Darwin" ]; then
+        ../.mise/tasks/infra/mac --nodes="${NODES_COUNT}" ${FORWARD_ARGS[@]+"${FORWARD_ARGS[@]}"}
+    else
+        ../.mise/tasks/infra/linux --nodes="${NODES_COUNT}" ${FORWARD_ARGS[@]+"${FORWARD_ARGS[@]}"}
+    fi
+    exec ../.mise/tasks/infra/push
+fi
+
+# Generic deployment (e.g. ENV=opf)
+make deploy ${FORWARD_ARGS[@]+"${FORWARD_ARGS[@]}"}

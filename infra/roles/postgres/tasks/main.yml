@@ -1,0 +1,61 @@
+#
+# Copyright (c) 2026, RTE (https://www.rte-france.com)
+# See AUTHORS.md
+# SPDX-License-Identifier: MPL-2.0
+# This file is part of Twin-CR, a platform for real-time cyber-physical
+# co-simulation of power systems.
+#
+
+---
+- name: Create directories for Postgres
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    mode: "0755"
+  loop:
+    - /opt/twincr/postgres/data
+    - /opt/twincr/postgres/init
+
+- name: Template DB migration script
+  ansible.builtin.template:
+    src: 01_init_templates.sql.j2
+    dest: /opt/twincr/postgres/init/01_init_templates.sql
+    mode: "0644"
+
+- name: Template DB job file
+  ansible.builtin.template:
+    src: postgres.nomad.j2
+    dest: /tmp/postgres.nomad
+    mode: "0644"
+
+- name: Deploy DB via Nomad CLI
+  ansible.builtin.command: nomad job run -detach /tmp/postgres.nomad
+  register: nomad_run_db
+  changed_when: "'Job registration successful' in nomad_run_db.stdout"
+
+- name: Check Nomad allocations for Postgres if pending
+  ansible.builtin.command: nomad job status postgres
+  register: nomad_status
+  changed_when: false
+
+- name: Wait for Postgres to be healthy and listening on port 5433
+  ansible.builtin.wait_for:
+    host: 127.0.0.1
+    port: 5433
+    state: started
+    delay: 2
+    timeout: 90
+    msg: "Postgres n'est pas prêt sur le port 5433"
+
+- name: Execute SQL migration on the live database
+  ansible.builtin.command: >
+    docker run --rm
+    -e PGPASSWORD="{{ db_password | default('twincr_password') }}"
+    -v /opt/twincr/postgres/init:/scripts
+    --network host
+    postgres:15-alpine
+    psql -h 127.0.0.1 -p 5433 -U {{ db_user | default('twincr_api') }} -d {{ db_name | default('twincr') }} -f /scripts/01_init_templates.sql
+  register: db_migration
+  changed_when: >
+    'CREATE TABLE' in db_migration.stdout or
+    'CREATE INDEX' in db_migration.stdout

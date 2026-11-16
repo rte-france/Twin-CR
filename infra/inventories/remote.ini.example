@@ -1,0 +1,15 @@
+#
+# Example inventory for Remote deployment (e.g. OPF, Prod, Staging)
+# Copy to infra/inventories/opf.ini and adjust hosts/IPs.
+#
+
+[nomad_servers]
+server1 ansible_connection=ssh ansible_host=x.x.x.x ansible_user= ansible_python_interpreter=auto_silent
+
+[nomad_workers]
+worker1 ansible_connection=ssh ansible_host=x.x.x.x ansible_user= ansible_python_interpreter=auto_silent
+worker2 ansible_connection=ssh ansible_host=x.x.x.x ansible_user= ansible_python_interpreter=auto_silent
+
+[all:children]
+nomad_servers
+nomad_workers

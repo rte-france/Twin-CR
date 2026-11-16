@@ -1,0 +1,120 @@
+job "garage" {
+  datacenters = ["dc1"]
+  type = "service"
+
+  group "storage" {
+    count = 1
+
+    constraint {
+      attribute = "${node.class}"
+      value     = "control-plane"
+    }
+
+    network {
+      port "s3_api" { static = 3900 }
+      port "rpc"    { static = 3901 }
+      port "admin"  { static = 3903 }
+    }
+
+    service {
+      name     = "garage-s3"
+      port     = "s3_api"
+      provider = "consul"
+
+      tags = [
+        "traefik.enable=true",
+        "traefik.http.routers.garage-s3.rule=Host(`s3.{{ base_domain }}`) || HostRegexp(`{subdomain:[a-zA-Z0-9-]+}.s3.{{ base_domain }}`)",
+        "traefik.http.routers.garage-s3.entrypoints=web",
+        "traefik.http.services.garage-s3.loadbalancer.server.port=${NOMAD_PORT_s3_api}"
+      ]
+
+      check {
+        type     = "tcp"
+        interval = "10s"
+        timeout  = "2s"
+      }
+    }
+
+    service {
+      name     = "garage-admin"
+      port     = "admin"
+      provider = "consul"
+
+      tags = [
+        "traefik.enable=true",
+        "traefik.http.routers.garage-admin.rule=Host(`admin.garage.{{ base_domain }}`)",
+        "traefik.http.routers.garage-admin.entrypoints=web",
+        "traefik.http.services.garage-admin.loadbalancer.server.port=${NOMAD_PORT_admin}"
+      ]
+
+      check {
+        type     = "tcp"
+        interval = "10s"
+        timeout  = "2s"
+      }
+    }
+
+    vault {
+      role = "nomad-workloads"
+    }
+
+    task "garage-daemon" {
+      driver = "docker"
+
+      template {
+        data = <<EOF
+metadata_dir = "/opt/garage/meta"
+data_dir = "/opt/garage/data"
+db_engine = "sqlite"
+
+replication_factor = 1
+
+rpc_bind_addr = "0.0.0.0:3901"
+rpc_public_addr = "{{ ansible_facts['default_ipv4']['address'] }}:3901"
+{% raw %}
+{{ with secret "secret/data/garage-config" }}
+rpc_secret = "{{ .Data.data.rpc_secret }}"
+{% endraw %}
+
+[s3_api]
+s3_region = "garage"
+api_bind_addr = "0.0.0.0:3900"
+root_domain = ".s3.{{ base_domain }}"
+
+[s3_web]
+bind_addr = "0.0.0.0:3902"
+root_domain = ".web.garage.{{ base_domain }}"
+index = "index.html"
+
+[k2v_api]
+api_bind_addr = "0.0.0.0:3904"
+
+[admin]
+api_bind_addr = "0.0.0.0:3903"
+{% raw %}
+admin_token = "{{ .Data.data.admin_token }}"
+metrics_token = "{{ .Data.data.metrics_token }}"
+{{ end }}
+{% endraw %}
+EOF
+        destination = "secrets/garage.toml"
+      }
+
+      config {
+        image = "dxflrs/garage:v2.3.0"
+        network_mode = "host"
+
+        volumes = [
+          "/opt/garage/data:/opt/garage/data",
+          "/opt/garage/meta:/opt/garage/meta",
+          "secrets/garage.toml:/etc/garage.toml"
+        ]
+      }
+
+      resources {
+        cpu    = 500
+        memory = 512
+      }
+    }
+  }
+}

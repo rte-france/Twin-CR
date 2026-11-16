@@ -12,7 +12,36 @@
 python = "3.11"              # setup.sh, examples config.sh (dynawo_toolbox venv), NRT tests (same as the CI)
 uv = "latest"                # configurator_client, session-manager (they get their own Python 3.14 from uv)
 node = "24"                  # Argus native run (same as envs/Dockerfile.argus.AppImage)
-pnpm = "10.18.3"
+pnpm = "latest"
 jq = "latest"                # envs/fetch_simulators.sh
 go = "1.23.6"                # pre-commit gitleaks hook
 "pipx:pre-commit" = "4.7.0"   # Pinned: the git hook stores the path of this install, which contains the version
+nomad = "latest"
+
+[tasks.setup]
+description = "Setup environment and build docker images via setup.sh"
+alias = "setup"
+run = "./setup.sh"
+
+[tasks.infra]
+description = "Deploy local infrastructure"
+alias = "infra"
+run = ".mise/tasks/infra/run"
+
+[tasks."infra:push"]
+description = "Tag and push built images to the local registry"
+alias = "infra:push"
+run = ".mise/tasks/infra/push"
+
+[tasks."infra:stop"]
+description = "Stop local infrastructure"
+alias = "infra:stop"
+run = ".mise/tasks/infra/stop"
+
+[tasks."infra:linux"]
+description = "Deploy infrastructure on Linux"
+run = ".mise/tasks/infra/linux"
+
+[tasks."infra:mac"]
+description = "Deploy infrastructure on macOS"
+run = ".mise/tasks/infra/mac"
