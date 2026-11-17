@@ -29,7 +29,6 @@ export function SessionsView(props: SessionsViewProps) {
   const [accessKeyMode, setAccessKeyMode] = createSignal<Mode | null>(null);
   const [currentSession, setCurrentSession] = createSignal<GameSession | null>(null);
   const [launchingSessions, setLaunchingSessions] = createSignal<Set<number>>(new Set());
-  const [resettingSessions, setResettingSessions] = createSignal<Record<number, boolean>>({});
   const [sessionError, setSessionError] = createSignal<string | null>(null);
   const [joinError, setJoinError] = createSignal<string | null>(null);
 
@@ -38,7 +37,6 @@ export function SessionsView(props: SessionsViewProps) {
   const auth = useAuth();
 
   const isLaunching = (sessionId: number) => launchingSessions().has(sessionId);
-  const isResetting = (id: number) => resettingSessions()[id] ?? false;
 
   const setLaunching = (sessionId: number, launching: boolean) => {
     setLaunchingSessions((previous) => {
@@ -50,13 +48,6 @@ export function SessionsView(props: SessionsViewProps) {
       }
       return next;
     });
-  };
-
-  const setResetting = (id: number, resetting: boolean) => {
-    setResettingSessions(prev => ({
-      ...prev,
-      [id]: resetting,
-    }));
   };
 
   const openAccessModal = (mode: Mode, session: GameSession) => {
@@ -202,11 +193,10 @@ export function SessionsView(props: SessionsViewProps) {
                 <Show when={auth.isSessionLauncher()}>
                   <span>
                     <button
-                      disabled={isResetting(session.id) || session.state === SessionState.Cleanup || session.state === SessionState.Ready}
+                      disabled={session.state === SessionState.Cleanup || session.state === SessionState.Ready}
                       onClick={async () => {
                         setSessionError(null);
                         try {
-                          setResetting(session.id, true);
                           await resetSession(session.id);
                         } catch (err) {
                           console.error(err);
@@ -214,17 +204,14 @@ export function SessionsView(props: SessionsViewProps) {
                             err instanceof Error ? err.message : String(err),
                           );
                         }
-                        finally {
-                          setResetting(session.id, false);
-                        }
                       }}
                       class="px-3 py-1.5 text-xs font-medium border border-slate-300 bg-white text-slate-700 enabled:hover:bg-slate-800 enabled:hover:text-white enabled:hover:border-slate-800 transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1"
                     >
                       <Show
-                        when={!isResetting(session.id)}
-                        fallback={<Icon class="mr-1 animate-spin" icon="lucide:loader" />}
+                        when={session.state === SessionState.Cleanup}
+                        fallback={<Icon class="mr-1" icon="lucide:rotate-ccw" />}
                       >
-                        <Icon class="mr-1" icon="lucide:rotate-ccw" />
+                        <Icon class="mr-1 animate-spin" icon="lucide:loader" />
                       </Show>
                       Reset
                     </button>
