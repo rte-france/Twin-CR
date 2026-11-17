@@ -50,6 +50,7 @@ message(STATUS "Found cppzmq:" ${cppzmq_INCLUDE_DIR})
 message(STATUS "Found ZMQ:" ${ZMQ_LIBRARY})
 
 # Include subdirectories
+add_subdirectory(Alarms)
 add_subdirectory(AssetSimulator)
 add_subdirectory(Broker)
 add_subdirectory(Credentials)
@@ -71,6 +72,17 @@ add_subdirectory(Replay)
 add_subdirectory(ScenarioHandler)
 
 # Add the main executable
+# `make tests` builds and runs all the Orchestrator tests (not the tests of the dependencies)
+if(ORCHESTRATOR_BUILD_TESTS)
+    add_custom_target(tests
+        COMMAND ${CMAKE_CTEST_COMMAND} --output-on-failure --label-regex "dsl|alarms"
+        DEPENDS dsl_test alarm_test
+        WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+        COMMENT "Running the Orchestrator tests"
+        VERBATIM
+    )
+endif()
+
 add_executable(orchestrator_project main.cpp )
 set_target_properties(${PROJECT_NAME} PROPERTIES OUTPUT_NAME "orchestrator_exec")
 

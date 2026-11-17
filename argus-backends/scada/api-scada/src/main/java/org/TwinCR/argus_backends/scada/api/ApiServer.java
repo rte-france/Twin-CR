@@ -15,20 +15,16 @@ import com.fasterxml.jackson.databind.util.RawValue;
 import com.powsybl.commons.datasource.MemDataSource;
 import com.powsybl.sld.svg.styles.DefaultStyleProviderFactory;
 import com.powsybl.sld.svg.styles.StyleProvidersList;
-import org.TwinCR.argus_backends.scada.alarms.AlarmRepository;
-import org.TwinCR.argus_backends.scada.alarms.AlarmRule;
 import org.TwinCR.argus_backends.common.api.ApiServerCommon;
 import org.TwinCR.argus_backends.common.api.ControllableSwitchStyleProvider;
 import org.TwinCR.argus_backends.common.api.EstimatedVariable;
 import org.TwinCR.argus_backends.common.core.bridge.SseNatsBridge;
 import org.TwinCR.argus_backends.common.gridmodel.ControlSenderCommon;
 import org.TwinCR.argus_backends.common.gridmodel.GridModel;
-import org.TwinCR.argus_backends.scada.alarms.AlarmEngine;
 import org.TwinCR.argus_backends.scada.config.Config;
 import org.TwinCR.argus_backends.scada.telemetry.SseEstimatedValuesBridge;
 import org.TwinCR.argus_backends.scada.telemetry.StateEstimator;
 import org.TwinCR.argus_backends.scada.telemetry.TelemetryConsumer;
-import org.TwinCR.argus_backends.scada.util.JsonUtil;
 
 import io.nats.client.Connection;
 import io.swagger.v3.oas.annotations.Operation;
@@ -47,7 +43,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.*;
-import java.nio.charset.StandardCharsets;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -56,17 +51,15 @@ import java.util.Set;
 
 public class ApiServer extends ApiServerCommon {
     private final static Logger LOGGER = LoggerFactory.getLogger(ApiServer.class);
-    private final AlarmEngine engine;
     private final TelemetryConsumer telemetryConsumer;
     private final String mappingString;
     private final SseEstimatedValuesBridge estimatedValuesBridge;
     private final double staleMeasurementTimeout;
 
-    public ApiServer(Config config, SseNatsBridge natsBridge, SseEstimatedValuesBridge estimatedValuesBridge, Connection conn, String appName, AlarmEngine engine, TelemetryConsumer telemetryConsumer, ControlSenderCommon controlSender) throws Exception {
+    public ApiServer(Config config, SseNatsBridge natsBridge, SseEstimatedValuesBridge estimatedValuesBridge, Connection conn, String appName, TelemetryConsumer telemetryConsumer, ControlSenderCommon controlSender) throws Exception {
         super(config, natsBridge, conn, appName, telemetryConsumer, controlSender,
             new ControllableSwitchStyleProvider(parseControllableSwitches(config))
         );
-        this.engine = engine;
         this.telemetryConsumer = telemetryConsumer;
         this.staleMeasurementTimeout = config.staleMeasurementTimeout();
 
@@ -90,9 +83,6 @@ public class ApiServer extends ApiServerCommon {
     @Override
     protected void registerEndpoints(RouteRegistry registry) {
         registry.add(new MappingHandler());
-        registry.add(new AlarmsAckHandler());
-        registry.add(new AlarmsGetHandler());
-        registry.add(new RulesHandler());
         registry.add(new CountHandler());
         registry.add(new UnchangedMeasurementsHandler());
         registry.add(new EstimHandler());
@@ -119,69 +109,6 @@ public class ApiServer extends ApiServerCommon {
                 return;
             }
             respondjson(resp, 200, mappingString);
-        }
-    }
-
-    @Path("/alarms")
-    class AlarmsGetHandler extends RouteHandler {
-        @Override public String path() { return "/alarms"; }
-
-        @GET
-        @Tag(name = "Alarms")
-        @Operation(summary = "List all active alarms")
-        @ApiResponse(responseCode = "200", description = "JSON array of alarms")
-        @Override
-        public void handle(String target, HttpServletRequest req, HttpServletResponse resp) throws Exception {
-            addCorsHeaders(resp);
-            if ("GET".equalsIgnoreCase(req.getMethod())) {
-                respondjson(resp, 200, JsonUtil.toJson(AlarmRepository.listAll()));
-            } else if ("POST".equalsIgnoreCase(req.getMethod()) && target.endsWith("/ack")) {
-                String body = new String(req.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
-                Map<?, ?> m = JsonUtil.fromJson(body, Map.class);
-                boolean ok = AlarmRepository.ack((String) m.get("id"));
-                respondjson(resp, ok ? 200 : 404, ok ? "{\"status\": \"ACKED\"}" : "{\"status\": \"NOT_FOUND\"}");
-            } else {
-                respondError(resp, 405, "Method Not Allowed");
-            }
-        }
-    }
-
-    @Path("/alarms/ack")
-    class AlarmsAckHandler extends RouteHandler {
-        @Override public String path() { return "/alarms/ack"; }
-
-        @POST
-        @Tag(name = "Alarms")
-        @Operation(summary = "Acknowledge an alarm")
-        @ApiResponse(responseCode = "200", description = "Alarm acknowledged")
-        @ApiResponse(responseCode = "404", description = "Alarm not found")
-        @Override
-        public void handle(String target, HttpServletRequest req, HttpServletResponse resp) throws Exception {
-            addCorsHeaders(resp);
-            String body = new String(req.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
-            Map<?, ?> m = JsonUtil.fromJson(body, Map.class);
-            boolean ok = AlarmRepository.ack((String) m.get("id"));
-            respondjson(resp, ok ? 200 : 404, ok ? "{\"status\": \"ACKED\"}" : "{\"status\": \"NOT_FOUND\"}");
-        }
-    }
-
-    @Path("/rules")
-    class RulesHandler extends RouteHandler {
-        @Override public String path() { return "/rules"; }
-
-        @GET
-        @Tag(name = "Alarms")
-        @Operation(summary = "List alarm rules")
-        @ApiResponse(responseCode = "200", description = "JSON array of alarm rules")
-        @Override
-        public void handle(String target, HttpServletRequest req, HttpServletResponse resp) throws Exception {
-            addCorsHeaders(resp);
-            if (!"GET".equalsIgnoreCase(req.getMethod())) {
-                respondError(resp, 405, "Method Not Allowed");
-                return;
-            }
-            List<AlarmRule> rules = engine.getRules();
-            respondjson(resp, 200, JsonUtil.toJson(rules));
         }
     }
 

@@ -8,3 +8,4 @@ dynawo_scada_inputs_no_map.json
 scada_outputs_no_map.json
 RTConnectors.dyd
 scada_inputs_no_map.json
+alarms.json

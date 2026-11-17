@@ -61,6 +61,12 @@ export const rightSidebarPanels: PanelManifest[] = [
 
 export const rightSidebarTools: PanelManifest[] = [
   {
+    id: "events",
+    label: "Events",
+    iconId: "mdi:format-list-bulleted",
+    elementTag: "event-list",
+  },
+  {
     id: "scada-commands",
     label: "Scada Commands",
     iconId: "mdi:account-school",

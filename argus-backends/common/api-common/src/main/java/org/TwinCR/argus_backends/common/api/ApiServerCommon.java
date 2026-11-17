@@ -28,6 +28,7 @@ import com.powsybl.sld.SldParameters;
 import com.powsybl.sld.svg.styles.DefaultStyleProviderFactory;
 import com.powsybl.sld.svg.styles.StyleProvidersList;
 
+import org.TwinCR.argus_backends.common.alarms.AlarmService;
 import org.TwinCR.argus_backends.common.core.bridge.DeferredSseClient;
 import org.TwinCR.argus_backends.common.core.bridge.SseClient;
 import org.TwinCR.argus_backends.common.core.bridge.SseNatsBridge;
@@ -109,6 +110,7 @@ public abstract class ApiServerCommon {
     protected final ControlSenderCommon controlSender;
     protected final String iidmVersion;
     protected final ControllableSwitchStyleProvider controllableSwitchStyleProvider;
+    protected final AlarmService alarmService;
 
     private static final Set<SseTopicSubscriber> clients = ConcurrentHashMap.newKeySet();
     private static final ScheduledExecutorService sseClientsManager = Executors.newSingleThreadScheduledExecutor();
@@ -172,6 +174,8 @@ public abstract class ApiServerCommon {
         this.controlSender = controlSender;
         this.iidmVersion = config.iidmVersion();
         this.controllableSwitchStyleProvider = controllableSwitchStyleProvider;
+        // Alarms detected by the Orchestrator for the values seen by this backend (Alarms.GameMaster or Alarms.HMI.<location>)
+        this.alarmService = new AlarmService(conn, "Alarms." + telemetryConsumer.subjectPrefix());
 
         Server server = new Server();
         HttpConfiguration httpConfig = new HttpConfiguration();
@@ -221,11 +225,14 @@ public abstract class ApiServerCommon {
         registry.add(new SubstationListHandler());
         registry.add(new NetworkComponentTypesHandler());
         registry.add(new NetworkTypeOfHandler());
+        registry.add(new NetworkLocationHandler());
         registry.add(new NetworkComponentSchemaHandler());
         registry.add(new NetworkComponentRowsHandler());
         registry.add(new SubHandler());
         registry.add(new SubDynawoConstraintsHandler());
         registry.add(new SubScadaCommandsHandler());
+        registry.add(new SubAlarmsHandler());
+        registry.add(new AlarmsHandler());
         registry.add(new TimeHandler());
         registry.add(new InitClockTimeHandler());
         registry.add(new HistoryHandler());
@@ -672,6 +679,49 @@ public abstract class ApiServerCommon {
         }
     }
 
+    @Path("/network/location")
+    class NetworkLocationHandler extends RouteHandler {
+        @Override public String path() { return "/network/location"; }
+
+        @GET
+        @Tag(name = "Grid")
+        @Operation(summary = "Get the substation and voltage level of an element by its id",
+            description = "{\"substation_id\": ..., \"voltage_level_id\": ...} (voltage level null for a substation)")
+        @Parameter(name = "id", in = ParameterIn.QUERY, required = true, description = "ID of the equipment, voltage level or substation")
+        @Parameter(name = "side", in = ParameterIn.QUERY, description = "Side of a branch or 3 windings transformer: ONE (default), TWO or THREE")
+        @ApiResponse(responseCode = "200", description = "Location of the element")
+        @ApiResponse(responseCode = "404", description = "No element found with the given id, or element without location")
+        @Override
+        public void handle(String target, HttpServletRequest req, HttpServletResponse resp) throws Exception {
+            addCorsHeaders(resp);
+            if (!"GET".equalsIgnoreCase(req.getMethod())) {
+                respondError(resp, 405, "Method Not Allowed");
+                return;
+            }
+            String id = req.getParameter("id");
+            if (id == null || id.isBlank()) {
+                respondError(resp, 400, "Missing 'id' parameter");
+                return;
+            }
+            int sideIndex = switch (Optional.ofNullable(req.getParameter("side")).orElse("ONE")) {
+                case "ONE" -> 0;
+                case "TWO" -> 1;
+                case "THREE" -> 2;
+                default -> -1;
+            };
+            if (sideIndex < 0) {
+                respondError(resp, 400, "Invalid side (ONE, TWO or THREE): " + req.getParameter("side"));
+                return;
+            }
+            Map<String, String> location = GridModel.locate(id, sideIndex);
+            if (location == null) {
+                respondError(resp, 404, "No located element with id: " + id);
+                return;
+            }
+            respondjson(resp, 200, MAPPER.writeValueAsString(location));
+        }
+    }
+
     @Path("/network/component-types-schema/{type}")
     class NetworkComponentSchemaHandler extends RouteHandler {
         @Override public String path() { return "/network/component-types-schema"; }
@@ -809,6 +859,93 @@ public abstract class ApiServerCommon {
             async.setTimeout(0);
             respondSse(resp);
             bridge.register("Dynawo.Constraints", sseClient(resp));
+        }
+    }
+
+    @Path("/sub-alarms")
+    class SubAlarmsHandler extends RouteHandler {
+        @Override public String path() { return "/sub-alarms"; }
+
+        @GET
+        @Tag(name = "Alarms")
+        @Operation(summary = "Subscribe to the alarms and events via SSE",
+            description = "First a snapshot {\"type\": \"snapshot\", \"alarms\": [...], \"events\": [...]}, then the changes: "
+                + "{\"type\": \"alarm\", \"alarm\": {...}} (added or updated), {\"type\": \"alarm_removed\", \"uid\": n}, "
+                + "{\"type\": \"event\", \"event\": {...}}, {\"type\": \"keepalive\"}")
+        @ApiResponse(responseCode = "200", description = "SSE stream of the alarm changes")
+        @Override
+        public void handle(String target, HttpServletRequest req, HttpServletResponse resp) throws Exception {
+            addCorsHeaders(resp);
+            if (!"GET".equalsIgnoreCase(req.getMethod())) {
+                respondError(resp, 405, "Method Not Allowed");
+                return;
+            }
+            AsyncContext async = req.startAsync();
+            async.setTimeout(0);
+            respondSse(resp);
+            try {
+                alarmService.register(sseClient(resp));
+            } catch (IOException e) {
+                async.complete();
+            }
+        }
+    }
+
+    @Path("/alarms/{action}")
+    class AlarmsHandler extends RouteHandler {
+        @Override public String path() { return "/alarms"; }
+
+        @POST
+        @Tag(name = "Alarms")
+        @Operation(summary = "Act on alarms (GET /alarms: current alarms and events)",
+            description = "acknowledge: {\"uids\": [...]}, removes the momentary alarms. "
+                + "clear: {\"uids\": [...]}, removes the persistent alarms acknowledged and ended. "
+                + "comment: {\"uid\": n, \"comment\": \"...\"} (null or blank removes it). "
+                + "acknowledge/clear reply with the uids done: {\"uids\": [...]}")
+        @Parameter(name = "action", in = ParameterIn.PATH, required = true, description = "acknowledge, clear or comment")
+        @ApiResponse(responseCode = "200", description = "OK")
+        @ApiResponse(responseCode = "404", description = "Unknown action, or alarm not found (comment)")
+        @Override
+        public void handle(String target, HttpServletRequest req, HttpServletResponse resp) throws Exception {
+            addCorsHeaders(resp);
+            if ("/alarms".equals(target)) {
+                if (!"GET".equalsIgnoreCase(req.getMethod())) {
+                    respondError(resp, 405, "Method Not Allowed");
+                    return;
+                }
+                respondjson(resp, 200, alarmService.snapshot().toString());
+                return;
+            }
+            if (!"POST".equalsIgnoreCase(req.getMethod())) {
+                respondError(resp, 405, "Method Not Allowed");
+                return;
+            }
+            JsonNode body = MAPPER.readTree(req.getInputStream());
+            String action = target.substring("/alarms/".length());
+            switch (action) {
+                case "acknowledge", "clear" -> {
+                    List<Long> uids = MAPPER.convertValue(body.path("uids"), new TypeReference<>() {});
+                    if (uids == null) {
+                        respondError(resp, 400, "Missing uids");
+                        return;
+                    }
+                    List<Long> done = "acknowledge".equals(action) ? alarmService.acknowledge(uids) : alarmService.clear(uids);
+                    respondjson(resp, 200, MAPPER.writeValueAsString(Map.of("uids", done)));
+                }
+                case "comment" -> {
+                    if (!body.hasNonNull("uid")) {
+                        respondError(resp, 400, "Missing uid");
+                        return;
+                    }
+                    String comment = body.hasNonNull("comment") ? body.get("comment").asText() : null;
+                    if (alarmService.comment(body.get("uid").asLong(), comment)) {
+                        respondjson(resp, 200, "{}");
+                    } else {
+                        respondError(resp, 404, "No alarm " + body.get("uid").asLong());
+                    }
+                }
+                default -> respondError(resp, 404, "Unknown action " + action);
+            }
         }
     }
 

@@ -1,0 +1,283 @@
+/*
+Copyright (c) 2026, RTE (https://www.rte-france.com)
+See AUTHORS.md
+SPDX-License-Identifier: MPL-2.0
+This file is part of Twin-CR, a platform for real-time cyber-physical
+co-simulation of power systems.
+*/
+
+package org.TwinCR.argus_backends.common.alarms;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+
+import io.nats.client.Connection;
+import io.nats.client.Dispatcher;
+
+import org.TwinCR.argus_backends.common.core.bridge.DeferredSseClient;
+import org.TwinCR.argus_backends.common.core.bridge.SseClient;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.io.IOException;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Deque;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+
+/**
+ * Alarm list and event journal of one backend, fed by the AlarmDetector of the Orchestrator (schemas/Orchestrator/Publications/alarm.json).
+ *
+ * Lifecycle of the alarms:
+ *  - momentary: acknowledging removes the alarm;
+ *  - persistent: the alarm is acknowledged, then cleared once ended (back to its normal state);
+ *  - retain = false (NO RETAIN): a new state of an id replaces its alarms, else each occurrence has its own alarm.
+ * Acknowledgements, clearings and comments are shared by all the clients of the backend, and logged in the event journal.
+ *
+ * Clients follow the state through an SSE stream: a snapshot, then the changes:
+ *  {"type": "snapshot", "alarms": [...], "events": [...]}, {"type": "alarm", "alarm": {...}} (added or updated),
+ *  {"type": "alarm_removed", "uid": n}, {"type": "event", "event": {...}}, {"type": "keepalive"}.
+ */
+public class AlarmService {
+    private static final Logger LOGGER = LoggerFactory.getLogger(AlarmService.class);
+    private static final ObjectMapper MAPPER = new ObjectMapper();
+    private static final int MAX_EVENTS = 10_000;
+    private static final String KEEPALIVE = "{\"type\":\"keepalive\"}";
+
+    private final Map<Long, ObjectNode> alarms = new LinkedHashMap<>();  // By uid, in order of arrival
+    private final Deque<ObjectNode> events = new ArrayDeque<>();
+    private final Set<SseClient> clients = ConcurrentHashMap.newKeySet();
+    private long nextUid = 1;
+    private long nextSeq = 1;
+    private volatile double currentTime = 0;
+
+    /**
+     * @param subject NATS subject of the AlarmDetector for this backend ("Alarms.GameMaster" or "Alarms.HMI.<location>")
+     */
+    public AlarmService(Connection conn, String subject) {
+        Dispatcher dispatcher = conn.createDispatcher(msg -> {
+            try {
+                if ("time".equals(msg.getSubject())) {
+                    currentTime = MAPPER.readTree(msg.getData()).path("current_time").asDouble(currentTime);
+                } else {
+                    onAlarm((ObjectNode) MAPPER.readTree(msg.getData()));
+                }
+            } catch (Exception e) {
+                LOGGER.warn("Invalid alarm message on {}", msg.getSubject(), e);
+            }
+        });
+        dispatcher.subscribe(subject);
+        dispatcher.subscribe("time");
+        LOGGER.info("Alarm service subscribed to {}", subject);
+
+        // Also detects the disconnected clients
+        ScheduledExecutorService keepalive = Executors.newSingleThreadScheduledExecutor(r -> {
+            Thread t = new Thread(r, "alarm-keepalive");
+            t.setDaemon(true);
+            return t;
+        });
+        keepalive.scheduleAtFixedRate(() -> {
+            synchronized (this) {
+                broadcast(KEEPALIVE);
+            }
+        }, 10, 10, TimeUnit.SECONDS);
+    }
+
+    /** Handle an alarm or event published by the AlarmDetector */
+    private synchronized void onAlarm(ObjectNode message) {
+        ObjectNode event = MAPPER.createObjectNode();
+        event.put("seq", nextSeq++);
+        for (String field : List.of("time", "id", "label", "state", "kind", "alarm", "priority", "color", "equipment_id", "side", "substation_id")) {
+            if (message.has(field)) {
+                event.set(field, message.get(field));
+            }
+        }
+        addEvent(event);
+
+        String id = message.path("id").asText();
+        boolean persistent = "persistent".equals(message.path("mode").asText());
+        // An event (even with "alarm": false) can end an alarm
+        if (persistent && message.path("normal").asBoolean(false)) {
+            // End of the persistent alarms of this id: they can now be cleared
+            for (ObjectNode alarm : alarms.values()) {
+                if (alarm.path("id").asText().equals(id) && !alarm.path("ended").asBoolean()) {
+                    alarm.put("ended", true);
+                    alarm.put("end_time", message.path("time").asDouble());
+                    broadcastAlarm(alarm);
+                }
+            }
+            return;
+        }
+        // Only an event ("alarm": false), skip
+        if (!message.path("alarm").asBoolean(false)) {
+            return;
+        }
+        if (!message.path("retain").asBoolean(true)) {
+            // NO RETAIN: only the latest state of the id is kept
+            removeAlarms(alarms.values().stream().filter(a -> a.path("id").asText().equals(id)).map(a -> a.path("uid").asLong()).toList());
+        }
+
+        ObjectNode alarm = message.deepCopy();
+        alarm.put("uid", nextUid++);
+        alarm.put("acked", false);
+        alarm.put("ended", !persistent);  // Only persistent alarms have to end before being cleared
+        alarm.putNull("comment");
+        alarms.put(alarm.path("uid").asLong(), alarm);
+        broadcastAlarm(alarm);
+    }
+
+    /**
+     * Acknowledge alarms: removes the momentary ones, the persistent ones then have to be cleared
+     * @return the uids acknowledged
+     */
+    public synchronized List<Long> acknowledge(Collection<Long> uids) {
+        List<Long> done = new ArrayList<>();
+        for (Long uid : uids) {
+            ObjectNode alarm = alarms.get(uid);
+            if (alarm == null || alarm.path("acked").asBoolean()) {
+                continue;
+            }
+            done.add(uid);
+            logAction(alarm, "acknowledge", "Acknowledged");
+            if ("persistent".equals(alarm.path("mode").asText())) {
+                alarm.put("acked", true);
+                broadcastAlarm(alarm);
+            } else {
+                removeAlarms(List.of(uid));
+            }
+        }
+        return done;
+    }
+
+    /**
+     * Clear persistent alarms, once acknowledged and ended
+     * @return the uids cleared
+     */
+    public synchronized List<Long> clear(Collection<Long> uids) {
+        List<Long> done = new ArrayList<>();
+        for (Long uid : uids) {
+            ObjectNode alarm = alarms.get(uid);
+            if (alarm == null || !alarm.path("acked").asBoolean() || !alarm.path("ended").asBoolean()) {
+                continue;
+            }
+            done.add(uid);
+            logAction(alarm, "clear", "Cleared");
+            removeAlarms(List.of(uid));
+        }
+        return done;
+    }
+
+    /**
+     * Set (or remove, with null or blank) the comment of an alarm. The comment disappears with the alarm.
+     * @return false if the alarm does not exist
+     */
+    public synchronized boolean comment(long uid, String comment) {
+        ObjectNode alarm = alarms.get(uid);
+        if (alarm == null) {
+            return false;
+        }
+        if (comment == null || comment.isBlank()) {
+            alarm.putNull("comment");
+            logAction(alarm, "comment", "Comment removed");
+        } else {
+            alarm.put("comment", comment);
+            logAction(alarm, "comment", "Comment: " + comment);
+        }
+        broadcastAlarm(alarm);
+        return true;
+    }
+
+    /** Current alarms and events */
+    public synchronized ObjectNode snapshot() {
+        ObjectNode snapshot = MAPPER.createObjectNode();
+        snapshot.put("type", "snapshot");
+        ArrayNode alarmArray = snapshot.putArray("alarms");
+        alarms.values().forEach(alarmArray::add);
+        ArrayNode eventArray = snapshot.putArray("events");
+        events.forEach(eventArray::add);
+        return snapshot;
+    }
+
+    /** Send the snapshot to a new client, then the changes */
+    public void register(SseClient client) throws IOException {
+        DeferredSseClient deferred = new DeferredSseClient(client);
+        String snapshot;
+        synchronized (this) {
+            snapshot = snapshot().toString();
+            clients.add(deferred);
+        }
+        try {
+            deferred.start(List.of(snapshot));
+        } catch (IOException e) {
+            clients.remove(deferred);
+            throw e;
+        }
+    }
+
+    private void logAction(ObjectNode alarm, String kind, String state) {
+        ObjectNode event = MAPPER.createObjectNode();
+        event.put("seq", nextSeq++);
+        event.put("time", currentTime);
+        for (String field : List.of("id", "label", "equipment_id", "side", "substation_id")) {
+            if (alarm.has(field)) {
+                event.set(field, alarm.get(field));
+            }
+        }
+        event.put("state", state);
+        event.put("kind", kind);
+        event.put("alarm", false);
+        event.put("priority", 0);
+        event.put("color", "grey");
+        event.put("uid", alarm.path("uid").asLong());
+        addEvent(event);
+    }
+
+    private void addEvent(ObjectNode event) {
+        events.addLast(event);
+        while (events.size() > MAX_EVENTS) {
+            events.removeFirst();
+        }
+        ObjectNode message = MAPPER.createObjectNode();
+        message.put("type", "event");
+        message.set("event", event);
+        broadcast(message.toString());
+    }
+
+    private void removeAlarms(List<Long> uids) {
+        for (Long uid : uids) {
+            if (alarms.remove(uid) != null) {
+                broadcast("{\"type\":\"alarm_removed\",\"uid\":" + uid + "}");
+            }
+        }
+    }
+
+    private void broadcastAlarm(ObjectNode alarm) {
+        ObjectNode message = MAPPER.createObjectNode();
+        message.put("type", "alarm");
+        message.set("alarm", alarm);
+        broadcast(message.toString());
+    }
+
+    /** Called with the lock held, so that all the clients get the changes in the same order */
+    private void broadcast(String payload) {
+        Iterator<SseClient> it = clients.iterator();
+        while (it.hasNext()) {
+            SseClient client = it.next();
+            try {
+                client.send(payload);
+            } catch (IOException e) {
+                it.remove();
+            }
+        }
+    }
+}

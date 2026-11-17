@@ -15,7 +15,7 @@ import {
   type JSX,
 } from "solid-js";
 import { useSubstationList } from "../hooks/useSubstationList";
-import { openInCentral } from "@/utils/openInCentral";
+import { openSld } from "@/features/single-line-diagram/navigation";
 import type { Type } from "../types";
 
 interface SubstationExplorerContextValue extends ReturnType<
@@ -49,17 +49,7 @@ export const SubstationExplorerProvider: Component<Props> = (props) => {
 
   const substationList = useSubstationList();
 
-  const handleOpenSld = (equipmentId: string, type: Type) => {
-    openInCentral({
-      id: `${type} - ${equipmentId}`,
-      title: `${type} - ${equipmentId}`,
-      elementTag: "sld-viewer",
-      params: {
-        equipmentId,
-        type,
-      },
-    });
-  };
+  const handleOpenSld = (equipmentId: string, type: Type) => openSld(equipmentId, type);
 
   const toggleExpand = (id: string) => {
     const next = new Set(expanded());

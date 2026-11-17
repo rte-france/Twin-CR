@@ -9,7 +9,7 @@ co-simulation of power systems.
 import { For, Show, type Component } from "solid-js";
 import { useSldContext } from "../providers/SldProvider";
 import { useLineGoTo } from "../hooks/useLineGoto";
-import { openInCentral } from "@/utils/openInCentral";
+import { openSld } from "../navigation";
 import { useEquipmentControl } from "../hooks/useEquipmentControl";
 import { useActionPanelSelection } from "../hooks/useActionPanelSelection";
 import { useProtectionEquipmentLabels } from "../hooks/useProtectionEquipmentLabels";
@@ -30,17 +30,7 @@ export const SldCanvas: Component = () => {
   useLineGoTo({
     svgRef: ctx.svgRef,
     metadata: () => ctx.sldData()?.sld?.metadata,
-    onGoToVoltageLevel: (nextVId) => {
-      openInCentral({
-        id: `vl - ${nextVId}`,
-        title: `vl - ${nextVId}`,
-        elementTag: "sld-viewer",
-        params: {
-          equipmentId: nextVId,
-          type: "vl",
-        },
-      });
-    },
+    onGoToVoltageLevel: (nextVId) => openSld(nextVId, "vl"),
   });
 
   const { pendingIds } = useEquipmentControl({

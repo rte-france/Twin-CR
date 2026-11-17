@@ -1,0 +1,125 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Alarm Configuration",
+  "description": "Alarm types and alarms of the AlarmDetector (config.toml input_files.alarms_file). A configured id raises an event each time its state changes, on the GameMaster side (ActualMeasurement) and on the SCADA side (MeasurementReceived, per destination); controls raise command events.",
+  "type": "object",
+  "definitions": {
+    "color": {
+      "type": "string",
+      "description": "Display colour, e.g. grey, blue, yellow, red, violet (interpreted by Argus)"
+    },
+    "sound": {
+      "type": ["string", "null"],
+      "description": "Sound played until the alarm is acknowledged, e.g. grey, blue, yellow, red, violet (interpreted by Argus); null for no sound"
+    },
+    "state": {
+      "type": "object",
+      "properties": {
+        "label": {"type": "string", "description": "State displayed after the alarm label, e.g. Open"},
+        "priority": {"type": "integer", "description": "Priority, also giving the colour and the sound through 'priorities' unless set here"},
+        "color": {"$ref": "#/definitions/color"},
+        "sound": {"$ref": "#/definitions/sound"},
+        "alarm": {"type": "boolean", "description": "Overrides the 'alarm' of the type for this state"}
+      },
+      "required": ["label", "priority"],
+      "additionalProperties": false
+    },
+    "level": {
+      "type": "object",
+      "properties": {
+        "name": {"type": "string", "description": "Level name, key of the 'thresholds' of the alarms of this type"},
+        "direction": {
+          "enum": ["high", "low"],
+          "description": "high (default): crossed when the absolute value is above the threshold. low: when below it, but not zero (e.g. a de-energised bus)"
+        },
+        "label": {"type": "string", "description": "State displayed after the alarm label, e.g. Limit 1 overload"},
+        "priority": {"type": "integer"},
+        "color": {"$ref": "#/definitions/color"},
+        "sound": {"$ref": "#/definitions/sound"},
+        "alarm": {"type": "boolean"}
+      },
+      "required": ["name", "label", "priority"],
+      "additionalProperties": false
+    }
+  },
+  "properties": {
+    "priorities": {
+      "type": "array",
+      "description": "Colour and sound from the priority: the rule with the highest 'min' not above the priority applies",
+      "items": {
+        "type": "object",
+        "properties": {
+          "min": {"type": "integer"},
+          "color": {"$ref": "#/definitions/color"},
+          "sound": {"$ref": "#/definitions/sound"}
+        },
+        "required": ["min", "color"],
+        "additionalProperties": false
+      }
+    },
+    "types": {
+      "type": "object",
+      "description": "Alarm types by name. A type has either 'states' (state change of the value) or 'levels' (threshold crossing of the absolute value)",
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "alarm": {"type": "boolean", "description": "True (default) to show the events in the alarm list, false for the event list only"},
+          "mode": {
+            "enum": ["momentary", "persistent"],
+            "description": "momentary (default): acknowledging removes the alarm. persistent: the alarm must be acknowledged then cleared, once back to normal; also raised at start when not normal"
+          },
+          "retain": {"type": "boolean", "description": "True (default): one alarm per occurrence. False (NO RETAIN): only the latest state of each id is kept"},
+          "normal": {"type": "number", "description": "Normal value (state types), required for persistent types"},
+          "states": {
+            "type": "object",
+            "description": "State of each value, keyed by the value (integers without decimals, e.g. '1'). Other values are displayed as is",
+            "additionalProperties": {"$ref": "#/definitions/state"}
+          },
+          "levels": {
+            "type": "array",
+            "description": "Threshold levels, the levels of each direction in increasing severity (increasing threshold for high levels, decreasing for low levels). The state is the last level crossed",
+            "items": {"$ref": "#/definitions/level"}
+          },
+          "normal_state": {"$ref": "#/definitions/state", "description": "State when no threshold is crossed (threshold types)"},
+          "hysteresis": {"type": "number", "minimum": 0, "description": "Relative hysteresis to leave a level, e.g. 0.02: a high level is left below 98% of its threshold, a low level above 102%"}
+        },
+        "additionalProperties": false
+      }
+    },
+    "commands": {
+      "type": "object",
+      "description": "Command events (ControlSent: all of them on the GameMaster side, those from the HMI on the SCADA side)",
+      "properties": {
+        "enabled": {"type": "boolean"},
+        "label": {"type": "string", "description": "State displayed before the value, e.g. Command"},
+        "priority": {"type": "integer"}
+      },
+      "additionalProperties": false
+    },
+    "alarms": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {"type": "string", "description": "Measurement id (game_master_outputs/scada_outputs id)"},
+          "tase2": {"type": "string", "description": "Tase2 id, resolved to the id through scada_outputs_file, instead of 'id'"},
+          "type": {"type": "string", "description": "Name of the type in 'types'"},
+          "label": {"type": "string", "description": "Displayed name, defaults to the id"},
+          "equipment_id": {"type": "string", "description": "IIDM equipment, located in the network of each backend by Locate (with side)"},
+          "substation_id": {"type": "string", "description": "IIDM substation opened by Locate, when the equipment is not given or not found in the network of a backend"},
+          "side": {"enum": ["ONE", "TWO", "THREE"], "description": "Side of the equipment (branch, 3 windings transformer) located by Locate, side ONE if not given"},
+          "thresholds": {
+            "type": "object",
+            "description": "Threshold of each level name of the type (threshold types); a level without threshold is never crossed",
+            "additionalProperties": {"type": "number"}
+          }
+        },
+        "required": ["type"],
+        "oneOf": [{"required": ["id"]}, {"required": ["tase2"]}],
+        "additionalProperties": false
+      }
+    }
+  },
+  "required": ["types", "alarms"],
+  "additionalProperties": false
+}

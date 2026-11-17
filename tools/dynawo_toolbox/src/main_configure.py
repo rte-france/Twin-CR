@@ -11,6 +11,7 @@ import json
 from pathlib import Path
 
 from configurator.configurator import Configurator
+import configurator.alarm_config_generator as AlarmConfigGenerator
 import configurator.asset_simulator_config_generator as AssetSimulatorConfigGenerator
 from jobs_editor import JobsFile
 from json_io import load_json
@@ -63,11 +64,14 @@ def main(
     if pt_fige_file is None:  # Use PtFigé iidm instead of the Dynawo iidm if specified as it has more accurate current limits (esp. for 3-windings tfos)
         pt_fige_file = iidm_file
 
+    asset_simulator_config = None
     if generate_asset_simulator_config:
-        generate_asset_simulator(output_dir, communication_file, cyber_mapping_file, pt_fige_file, suffix_mini, suffix_mapped)
+        asset_simulator_config = generate_asset_simulator(output_dir, communication_file, cyber_mapping_file, pt_fige_file, suffix_mini, suffix_mapped)
 
     if extra_io_file is not None:
         add_extra_io(extra_io_file, output_dir, suffix_mini, suffix_mapped, pretty_print)
+
+    generate_alarms(output_dir, pt_fige_file, suffix_mini, suffix_mapped, asset_simulator_config)
 
     return mock_cyber_config
 
@@ -81,7 +85,9 @@ def main_from_jobs(jobs_file: str | Path, models_path: Path | str | None = None,
                    generate_asset_simulator_config: bool = False,
                    pt_fige_file: str | Path | None = None,
                    extra_rules_dir: str | Path | None = None,
-                   extra_io_file: str | Path | None = None) -> tuple[str, str | None, str | None]:
+                   extra_io_file: str | Path | None = None,
+                   generate_alarm_config: bool = True,
+                   asset_simulator_config_file: str | Path | None = None) -> tuple[str, str | None, str | None, str | None]:
     """
     Configure a context from its jobs file alone.
 
@@ -91,8 +97,11 @@ def main_from_jobs(jobs_file: str | Path, models_path: Path | str | None = None,
     is added to the jobs file if it is not referenced yet.
 
     Returns the generated connectors dyd, the generated mock cyber config when
-    no real one was supplied, and the generated asset simulator config when one
-    was asked for and could be built.
+    no real one was supplied, the generated asset simulator config when one
+    was asked for and could be built, and the generated alarm config when one
+    was asked for (not when the user supplies one: it would overwrite it).
+    The OverloadAlarm assets of the alarm config come from the generated asset simulator config, else from
+    asset_simulator_config_file (supplied by the user).
     """
     jobs_file = Path(jobs_file)
     working_dir = jobs_file.parent
@@ -145,6 +154,11 @@ def main_from_jobs(jobs_file: str | Path, models_path: Path | str | None = None,
     if extra_io_file is not None:
         add_extra_io(extra_io_file, output_dir, suffix_mini, suffix_mapped, pretty_print)
 
+    alarm_config = None
+    if generate_alarm_config:
+        alarm_config = generate_alarms(output_dir, pt_fige_file, suffix_mini, suffix_mapped,
+                                       asset_simulator_config or asset_simulator_config_file)
+
     changed = jobs.ensure_dyd(generated_dyd)
     if period is not None:
         changed |= jobs.ensure_interactive_settings(period)
@@ -153,7 +167,23 @@ def main_from_jobs(jobs_file: str | Path, models_path: Path | str | None = None,
 
     return (generated_dyd,
             mock_cyber_config.name if mock_cyber_config else None,
-            asset_simulator_config.name if asset_simulator_config else None)
+            asset_simulator_config.name if asset_simulator_config else None,
+            alarm_config.name if alarm_config else None)
+
+
+def generate_alarms(output_dir: Path, iidm_file: str | Path, suffix_mini: str, suffix_mapped: str,
+                    asset_simulator_config: str | Path | None) -> Path:
+    """
+    Write the alarm configuration (breakers, OverloadAlarm assets, current and voltage thresholds) next to the other outputs.
+    Uses the game master and SCADA outputs, so that the alarms on the GameMaster and SCADA sides are the same.
+    """
+    return AlarmConfigGenerator.generate(
+        iidm_file,
+        Path(output_dir) / f"scada_outputs{suffix_mini}{suffix_mapped}.json",
+        Path(output_dir) / AlarmConfigGenerator.ALARM_CONFIG_NAME,
+        asset_simulator_config,
+        Path(output_dir) / f"game_master_outputs{suffix_mini}.json",
+    )
 
 
 def generate_asset_simulator(output_dir: Path, communication_file: str | Path | None,
