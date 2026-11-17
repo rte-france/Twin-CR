@@ -170,9 +170,13 @@ export function SessionsView(props: SessionsViewProps) {
               <div class="flex items-center gap-2 w-24 shrink-0">
                 <span
                   class={`w-2 h-2 rounded-full ${
-                    session.state === SessionState.Ended
-                      ? "bg-red-500"
-                      : "bg-green-500"
+                    {
+                      [SessionState.Warmup]: "bg-yellow-500",
+                      [SessionState.Ready]: "bg-green-500",
+                      [SessionState.Ongoing]: "bg-blue-500",
+                      [SessionState.Cleanup]: "bg-orange-500",
+                      [SessionState.Ended]: "bg-red-500",
+                    }[session.state] ?? "bg-gray-500"
                   }`}
                 />
                 <span class="text-xs text-slate-600 font-medium">

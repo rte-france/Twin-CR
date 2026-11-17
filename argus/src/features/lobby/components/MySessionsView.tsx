@@ -47,6 +47,32 @@ export function MySessionsView() {
     onCleanup(() => clearInterval(interval));
   });
 
+  type SessionStateBadgeProps = {
+    state: SessionState;
+  };
+
+  const STATE_COLORS: Record<SessionState, string> = {
+    [SessionState.Warmup]: "bg-yellow-100 text-yellow-700",
+    [SessionState.Ready]: "bg-green-100 text-green-700",
+    [SessionState.Ongoing]: "bg-blue-100 text-blue-700",
+    [SessionState.Cleanup]: "bg-orange-100 text-orange-700",
+    [SessionState.Ended]: "bg-red-100 text-red-700",
+  };
+
+  function SessionStateBadge({
+    state,
+  }: SessionStateBadgeProps) {
+    return (
+      <span
+        class={`text-xs font-medium px-1 ${
+          STATE_COLORS[state] ?? "bg-gray-100 text-gray-700"
+        }`}
+      >
+        {state}
+      </span>
+    );
+  }
+
   const removeSession = async (id: number) => {
     const previous = notReadySessions() ?? [];
     setError(null);
@@ -96,16 +122,7 @@ export function MySessionsView() {
                 </div>
 
                 <div class="flex items-center gap-4">
-                  <span
-                    class={`text-xs font-medium text-slate-600 px-1 ${
-                      session.state === SessionState.Ended
-                        ? "bg-red-100 text-red-700"
-                        : "bg-green-100 text-green-700"
-                    }`}
-                  >
-                    {session.state}
-                  </span>
-
+                  <SessionStateBadge state={session.state} />
                   <span class="text-xs text-slate-400">
                     #{session.id}
                   </span>
@@ -180,15 +197,7 @@ export function MySessionsView() {
                 </div>
 
                 <div class="flex items-center gap-4">
-                  <span
-                    class={`text-xs font-medium text-slate-600 px-1 ${
-                      session.state === SessionState.Ended
-                        ? "bg-red-100 text-red-700"
-                        : "bg-green-100 text-green-700"
-                    }`}
-                  >
-                    {session.state}
-                  </span>
+                  <SessionStateBadge state={session.state} />
 
                   <span class="text-sm text-gray-500">#{session.id}</span>
                 </div>
