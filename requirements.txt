@@ -29,7 +29,13 @@ AsyncioPySide6
 matplotlib
 psutil
 nats-py
-
+clickhouse_connect
+pathspec
+pandapower
+scikit-learn
+pypower
+colorcet
+numba
 
 # RTWH dependencies
 fastapi==0.95.2

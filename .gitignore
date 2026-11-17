@@ -124,3 +124,6 @@ estimOutput.*
 # Argus build dir
 AppImage/
 Windows/
+
+# Private tests
+trainer_agent/tests_private
