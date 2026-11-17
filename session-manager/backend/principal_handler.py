@@ -20,7 +20,7 @@ class PrincipalHandler:
     """
 
     def __init__(self):
-        if KEYCLOAK_VERIFY_TLS:
+        if not KEYCLOAK_VERIFY_TLS:
             ssl._create_default_https_context = ssl._create_unverified_context
         self.security_scheme = HTTPBearer()
         # Fetches the realm's public keys once and caches them, so verification does not
