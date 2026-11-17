@@ -29,7 +29,8 @@ from fastapi.responses import JSONResponse
 from sqlalchemy import case, func
 from sqlmodel import select, Session
 
-from backend.config import KEYCLOAK_CLIENT_ID, NO_AUTH, UPDATE_SESSION_STATE_TIMEOUT, CONFIGURATOR_CLIENT_ENDPOINT
+from backend.config import KEYCLOAK_CLIENT_ID, UPDATE_SESSION_STATE_TIMEOUT, CONFIGURATOR_CLIENT_ENDPOINT, \
+    SIMULATORS_PATH, EXTRA_RULES_PATH, NO_AUTH
 from backend.db.constants import USERS_FOLDER_ID, ROOT_FOLDER_ID
 from backend.db.engine import create_db_and_tables, SessionDep, StorageDep, USERS_FOLDER_ID, SessionServiceDep, \
     CurrentUserDep, principal_handler, engine
@@ -44,11 +45,22 @@ from backend.simulator.simulator_cache_handler import get_or_retrieve
 
 TEMPLATE_NAME_RE = re.compile(r"[A-Za-z0-9 ._-]{1,100}")
 
+# Paths inside the orchestrator container, as in the example config.toml files.
+# RTE's build carries models the public one does not, so a context is tied to one.
+DYNAWO_SCRIPT_PATHS = {
+    "public": "/home/orchestrator/simulators/dynawo/dynawo.sh",
+    "rte": "/home/orchestrator/simulators/dynawo-rte/dynawo.sh",
+}
+
+DYNAWO_DDB_PATHS = {
+    "public": Path(SIMULATORS_PATH) / "dynawo/ddb",
+    "rte": Path(SIMULATORS_PATH) / "dynawo-rte/ddb",
+}
 
 # Configurator rules of the models only in RTE's build, merged over the default ones (mounted by the Twin-CR compose override)
 DYNAWO_EXTRA_RULES_DIRS = {
     "public": None,
-    "rte": "/home/session-manager/dynawo_rules",
+    "rte": EXTRA_RULES_PATH,
 }
 load_dotenv()
 import main_configure  # need env var
@@ -748,7 +760,7 @@ def create_template(
         mapping_file: UploadFile | None = File(None),
         scada_iidm_file: UploadFile | None = File(None),
         gm_iidm_file: UploadFile | None = File(None),other_files: list[UploadFile] = File(default_factory=list),
-    automata_commands: list[str] = Form(default_factory=list),
+        automata_commands: list[str] = Form(default_factory=list),
         period: float = Form(1),
         dynawo_version: str = Form("dynawov1.8.2"),
         current_user=Depends(require_role("template_manager")),
@@ -868,7 +880,7 @@ def create_template(
                     period,
                     asset_simulator_config_file is None,
                     paths.get(TemplateFileRole.scada_iidm),
-                    DYNAWO_EXTRA_RULES_DIRS[dynawo_variant],
+                    DYNAWO_EXTRA_RULES_DIRS[dynawo_version],
                     paths.get(TemplateFileRole.extra_io),
                 ).result()
         except ValueError as e:

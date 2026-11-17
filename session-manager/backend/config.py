@@ -43,3 +43,7 @@ KEYCLOAK_HTTPS = os.getenv("KEYCLOAK_HTTPS", "false")
 NO_AUTH = os.getenv("NO_AUTH", "false")
 
 UPDATE_SESSION_STATE_TIMEOUT = 5
+
+KEYCLOAK_VERIFY_TLS = os.getenv("KEYCLOAK_VERIFY_TLS","TRUE").casefold() == "true"
+SIMULATORS_PATH = os.getenv("SIMULATORS_PATH", "/home/session-manager/simulators")
+EXTRA_RULES_PATH = os.getenv("EXTRA_RULES_PATH", "/home/session-manager/dynawo_rules")

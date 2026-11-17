@@ -12,6 +12,7 @@ import { useAppMode } from "@/hooks/useAppMode";
 import { Show } from "solid-js";
 import { GmControls } from "@/features/gm-settings";
 import { Mode } from "@/services/app-mode";
+import { Clock } from "@/features/clock-simulation";
 
 export const CentralMenu = () => {
   const [mode] = useAppMode();
@@ -29,6 +30,10 @@ export const CentralMenu = () => {
           <div class="w-px h-2.5 bg-divider rounded-full" />
           <GmControls />
         </Show>
+
+        <div class="w-px h-2.5 bg-divider rounded-full" />
+
+        <Clock />
       </div>
     </div>
   );
