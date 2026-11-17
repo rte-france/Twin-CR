@@ -145,6 +145,13 @@ void Broker::onDynawoConstraintEvent(const DynawoConstraintEvent& info) {
     natsConnection_PublishString(nats_connection_, "Dynawo.Constraints", info.event_string.c_str());
 }
 
+void Broker::publish(const std::string& subject, const std::string& payload) {
+    natsStatus s = natsConnection_Publish(nats_connection_, subject.c_str(), payload.data(), static_cast<int>(payload.size()));
+    if (s != NATS_OK) {
+        spdlog::error("Broker: Failed to publish on {}: {}", subject, natsStatus_GetText(s));
+    }
+}
+
 void Broker::subscribe(const std::string& topic, Handler handler) {
     auto handler_ptr = std::make_shared<Handler>(std::move(handler));
     nats_handlers_.push_back(handler_ptr);

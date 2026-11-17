@@ -55,7 +55,7 @@ RUN mkdir -p /opt/orchestrator/build-orchestrator-container && \
     cmake -DORCHESTRATOR_BUILD_TESTS=${WITH_TESTS} \
           -DFETCHCONTENT_BASE_DIR=/opt/orchestrator/build-deps/_deps .. && \
     make -j $(nproc) && \
-    if [ "${WITH_TESTS}" = "ON" ]; then make dsl-tests; fi && \
+    if [ "${WITH_TESTS}" = "ON" ]; then make tests; fi && \
     make install
 
 # Runtime image: only the installed binary/libs and the packages needed to run it

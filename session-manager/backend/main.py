@@ -8,6 +8,7 @@ co-simulation of power systems.
 import asyncio
 import datetime
 import hmac
+import json
 import logging
 import mimetypes
 import re
@@ -62,6 +63,7 @@ DYNAWO_EXTRA_RULES_DIRS = {
 
 load_dotenv()
 import main_configure # need env var
+from configurator.configurator import ROOT_CYBER_NODE_NAME
 import dynawo_deps
 import jobs_editor
 
@@ -729,6 +731,7 @@ def create_template(
     dsl_file: UploadFile | None = File(None),
     cyber_config_file: UploadFile | None = File(None),
     asset_simulator_config_file: UploadFile | None = File(None),
+    alarms_file: UploadFile | None = File(None),
     extra_io_file: UploadFile | None = File(None),
     geo_data: UploadFile | None = File(None),
     scenario_file: UploadFile | None = File(None),
@@ -738,6 +741,7 @@ def create_template(
     other_files: list[UploadFile] = File(default_factory=list),
     automata_commands: list[str] = Form(default_factory=list),
     period: float = Form(1),
+    hmi_location: str = Form(ROOT_CYBER_NODE_NAME),
     dynawo_variant: str = Form("public"),
     current_user=Depends(require_role("template_manager")),
 ):
@@ -748,7 +752,7 @@ def create_template(
     with it in `dynawo_files` (the client resolves them via
     /templates/dynawo_dependencies), and the connectors, curves and SCADA I/O
     files plus the config.toml are generated here. So is the asset simulator
-    config, unless one is uploaded.
+    config and the alarm config, unless they are uploaded.
     """
     user_name = current_user["preferred_username"]
     validate_template_name(template_name)
@@ -781,6 +785,7 @@ def create_template(
         TemplateFileRole.dsl: dsl_file,
         TemplateFileRole.cyber_config: cyber_config_file,
         TemplateFileRole.asset_simulator_config: asset_simulator_config_file,
+        TemplateFileRole.alarms: alarms_file,
         TemplateFileRole.extra_io: extra_io_file,
         TemplateFileRole.geo_data: geo_data,
         TemplateFileRole.scenario: scenario_file,
@@ -810,6 +815,9 @@ def create_template(
             if upload is not None:
                 paths[role] = write_file_path(working_dir, upload)
                 stored[paths[role]] = role.value
+
+        hmi_location = hmi_location.strip() or ROOT_CYBER_NODE_NAME
+        check_hmi_location(hmi_location, paths.get(TemplateFileRole.cyber_config))
 
         # Files only used at runtime (e.g. python automata), listed in the config.toml other_files
         other_names: list[str] = []
@@ -843,7 +851,7 @@ def create_template(
         # 2. reclaim the lxml/pypowsybl memory on completion
         try:
             with ProcessPoolExecutor(max_workers=1) as pool:
-                generated_dyd, mock_cyber_config, generated_asset_simulator_config = pool.submit(
+                generated_dyd, mock_cyber_config, generated_asset_simulator_config, generated_alarms = pool.submit(
                     main_configure.main_from_jobs,
                     job_path,
                     DYNAWO_DDB_PATHS[dynawo_variant],
@@ -857,6 +865,8 @@ def create_template(
                     paths.get(TemplateFileRole.scada_iidm),
                     DYNAWO_EXTRA_RULES_DIRS[dynawo_variant],
                     paths.get(TemplateFileRole.extra_io),
+                    alarms_file is None,
+                    paths.get(TemplateFileRole.asset_simulator_config),
                 ).result()
         except ValueError as e:
             # Invalid inputs, e.g. an extra io file with an unknown key or an id already generated
@@ -875,6 +885,8 @@ def create_template(
             generated.append(mock_cyber_config)
         if generated_asset_simulator_config:
             generated.append(generated_asset_simulator_config)
+        if generated_alarms:
+            generated.append(generated_alarms)
         for name in generated:
             stored[working_dir / name] = TemplateFileRole.generated.value
 
@@ -887,6 +899,7 @@ def create_template(
                 scenario_file=stored_name(scenario_file),
                 geo_data=stored_name(geo_data),
                 asset_simulator_config_file=stored_name(asset_simulator_config_file) or generated_asset_simulator_config,
+                alarms_file=stored_name(alarms_file) or generated_alarms,
                 extra_io_file=stored_name(extra_io_file),
                 other_files=other_names,
                 automata_commands=[c.strip() for c in automata_commands if c.strip()],
@@ -898,6 +911,7 @@ def create_template(
                 dynawo_path=DYNAWO_SCRIPT_PATHS[dynawo_variant],
                 scada_suffix=scada_suffix,
                 period=period,
+                hmi_location=hmi_location,
             )
         )
         stored[config_path] = TemplateFileRole.config_toml.value
@@ -910,13 +924,40 @@ def create_template(
         return {"template_id": template.id, "uuid": template.uuid}
 
 
+def check_hmi_location(hmi_location: str, cyber_config: Path | None) -> None:
+    """
+    The orchestrator refuses an hmi.location that is not a node of the cyber network: a node of the
+    uploaded cyber config (the ends of its links), else the root of the generated mock one.
+    """
+    if cyber_config is None:
+        if hmi_location != ROOT_CYBER_NODE_NAME:
+            raise HTTPException(
+                status_code=400,
+                detail=f"HMI location {hmi_location!r}: without a cyber network file, the HMI location is the root of "
+                       f"the generated network, {ROOT_CYBER_NODE_NAME!r}",
+            )
+        return
+    try:
+        links = json.loads(cyber_config.read_text()).get("links", [])
+        nodes = {link[end] for link in links for end in ("from", "to")}
+    except (ValueError, AttributeError, KeyError, TypeError) as exc:
+        raise HTTPException(status_code=400, detail=f"Could not read the nodes of the cyber network file: {exc}")
+    if hmi_location not in nodes:
+        examples = ", ".join(sorted(n for n in nodes if "SCADA" in n.upper())[:5]) or ", ".join(sorted(nodes)[:5])
+        raise HTTPException(
+            status_code=400,
+            detail=f"HMI location {hmi_location!r} is not a node of the cyber network file (e.g. {examples})",
+        )
+
+
 def build_config_toml(*, job_file: str, dsl_file: str | None, cyber_config_file: str | None,
                       scenario_file: str | None, geo_data: str | None,
                       asset_simulator_config_file: str | None, extra_io_file: str | None,
+                      alarms_file: str | None,
                       mapping_file: str | None,
                       scada_iidm_file: str | None, gm_iidm_file: str | None,
                       connectors_dyd: str, iidm_file: str, dynawo_path: str,
-                      scada_suffix: str, period: float, other_files: list[str] | None = None,
+                      scada_suffix: str, period: float, hmi_location: str = ROOT_CYBER_NODE_NAME, other_files: list[str] | None = None,
                       automata_commands: list[str] | None = None) -> str:
     """
     Write the config.toml for a guided upload.
@@ -956,6 +997,8 @@ def build_config_toml(*, job_file: str, dsl_file: str | None, cyber_config_file:
         input_files["geo_data"] = geo_data
     if asset_simulator_config_file:
         input_files["asset_simulator_config_file"] = asset_simulator_config_file
+    if alarms_file:
+        input_files["alarms_file"] = alarms_file
     # Not read by the orchestrator: already applied to the generated io files, kept to regenerate them
     if extra_io_file:
         input_files["extra_io_file"] = extra_io_file
@@ -983,7 +1026,8 @@ def build_config_toml(*, job_file: str, dsl_file: str | None, cyber_config_file:
     config["input_files"] = input_files
 
     hmi = tomlkit.table()
-    hmi["location"] = "SCADA"
+    # SCADA destination whose measurements, controls and alarms the HMI shows (required by the alarm detection)
+    hmi["location"] = hmi_location
     config["hmi"] = hmi
 
     return tomlkit.dumps(config)

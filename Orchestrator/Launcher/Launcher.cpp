@@ -133,6 +133,9 @@ void Launcher::init_from_toml(const std::filesystem::path& config_path, const st
     // Initialize the broker (automatically launches the performance broker)
     Broker::get().init();
 
+    // Alarm detection (optional, needs input_files.alarms_file)
+    alarm_detector_ = AlarmDetector::create(*logger_, actual_start_time, from_dump);
+
     // Initialize Cycosim interface if configured
     if (cycosim_config.has_value()) {
         if (from_dump) {

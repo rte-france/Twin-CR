@@ -18,6 +18,9 @@ export interface OpenCentralParams {
   isLocalFile?: boolean;
 }
 
+/** Dispatched once the central dock is ready to receive ADD_CENTRAL_EVENT (saved layout restored) */
+export const CENTRAL_READY_EVENT = "argus:central-ready";
+
 export const openInCentral = (payload: OpenCentralParams) => {
   window.dispatchEvent(new CustomEvent(ADD_CENTRAL_EVENT, { detail: payload }));
 };

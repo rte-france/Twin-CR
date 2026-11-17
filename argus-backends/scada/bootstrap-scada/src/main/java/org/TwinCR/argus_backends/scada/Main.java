@@ -15,10 +15,6 @@ import org.TwinCR.argus_backends.common.core.bridge.SseNatsBridge;
 import org.TwinCR.argus_backends.common.core.config.NatsConnectionFactory;
 import org.TwinCR.argus_backends.common.core.ifl.InformationFlowModelLayout;
 import org.TwinCR.argus_backends.common.gridmodel.GridModel;
-import org.TwinCR.argus_backends.scada.alarms.AlarmEngine;
-import org.TwinCR.argus_backends.scada.alarms.AlarmPublisher;
-import org.TwinCR.argus_backends.scada.alarms.AlarmRule;
-import org.TwinCR.argus_backends.scada.alarms.AlarmsStreamInitializer;
 import org.TwinCR.argus_backends.scada.commands.CommandRequestHandler;
 import org.TwinCR.argus_backends.scada.config.Config;
 import org.TwinCR.argus_backends.scada.telemetry.SseEstimatedValuesBridge;
@@ -58,12 +54,6 @@ public class Main {
 
         // Initialize streams
         TelemetryStreamInitializer.init(conn);
-        AlarmsStreamInitializer.init(conn);
-
-        // Build alarm engine
-        AlarmPublisher publisher = new AlarmPublisher(conn);
-        AlarmEngine engine = new AlarmEngine(publisher);
-        engine.addRule(new AlarmRule("temperature", 80.0, true));
 
         // Load case
         Instant start = Instant.now();
@@ -100,7 +90,7 @@ public class Main {
         StateEstimator.init(clickhouseClient, estimatedValuesBridge);
 
         new CommandRequestHandler().start(conn);
-        TelemetryConsumer telemetryConsumer = new TelemetryConsumer(conn, natsBridge, engine, config.estimPeriod(), clickhouseClient, config.location());
-        new ApiServer(config, natsBridge, estimatedValuesBridge, conn, appName, engine, telemetryConsumer, controlSender);
+        TelemetryConsumer telemetryConsumer = new TelemetryConsumer(conn, natsBridge, config.estimPeriod(), clickhouseClient, config.location());
+        new ApiServer(config, natsBridge, estimatedValuesBridge, conn, appName, telemetryConsumer, controlSender);
     }
 }

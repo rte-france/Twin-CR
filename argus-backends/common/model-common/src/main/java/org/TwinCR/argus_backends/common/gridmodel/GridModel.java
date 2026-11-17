@@ -12,6 +12,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -79,6 +80,43 @@ public class GridModel {
 
     public static Optional<String> splitLegId(ThreeWindingsTransformer transformer, ThreeSides side) {
         return splitIdsOf(transformer).map(splitIds -> splitIds[side.getNum() - 1]);
+    }
+
+    // Voltage level of a split transformer: that of the leg of the merged three windings transformer it became
+    private static Optional<String> splitTransformerVoltageLevel(String splitTransformerId) {
+        return Optional.ofNullable(splitTransformerLegs.get(splitTransformerId)).map(Leg::voltageLevelId);
+    }
+
+    /**
+     * Substation and voltage level of an element of the network (voltage level null for a substation), null if not found.
+     * Includes the ground disconnectors added from the mapping, and the transformers merged into three windings ones.
+     * @param sideIndex side of a branch or 3 windings transformer (0 for side ONE): index of its terminals
+     */
+    public static Map<String, String> locate(String id, int sideIndex) {
+        synchronized (network) {
+            Identifiable<?> identifiable = network.getIdentifiable(id);
+            if (identifiable instanceof Substation substation) {
+                Map<String, String> location = new HashMap<>();
+                location.put("substation_id", substation.getId());
+                location.put("voltage_level_id", null);
+                return location;
+            }
+            VoltageLevel voltageLevel = switch (identifiable) {
+                case VoltageLevel vl -> vl;
+                case Switch sw -> sw.getVoltageLevel();
+                case Connectable<?> connectable when !connectable.getTerminals().isEmpty() -> {
+                    List<? extends Terminal> terminals = connectable.getTerminals();
+                    yield terminals.get(Math.min(sideIndex, terminals.size() - 1)).getVoltageLevel();
+                }
+                // A transformer merged into a three windings transformer: its other side faced the removed fake bus
+                case null -> splitTransformerVoltageLevel(id).map(network::getVoltageLevel).orElse(null);
+                default -> null;
+            };
+            if (voltageLevel == null || voltageLevel.getSubstation().isEmpty()) {
+                return null;
+            }
+            return Map.of("substation_id", voltageLevel.getSubstation().get().getId(), "voltage_level_id", voltageLevel.getId());
+        }
     }
 
     public static boolean isSplitTransformer(String equipmentId) {

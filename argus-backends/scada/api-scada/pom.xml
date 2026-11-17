@@ -30,10 +30,6 @@ co-simulation of power systems.
             <artifactId>core-scada</artifactId>
         </dependency>
         <dependency>
-            <groupId>${project.groupId}</groupId>
-            <artifactId>alarms-scada</artifactId>
-        </dependency>
-        <dependency>
             <groupId>org.TwinCR</groupId>
             <artifactId>model-scada</artifactId>
         </dependency>
