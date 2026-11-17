@@ -50,8 +50,8 @@ DYNAWO_SCRIPT_PATHS = {
 }
 
 DYNAWO_DDB_PATHS = {
-    "public": SIMULATORS_PATH / "dynawo/ddb",
-    "rte": SIMULATORS_PATH / "dynawo-rte/ddb",
+    "public": Path(SIMULATORS_PATH) / "dynawo/ddb",
+    "rte": Path(SIMULATORS_PATH) / "dynawo-rte/ddb",
 }
 
 # Configurator rules of the models only in RTE's build, merged over the default ones (mounted by the Twin-CR compose override)
