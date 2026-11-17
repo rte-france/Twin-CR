@@ -127,6 +127,15 @@ export async function launchSession(sessionId: number) {
   );
 }
 
+export async function resetSession(sessionId: number) {
+  return apiFetch(
+    `${getArgusConfig().session_manager_url}/sessions/${sessionId}/reset`,
+    {
+      method: "POST",
+    },
+  );
+}
+
 export async function stopSession(sessionId: number) {
   return apiFetch(
     `${getArgusConfig().session_manager_url}/sessions/${sessionId}/stop`,

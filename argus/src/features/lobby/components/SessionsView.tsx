@@ -12,7 +12,7 @@ import { GameSession, SessionState } from "@/services/session-manager/types";
 import { FiLogIn } from "solid-icons/fi";
 import { For } from "solid-js";
 import { AccessModal } from "./AccessModal";
-import { connectSession, launchSession, parseUtcDate } from "@/services/session-manager";
+import { connectSession, launchSession, parseUtcDate, resetSession } from "@/services/session-manager";
 import { useNavigate } from "@solidjs/router";
 import { useAppMode } from "@/hooks/useAppMode";
 import { useAuth } from "@/features/auth/hooks/useAuth";
@@ -183,6 +183,23 @@ export function SessionsView(props: SessionsViewProps) {
                     {session.state} for {formatElapsed(session.started_at)}
                   </Show>
                 </span>
+              </div>
+
+              <div class="flex items-center gap-1.5 shrink-0">
+                <Show when={auth.isSessionLauncher()}>
+                  <span>
+                    <button
+                      onClick={async () => {
+                        try {
+                          await resetSession(session.id);
+                        } catch (err) {
+                          console.error(err);
+                        }
+                      }}
+                      class="px-3 py-1.5 text-xs font-medium border border-slate-300 bg-white text-slate-700 enabled:hover:bg-slate-800 enabled:hover:text-white enabled:hover:border-slate-800 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                    ><Icon class="mr-1" icon="lucide:rotate-ccw" /> Reset</button>
+                  </span>
+                </Show>
               </div>
 
               <div class="flex items-center gap-1.5 w-24 shrink-0">
