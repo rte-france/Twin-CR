@@ -35,8 +35,39 @@ variable "garage_endpoint" {
 }
 
 job "twincr-session" {
+  name        = var.session_id
+  id          = var.session_id
   datacenters = ["dc1"]
   type        = "service"
+
+  ui {
+    description = "Twin-CR simulation session ${var.session_id}"
+
+    link {
+      label = "argus-scada"
+      url   = "https://sessions.${var.base_domain}/sessions/${var.session_id}/argus-scada"
+    }
+
+    link {
+      label = "argus-gm"
+      url   = "https://sessions.${var.base_domain}/sessions/${var.session_id}/argus-gm"
+    }
+
+    link {
+      label = "configurator-client"
+      url   = "https://sessions.${var.base_domain}/sessions/${var.session_id}/configurator-client"
+    }
+
+    link {
+      label = "twincr-core"
+      url   = "https://sessions.${var.base_domain}/sessions/${var.session_id}/twincr-core"
+    }
+
+    link {
+      label = "clickhouse"
+      url   = "https://sessions.${var.base_domain}/sessions/${var.session_id}/clickhouse"
+    }
+  }
 
   meta {
     session_id  = var.session_id
@@ -62,62 +93,77 @@ job "twincr-session" {
     }
 
     service {
-      name         = "session-${var.session_id}-scada"
+      name         = "session-${var.session_id}-argus-scada"
       port         = "scada_http"
       provider     = "consul"
 
       tags = [
         "traefik.enable=true",
-        "traefik.http.routers.scada-${var.session_id}.rule=Host(`sessions.${var.base_domain}`) && PathPrefix(`/sessions/${var.session_id}/scada`)",
-        "traefik.http.routers.scada-${var.session_id}.entrypoints=web,websecure",
-        "traefik.http.routers.scada-${var.session_id}.tls=true",
-        "traefik.http.routers.scada-${var.session_id}.middlewares=strip-scada-${var.session_id}",
-        "traefik.http.middlewares.strip-scada-${var.session_id}.stripprefix.prefixes=/sessions/${var.session_id}/scada"
+        "traefik.http.routers.argus-scada-${var.session_id}.rule=Host(`sessions.${var.base_domain}`) && PathPrefix(`/sessions/${var.session_id}/argus-scada`)",
+        "traefik.http.routers.argus-scada-${var.session_id}.entrypoints=web,websecure",
+        "traefik.http.routers.argus-scada-${var.session_id}.tls=true",
+        "traefik.http.routers.argus-scada-${var.session_id}.middlewares=strip-argus-scada-${var.session_id}",
+        "traefik.http.middlewares.strip-argus-scada-${var.session_id}.stripprefix.prefixes=/sessions/${var.session_id}/argus-scada"
       ]
     }
 
     service {
-      name         = "session-${var.session_id}-gm"
+      name         = "session-${var.session_id}-argus-gm"
       port         = "gm_http"
       provider     = "consul"
 
       tags = [
         "traefik.enable=true",
-        "traefik.http.routers.gm-${var.session_id}.rule=Host(`sessions.${var.base_domain}`) && PathPrefix(`/sessions/${var.session_id}/gm`)",
-        "traefik.http.routers.gm-${var.session_id}.entrypoints=web,websecure",
-        "traefik.http.routers.gm-${var.session_id}.tls=true",
-        "traefik.http.routers.gm-${var.session_id}.middlewares=strip-gm-${var.session_id}",
-        "traefik.http.middlewares.strip-gm-${var.session_id}.stripprefix.prefixes=/sessions/${var.session_id}/gm"
+        "traefik.http.routers.argus-gm-${var.session_id}.rule=Host(`sessions.${var.base_domain}`) && PathPrefix(`/sessions/${var.session_id}/argus-gm`)",
+        "traefik.http.routers.argus-gm-${var.session_id}.entrypoints=web,websecure",
+        "traefik.http.routers.argus-gm-${var.session_id}.tls=true",
+        "traefik.http.routers.argus-gm-${var.session_id}.middlewares=strip-argus-gm-${var.session_id}",
+        "traefik.http.middlewares.strip-argus-gm-${var.session_id}.stripprefix.prefixes=/sessions/${var.session_id}/argus-gm"
       ]
     }
 
     service {
-      name         = "session-${var.session_id}-configurator"
+      name         = "session-${var.session_id}-configurator-client"
       port         = "configurator"
       provider     = "consul"
 
       tags = [
         "traefik.enable=true",
-        "traefik.http.routers.configurator-${var.session_id}.rule=Host(`sessions.${var.base_domain}`) && PathPrefix(`/sessions/${var.session_id}/configurator`)",
-        "traefik.http.routers.configurator-${var.session_id}.entrypoints=web,websecure",
-        "traefik.http.routers.configurator-${var.session_id}.tls=true",
-        "traefik.http.routers.configurator-${var.session_id}.middlewares=strip-configurator-${var.session_id}",
-        "traefik.http.middlewares.strip-configurator-${var.session_id}.stripprefix.prefixes=/sessions/${var.session_id}/configurator"
+        "traefik.http.routers.configurator-client-${var.session_id}.rule=Host(`sessions.${var.base_domain}`) && PathPrefix(`/sessions/${var.session_id}/configurator-client`)",
+        "traefik.http.routers.configurator-client-${var.session_id}.entrypoints=web,websecure",
+        "traefik.http.routers.configurator-client-${var.session_id}.tls=true",
+        "traefik.http.routers.configurator-client-${var.session_id}.middlewares=strip-configurator-client-${var.session_id}",
+        "traefik.http.middlewares.strip-configurator-client-${var.session_id}.stripprefix.prefixes=/sessions/${var.session_id}/configurator-client"
       ]
     }
 
     service {
-      name         = "session-${var.session_id}-core"
+      name         = "session-${var.session_id}-twincr-core"
       port         = "core_dsl"
       provider     = "consul"
 
       tags = [
         "traefik.enable=true",
-        "traefik.http.routers.core-${var.session_id}.rule=Host(`sessions.${var.base_domain}`) && PathPrefix(`/sessions/${var.session_id}/core`)",
-        "traefik.http.routers.core-${var.session_id}.entrypoints=web,websecure",
-        "traefik.http.routers.core-${var.session_id}.tls=true",
-        "traefik.http.routers.core-${var.session_id}.middlewares=strip-core-${var.session_id}",
-        "traefik.http.middlewares.strip-core-${var.session_id}.stripprefix.prefixes=/sessions/${var.session_id}/core"
+        "traefik.http.routers.twincr-core-${var.session_id}.rule=Host(`sessions.${var.base_domain}`) && PathPrefix(`/sessions/${var.session_id}/twincr-core`)",
+        "traefik.http.routers.twincr-core-${var.session_id}.entrypoints=web,websecure",
+        "traefik.http.routers.twincr-core-${var.session_id}.tls=true",
+        "traefik.http.routers.twincr-core-${var.session_id}.middlewares=strip-twincr-core-${var.session_id}",
+        "traefik.http.middlewares.strip-twincr-core-${var.session_id}.stripprefix.prefixes=/sessions/${var.session_id}/twincr-core"
+      ]
+    }
+
+    service {
+      name         = "session-${var.session_id}-clickhouse"
+      port         = "clickhouse"
+      provider     = "consul"
+
+      tags = [
+        "traefik.enable=true",
+        "traefik.http.routers.clickhouse-${var.session_id}.rule=Host(`sessions.${var.base_domain}`) && PathPrefix(`/sessions/${var.session_id}/clickhouse`)",
+        "traefik.http.routers.clickhouse-${var.session_id}.entrypoints=web,websecure",
+        "traefik.http.routers.clickhouse-${var.session_id}.tls=true",
+        "traefik.http.routers.clickhouse-${var.session_id}.middlewares=strip-clickhouse-${var.session_id}",
+        "traefik.http.middlewares.strip-clickhouse-${var.session_id}.stripprefix.prefixes=/sessions/${var.session_id}/clickhouse"
       ]
     }
 
@@ -303,24 +349,24 @@ EOT
       }
     }
 
-    task "automata" {
-      driver = "docker"
+    // task "automata" {
+    //   driver = "docker"
 
-      env {
-        NATS_URL = "nats://127.0.0.1:4222"
-        MODE     = "CLICKHOUSE"
-      }
+    //   env {
+    //     NATS_URL = "nats://127.0.0.1:4222"
+    //     MODE     = "CLICKHOUSE"
+    //   }
 
-      config {
-        image   = "${var.registry}/automata:latest"
-        command = "python"
-        args    = ["-u", "automata_launcher.py"]
-      }
+    //   config {
+    //     image   = "${var.registry}/automata:latest"
+    //     command = "python"
+    //     args    = ["-u", "automata_launcher.py"]
+    //   }
 
-      resources {
-        cpu    = 200
-        memory = 256
-      }
-    }
+    //   resources {
+    //     cpu    = 200
+    //     memory = 256
+    //   }
+    // }
   }
 }
