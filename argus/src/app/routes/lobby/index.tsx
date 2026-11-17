@@ -33,6 +33,8 @@ import { UserBadge } from "@/features/auth";
 
 type View = "SESSIONS" | "TEMPLATES" | "MY_SESSIONS";
 
+export const REFRESH_SESSIONS_INTERVAL = 3000;
+
 export const Lobby = () => {
   const appWindow = getCurrentWindow();
   const close = () => appWindow.close();
@@ -73,7 +75,7 @@ export const Lobby = () => {
       const interval = setInterval(() => {
         if (view() !== "SESSIONS") return;
         void refreshSessions();
-      }, 5000);
+      }, REFRESH_SESSIONS_INTERVAL);
 
       onCleanup(() => clearInterval(interval));
     })();

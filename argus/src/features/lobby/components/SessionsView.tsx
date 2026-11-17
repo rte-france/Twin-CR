@@ -36,6 +36,8 @@ export function SessionsView(props: SessionsViewProps) {
   const [, setMode] = useAppMode();
   const auth = useAuth();
 
+  const REFRESH_RATE = 1000;
+
   const isLaunching = (sessionId: number) => launchingSessions().has(sessionId);
 
   const setLaunching = (sessionId: number, launching: boolean) => {
@@ -73,7 +75,7 @@ export function SessionsView(props: SessionsViewProps) {
 
   const interval = setInterval(() => {
     setNow(Date.now());
-  }, 5000);
+  }, REFRESH_RATE);
 
   onCleanup(() => clearInterval(interval));
 

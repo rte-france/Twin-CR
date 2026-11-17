@@ -12,6 +12,7 @@ import { For, Show } from "solid-js";
 import { createSignal, onCleanup, onMount } from "solid-js";
 import { Icon } from "@iconify-icon/solid";
 import { AccessKeysModal } from "./AccessKeysModal";
+import { REFRESH_SESSIONS_INTERVAL } from "@/app/routes/lobby";
 
 export function MySessionsView() {
   const [readySessions, setReadySessions] = createSignal<GameSession[]>();
@@ -42,7 +43,7 @@ export function MySessionsView() {
 
     const interval = setInterval(() => {
       loadSessions().catch(() => {});
-    }, 5000);
+    }, REFRESH_SESSIONS_INTERVAL);
 
     onCleanup(() => clearInterval(interval));
   });
