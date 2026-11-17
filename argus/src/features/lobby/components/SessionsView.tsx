@@ -29,7 +29,8 @@ export function SessionsView(props: SessionsViewProps) {
   const [accessKeyMode, setAccessKeyMode] = createSignal<Mode | null>(null);
   const [currentSession, setCurrentSession] = createSignal<GameSession | null>(null);
   const [launchingSessions, setLaunchingSessions] = createSignal<Set<number>>(new Set());
-  const [launchError, setLaunchError] = createSignal<string | null>(null);
+  const [resettingSessions, setResettingSessions] = createSignal<Set<number>>(new Set());
+  const [sessionError, setSessionError] = createSignal<string | null>(null);
   const [joinError, setJoinError] = createSignal<string | null>(null);
 
   const navigate = useNavigate();
@@ -37,11 +38,24 @@ export function SessionsView(props: SessionsViewProps) {
   const auth = useAuth();
 
   const isLaunching = (sessionId: number) => launchingSessions().has(sessionId);
+  const isResetting = (sessionId: number) => resettingSessions().has(sessionId);
 
   const setLaunching = (sessionId: number, launching: boolean) => {
     setLaunchingSessions((previous) => {
       const next = new Set(previous);
       if (launching) {
+        next.add(sessionId);
+      } else {
+        next.delete(sessionId);
+      }
+      return next;
+    });
+  };
+
+  const setResetting = (sessionId: number, resetting: boolean) => {
+    setResettingSessions((previous) => {
+      const next = new Set(previous);
+      if (resetting) {
         next.add(sessionId);
       } else {
         next.delete(sessionId);
@@ -140,7 +154,7 @@ export function SessionsView(props: SessionsViewProps) {
           }
         }}
       />
-      <Show when={launchError()}>
+      <Show when={sessionError()}>
         {(message) => (
           <p class="mx-6 mt-4 border-l-2 border-red-600 bg-red-50 px-3 py-2 text-xs text-red-800">
             {message()}
@@ -193,11 +207,20 @@ export function SessionsView(props: SessionsViewProps) {
                 <Show when={auth.isSessionLauncher()}>
                   <span>
                     <button
+                      disabled={session.state === SessionState.Cleanup || isResetting(session.id)}
                       onClick={async () => {
+                        setSessionError(null);
                         try {
+                          setResetting(session.id, true);
                           await resetSession(session.id);
                         } catch (err) {
                           console.error(err);
+                          setSessionError(
+                            err instanceof Error ? err.message : String(err),
+                          );
+                        }
+                        finally {
+                          setResetting(session.id, false);
                         }
                       }}
                       class="px-3 py-1.5 text-xs font-medium border border-slate-300 bg-white text-slate-700 enabled:hover:bg-slate-800 enabled:hover:text-white enabled:hover:border-slate-800 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
@@ -212,13 +235,13 @@ export function SessionsView(props: SessionsViewProps) {
                     <button
                       disabled={session.state !== SessionState.Ready || isLaunching(session.id)}
                       onClick={async () => {
-                        setLaunchError(null);
+                        setSessionError(null);
                         try {
                           setLaunching(session.id, true);
                           await launchSession(session.id);
                         } catch (err) {
                           console.error(err);
-                          setLaunchError(
+                          setSessionError(
                             err instanceof Error ? err.message : String(err),
                           );
                         } finally {
