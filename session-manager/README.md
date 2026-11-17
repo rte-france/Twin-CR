@@ -5,11 +5,27 @@ This micro-service is a backend to handle session CRUDs, and argus client author
 
 ### Installation for dev
 
+We describe here the installation process where the other services run with docker and the session-manager is launched manually.
+
 1. Install using UV:
     ```bash
     uv sync
     ```
-2. Copy the env-example file in a .env file in the session-manager folder, and complete it.
+2. Copy the env-example file in a .env file in the session-manager folder. 
+   - Uncomment the following variables and complete SIMULATORS_PATH and EXTRA_RULES_PATH.  
+     ```
+     # Native runs only (uv, other services in docker): uncomment and adapt.
+     # Defaults are the in-container paths used by docker.
+     #KEYCLOAK_VERIFY_TLS=false  # [native] Keycloak's host port serves a self-signed cert
+     #KEYCLOAK_INTERNAL_URL=https://localhost:8443  # [native] default http://keycloak:8080
+     #SIMULATORS_PATH=/home/session-manager/simulators  # [native]
+     #EXTRA_RULES_PATH=/home/session-manager/dynawo_rules  # [native]
+     ```
+   - Set the hosts to "localhost" 
+     ```
+     GARAGE_HOST=localhost
+     CONFIGURATOR_HOST=localhost
+     ```
 3. Then to run the server :
     ```bash
     uv run uvicorn backend.main:app --host 0.0.0.0 --port 8090
