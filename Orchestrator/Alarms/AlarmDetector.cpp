@@ -356,8 +356,9 @@ void AlarmDetector::processValue(AlarmSide& side, const std::string& id, const V
         // Initial value: at start, or the first value of a threshold type at any time (measurements are published
         // periodically, e.g. every 5 s on the SCADA side, so the first one may come after the start)
         if (time <= initial_time_ || type.isThreshold()) {
-            // Only the persistent alarms still on are raised
-            if (type.persistent && !type.isNormal(state)) {
+            // Only the conditions still on are published (initial): the persistent alarms, and the thresholds crossed
+            // (OverloadMonitor; a momentary threshold is not an alarm at start)
+            if ((type.persistent || type.isThreshold()) && !type.isNormal(state)) {
                 publishState(side, entry, state, v, time, true);
             }
             return;
@@ -406,6 +407,9 @@ void AlarmDetector::publishState(const AlarmSide& side, const AlarmEntry& entry,
         {"normal", type.isNormal(state)},
         {"initial", initial},
     };
+    if (type.isThreshold() && state > 0) {
+        j["limit"] = entry.thresholds.at(static_cast<size_t>(state) - 1);  // Threshold of the level crossed
+    }
     addLocation(j, entry);
     publisher_(side.subject, j.dump());
 }
@@ -445,7 +449,7 @@ void AlarmDetector::republishActive(double time) {
                 continue;
             }
             const AlarmEntry& entry = alarms_.at(id);
-            if (entry.type->persistent && !entry.type->isNormal(state)) {
+            if ((entry.type->persistent || entry.type->isThreshold()) && !entry.type->isNormal(state)) {
                 // The measured value is not dumped: the threshold of the level for threshold types
                 double value = state;
                 if (entry.type->isThreshold() && state > 0) {

@@ -173,6 +173,7 @@ int main() {
     CHECK(published.back().payload["state"] == "Low voltage");
     CHECK(published.back().payload["kind"] == "threshold");
     CHECK(published.back().payload["normal"] == false);
+    CHECK(published.back().payload["limit"] == 210);  // Threshold of the level crossed
     detector.onActualMeasurement(gm("voltage", 195.0, 5.0));
     CHECK(published.back().payload["state"] == "Very low voltage");
     detector.onActualMeasurement(gm("voltage", 201.0, 5.5));  // Within the hysteresis band of LOW2 (202)
@@ -194,12 +195,16 @@ int main() {
     detector.onActualMeasurement(gm("voltage", 0.0, 9.0));
     CHECK(published.empty());
 
-    // First value of a threshold type after the start (periodic measurement, e.g. every 5 s on the SCADA side): initial
+    // First value of a threshold type after the start (periodic measurement, e.g. every 5 s on the SCADA side): initial,
+    // published as such when crossed (OverloadMonitor, not an alarm)
     published.clear();
-    detector.onMeasurementReceived(scada("voltage", 205.0, 2.0));  // Already low: no alarm
-    CHECK(published.empty());
-    detector.onMeasurementReceived(scada("voltage", 195.0, 7.0));
+    detector.onMeasurementReceived(scada("voltage", 205.0, 2.0));  // Already low
     CHECK(published.size() == 1);
+    CHECK(published.back().payload["initial"] == true);
+    CHECK(published.back().payload["state"] == "Low voltage");
+    detector.onMeasurementReceived(scada("voltage", 195.0, 7.0));
+    CHECK(published.size() == 2);
+    CHECK(published.back().payload["initial"] == false);
     CHECK(published.back().payload["state"] == "Very low voltage");
     CHECK(published.back().subject == "Alarms.HMI.SCADA");
 
@@ -229,7 +234,7 @@ int main() {
     detector.onControlSent(ControlSent("breaker", 2, 9.0, "RTU", {}, "Scenario", std::nullopt));
     CHECK(published.size() == 1);
 
-    // Restart from a dump: same states, the persistent alarms still on are published again
+    // Restart from a dump: same states, the persistent alarms still on and the thresholds crossed are published again
     detector.onMeasurementReceived(scada("overload", true, 10.0));
     std::string dump = detector.saveState();
     std::vector<Published> restored_published;
@@ -238,11 +243,18 @@ int main() {
     });
     restored.loadState(dump);
     restored.republishActive(10.0);
-    CHECK(restored_published.size() == 2);  // Overload on in the GameMaster and in the SCADA
+    CHECK(restored_published.size() == 3);  // Overload on in the GameMaster and in the SCADA, very low SCADA voltage
+    int overloads = 0;
     for (const auto& p : restored_published) {
-        CHECK(p.payload["id"] == "overload");
+        overloads += p.payload["id"] == "overload";
         CHECK(p.payload["initial"] == true);
+        if (p.payload["id"] == "voltage") {
+            CHECK(p.payload["state"] == "Very low voltage");
+            CHECK(p.payload["value"] == 200);  // The measured value is not dumped: republished as the threshold of the level
+            CHECK(p.payload["limit"] == 200);
+        }
     }
+    CHECK(overloads == 2);
     restored_published.clear();
     restored.onActualMeasurement(gm("breaker", 2, 10.0));  // Same as before the dump
     restored.onMeasurementReceived(scada("overload", true, 10.0));
