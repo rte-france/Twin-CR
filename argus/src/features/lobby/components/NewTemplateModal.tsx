@@ -6,15 +6,16 @@ This file is part of Twin-CR, a platform for real-time cyber-physical
 co-simulation of power systems.
 */
 
-import { createSignal, For, onMount, Show, onCleanup } from "solid-js";
+import { createSignal, createEffect, For, onMount, Show, onCleanup } from "solid-js";
 import {
   createTemplate,
   createTemplateExpert,
   dynawoDependencies,
   getTemplateFolders,
+  listDynawoMetadata,
 } from "@/services/session-manager/service";
 import { parse } from "smol-toml";
-import { TemplateFolder } from "@/services/session-manager/types";
+import { DynawoMetadata, TemplateFolder } from "@/services/session-manager/types";
 import { Icon } from "@iconify-icon/solid";
 
 type NewTemplateModalProps = {
@@ -96,9 +97,27 @@ export function NewTemplateModal(props: NewTemplateModalProps) {
   const [scadaIidmFile, setScadaIidmFile] = createSignal<File>();
   const [gmIidmFile, setGmIidmFile] = createSignal<File>();
   const [period, setPeriod] = createSignal(1);
-  const [dynawoVariant, setDynawoVariant] = createSignal<"public" | "rte">(
-    "rte",
-  );
+  const [dynawoVariant, setDynawoVariant] = createSignal<"public" | "rte">("public");
+
+  const [metadata, setMetadata] = createSignal<DynawoMetadata[]>([]);
+  const [selectedVersion, setSelectedVersion] = createSignal<string>();
+
+  createEffect(async () => {
+      try {
+          const result = await listDynawoMetadata({
+              scope: dynawoVariant(),
+          });
+
+          setMetadata(result.items);
+
+          if (result.items.length > 0) {
+              setSelectedVersion(result.items[0].version);
+          }
+      } catch (err) {
+          console.error("Failed to load dynawo metadata", err);
+          setMetadata([]);
+      }
+  });
 
   const isSubmitDisabled = () => loading() || !canCreate();
 
@@ -537,20 +556,52 @@ export function NewTemplateModal(props: NewTemplateModalProps) {
                     </Show>
                   </div>
 
-                  <label class="text-xs text-gray-500">
-                    Dynawo build
-                  </label>
-                  <select
-                    class="border border-gray-300 rounded px-2 py-1"
-                    value={dynawoVariant()}
-                    onChange={(e) =>
-                      setDynawoVariant(
-                        e.currentTarget.value as "public" | "rte",
-                      )}
-                  >
-                    <option value="public">Public</option>
-                    <option value="rte">RTE</option>
-                  </select>
+                  <div class="flex flex-col gap-2">
+                      <label class="text-xs text-gray-500">Dynawo build</label>
+
+                      <div class="flex gap-4">
+                          <label class="flex items-center gap-2 cursor-pointer">
+                              <input
+                                  type="radio"
+                                  name="dynawo-build"
+                                  value="public"
+                                  checked={dynawoVariant() === "public"}
+                                  onChange={() => setDynawoVariant("public")}
+                              />
+                              <span>Public</span>
+                          </label>
+
+                          <label class="flex items-center gap-2 cursor-pointer">
+                              <input
+                                  type="radio"
+                                  name="dynawo-build"
+                                  value="rte"
+                                  checked={dynawoVariant() === "rte"}
+                                  onChange={() => setDynawoVariant("rte")}
+                              />
+                              <span>RTE</span>
+                          </label>
+                      </div>
+                  </div>
+
+                  <div class="flex flex-col gap-1">
+                      <label class="text-xs text-gray-500">Version</label>
+
+                      <select
+                          class="border border-gray-300 rounded px-2 py-1"
+                          value={selectedVersion()}
+                          onChange={(e) => setSelectedVersion(e.currentTarget.value)}
+                      >
+                          <For each={metadata()}>
+                              {(item) => (
+                                  <option value={item.version}>
+                                      {item.version}
+                                      {item.tag ? ` (${item.tag})` : ""}
+                                  </option>
+                              )}
+                          </For>
+                      </select>
+                  </div>
 
                   <label class="text-xs text-gray-500">
                     Master period (s)

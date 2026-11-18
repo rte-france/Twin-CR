@@ -100,3 +100,20 @@ export type AccessKeyTyped = {
 export type FileInfo = {
   size: number;
 };
+
+export type ListDynawoMetadataParams = {
+  scope?: string;
+  version?: string;
+  tag?: string;
+}
+
+export type DynawoMetadataList = {
+  count: number;
+  items: DynawoMetadata[];
+}
+
+export type DynawoMetadata = {
+  scope: string;
+  version: string;
+  tag: string | null;
+}
