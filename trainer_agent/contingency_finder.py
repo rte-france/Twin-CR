@@ -21,7 +21,6 @@ from tqdm import tqdm
 from clusters import get_clusters
 from dc_sensitivity_factors import DCSensitivityFactors
 from opf import powsybl2pandapower, pp_opf, _setup_redispatch_cost, fcr
-from state_estimation import observability
 
 network = None
 INCREASE_LOAD_PERCENT = 30
@@ -258,8 +257,6 @@ class ContingencyFinder:
             self.pp_net = pp_net
 
             substation_clusters = get_clusters(25)
-
-            # res = observability(pp_net, network, substation_clusters)
 
             self.load_groups = self.prepare_group_power_contingencies(substation_clusters, "load")
             self.gen_groups = self.prepare_group_power_contingencies(substation_clusters, "gen")
@@ -565,10 +562,12 @@ def inspect(contingency_name):
 
 if __name__ == "__main__":
     import os 
-
+    
+    from dotenv import load_dotenv
     from pathlib import Path
     from add_governor_kgover import read_governor_kgover
 
+    load_dotenv()
     # net = ps.network.load("docs/orchestrator/examples/Nordic/Nordic.iidm")
     # finder = ContingencyFinder("docs/orchestrator/examples/4Bus/4Bus.iidm", 1)
     net = ps.network.load("temp copy.xiidm")

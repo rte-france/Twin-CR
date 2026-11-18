@@ -44,7 +44,7 @@ class TrainerAgent:
                         self.rtu_links[link["to"][9:]] = link
                 elif link["totype"] == "RTU":
                     self.aggregator_links[link["to"]] = link["from"]
-        elif cyber_mode is not "NONE":
+        elif cyber_mode != "NONE":
             raise Exception("Cyber mode activated but no cyber communication file provided !")
 
         self.max_difficulty = max_difficulty
@@ -149,5 +149,8 @@ class TrainerAgent:
 
 
 if __name__ == "__main__":
+    from dotenv import load_dotenv
+   
+    load_dotenv()
     trainer = TrainerAgent(voltage_thresh=300, cyber_mode="NONE", max_difficulty=None)
     asyncio.run(trainer.run())

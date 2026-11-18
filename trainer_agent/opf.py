@@ -1,10 +1,9 @@
 """
-Copyright (c) 2025-2026, RTE (http://www.rte-france.com)
-This Source Code Form is subject to the terms of the Mozilla Public
-License, v. 2.0. If a copy of the MPL was not distributed with this
-file, You can obtain one at http://mozilla.org/MPL/2.0/.
+Copyright (c) 2025-2026, RTE (https://www.rte-france.com)
+See AUTHORS.md
 SPDX-License-Identifier: MPL-2.0
-This file is part of the TwinEU-core project.
+This file is part of Twin-CR, a platform for real-time cyber-physical
+co-simulation of power systems.
 """
 
 import copy
@@ -1142,6 +1141,7 @@ def pp_opf(pp_net, set_cost=False, pre_check=False, available_time=None):
         pp_net.res_line[pp_net.line["to_bus"] == pp_index]
         pp_net.load[pp_net.load["bus"] == pp_index]
         pp_net.res_trafo[pp_net.trafo["lv_bus"] == pp_index]
+        pp_net.bus.loc[pp_index]
     finally:
         pp_net.gen.loc[p_max.index, "max_p_mw"] = p_max
         pp_net.gen.loc[p_min.index, "min_p_mw"] = p_min
