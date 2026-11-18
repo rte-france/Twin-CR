@@ -214,10 +214,10 @@ const store = createRoot(() => {
     eventsVersion();
     return [...events].reverse();
   });
-  // Highest priority first, then the oldest crossing
+  // Highest priority first, then the latest crossing (as the alarm list: a new condition shows at the top)
   const monitor = createMemo(() => {
     monitorVersion();
-    return [...monitorById.values()].sort((a, b) => b.priority - a.priority || a.since - b.since);
+    return [...monitorById.values()].sort((a, b) => b.priority - a.priority || b.since - a.since);
   });
 
   const post = (endpoint: string, body: unknown) => {
