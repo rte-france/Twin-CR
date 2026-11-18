@@ -1,0 +1,933 @@
+{
+  "Job": {
+    "Affinities": null,
+    "AllAtOnce": false,
+    "Constraints": null,
+    "ConsulNamespace": "",
+    "CreateIndex": 0,
+    "Datacenters": [
+      "dc1"
+    ],
+    "DispatchIdempotencyToken": null,
+    "Dispatched": false,
+    "ID": "session-4bus",
+    "JobModifyIndex": 0,
+    "Meta": {
+      "context_id": "4Bus",
+      "config_path": "config.toml",
+      "session_id": "session-4bus"
+    },
+    "Migrate": null,
+    "ModifyIndex": 0,
+    "Multiregion": null,
+    "Name": "session-4bus",
+    "Namespace": "default",
+    "NodePool": "",
+    "NomadTokenID": "",
+    "ParameterizedJob": null,
+    "ParentID": "",
+    "Payload": null,
+    "Periodic": null,
+    "Priority": 50,
+    "Region": "global",
+    "Reschedule": null,
+    "Spreads": null,
+    "Stable": false,
+    "Status": "",
+    "StatusDescription": "",
+    "Stop": false,
+    "SubmitTime": null,
+    "TaskGroups": [
+      {
+        "Affinities": null,
+        "Constraints": null,
+        "Consul": null,
+        "Count": 1,
+        "Disconnect": null,
+        "EphemeralDisk": {
+          "Migrate": false,
+          "SizeMB": 300,
+          "Sticky": false
+        },
+        "MaxClientDisconnect": null,
+        "MaxRunDuration": null,
+        "Meta": null,
+        "Migrate": {
+          "HealthCheck": "checks",
+          "HealthyDeadline": 300000000000,
+          "MaxParallel": 1,
+          "MinHealthyTime": 10000000000
+        },
+        "Name": "session",
+        "Networks": [
+          {
+            "CIDR": "",
+            "CNI": null,
+            "DNS": null,
+            "Device": "",
+            "DynamicPorts": [
+              {
+                "HostNetwork": "",
+                "IgnoreCollision": false,
+                "Label": "clickhouse",
+                "To": 8123,
+                "Value": 0
+              },
+              {
+                "HostNetwork": "",
+                "IgnoreCollision": false,
+                "Label": "nats",
+                "To": 4222,
+                "Value": 0
+              },
+              {
+                "HostNetwork": "",
+                "IgnoreCollision": false,
+                "Label": "core_dsl",
+                "To": 8000,
+                "Value": 0
+              },
+              {
+                "HostNetwork": "",
+                "IgnoreCollision": false,
+                "Label": "configurator",
+                "To": 8080,
+                "Value": 0
+              },
+              {
+                "HostNetwork": "",
+                "IgnoreCollision": false,
+                "Label": "scada_http",
+                "To": 8081,
+                "Value": 0
+              },
+              {
+                "HostNetwork": "",
+                "IgnoreCollision": false,
+                "Label": "gm_http",
+                "To": 8082,
+                "Value": 0
+              }
+            ],
+            "Hostname": "",
+            "IP": "",
+            "MBits": null,
+            "Mode": "bridge",
+            "ReservedPorts": null
+          }
+        ],
+        "PreventRescheduleOnLost": null,
+        "ReschedulePolicy": {
+          "Attempts": 0,
+          "Delay": 30000000000,
+          "DelayFunction": "exponential",
+          "Interval": 0,
+          "MaxDelay": 3600000000000,
+          "Unlimited": true
+        },
+        "RestartPolicy": {
+          "Attempts": 2,
+          "Delay": 15000000000,
+          "Interval": 1800000000000,
+          "Mode": "fail",
+          "RenderTemplates": false
+        },
+        "Scaling": null,
+        "Services": [
+          {
+            "Address": "",
+            "AddressMode": "auto",
+            "CanaryMeta": null,
+            "CanaryTags": null,
+            "CheckRestart": null,
+            "Checks": null,
+            "Cluster": "default",
+            "Connect": null,
+            "EnableTagOverride": false,
+            "Identity": null,
+            "Kind": "",
+            "Meta": null,
+            "Name": "session-session-4bus-argus-scada",
+            "OnUpdate": "require_healthy",
+            "PortLabel": "scada_http",
+            "Provider": "consul",
+            "TaggedAddresses": null,
+            "Tags": [
+              "traefik.enable=true",
+              "traefik.http.routers.argus-scada-session-4bus.rule=Host(`sessions.twin.local`) && PathPrefix(`/sessions/session-4bus/argus-scada`)",
+              "traefik.http.routers.argus-scada-session-4bus.entrypoints=web,websecure",
+              "traefik.http.routers.argus-scada-session-4bus.tls=true",
+              "traefik.http.routers.argus-scada-session-4bus.middlewares=strip-argus-scada-session-4bus",
+              "traefik.http.middlewares.strip-argus-scada-session-4bus.stripprefix.prefixes=/sessions/session-4bus/argus-scada"
+            ],
+            "TaskName": "",
+            "Weights": null
+          },
+          {
+            "Address": "",
+            "AddressMode": "auto",
+            "CanaryMeta": null,
+            "CanaryTags": null,
+            "CheckRestart": null,
+            "Checks": null,
+            "Cluster": "default",
+            "Connect": null,
+            "EnableTagOverride": false,
+            "Identity": null,
+            "Kind": "",
+            "Meta": null,
+            "Name": "session-session-4bus-argus-gm",
+            "OnUpdate": "require_healthy",
+            "PortLabel": "gm_http",
+            "Provider": "consul",
+            "TaggedAddresses": null,
+            "Tags": [
+              "traefik.enable=true",
+              "traefik.http.routers.argus-gm-session-4bus.rule=Host(`sessions.twin.local`) && PathPrefix(`/sessions/session-4bus/argus-gm`)",
+              "traefik.http.routers.argus-gm-session-4bus.entrypoints=web,websecure",
+              "traefik.http.routers.argus-gm-session-4bus.tls=true",
+              "traefik.http.routers.argus-gm-session-4bus.middlewares=strip-argus-gm-session-4bus",
+              "traefik.http.middlewares.strip-argus-gm-session-4bus.stripprefix.prefixes=/sessions/session-4bus/argus-gm"
+            ],
+            "TaskName": "",
+            "Weights": null
+          },
+          {
+            "Address": "",
+            "AddressMode": "auto",
+            "CanaryMeta": null,
+            "CanaryTags": null,
+            "CheckRestart": null,
+            "Checks": null,
+            "Cluster": "default",
+            "Connect": null,
+            "EnableTagOverride": false,
+            "Identity": null,
+            "Kind": "",
+            "Meta": null,
+            "Name": "session-session-4bus-configurator-client",
+            "OnUpdate": "require_healthy",
+            "PortLabel": "configurator",
+            "Provider": "consul",
+            "TaggedAddresses": null,
+            "Tags": [
+              "traefik.enable=true",
+              "traefik.http.routers.configurator-client-session-4bus.rule=Host(`sessions.twin.local`) && PathPrefix(`/sessions/session-4bus/configurator-client`)",
+              "traefik.http.routers.configurator-client-session-4bus.entrypoints=web,websecure",
+              "traefik.http.routers.configurator-client-session-4bus.tls=true",
+              "traefik.http.routers.configurator-client-session-4bus.middlewares=strip-configurator-client-session-4bus",
+              "traefik.http.middlewares.strip-configurator-client-session-4bus.stripprefix.prefixes=/sessions/session-4bus/configurator-client"
+            ],
+            "TaskName": "",
+            "Weights": null
+          },
+          {
+            "Address": "",
+            "AddressMode": "auto",
+            "CanaryMeta": null,
+            "CanaryTags": null,
+            "CheckRestart": null,
+            "Checks": null,
+            "Cluster": "default",
+            "Connect": null,
+            "EnableTagOverride": false,
+            "Identity": null,
+            "Kind": "",
+            "Meta": null,
+            "Name": "session-session-4bus-twincr-core",
+            "OnUpdate": "require_healthy",
+            "PortLabel": "core_dsl",
+            "Provider": "consul",
+            "TaggedAddresses": null,
+            "Tags": [
+              "traefik.enable=true",
+              "traefik.http.routers.twincr-core-session-4bus.rule=Host(`sessions.twin.local`) && PathPrefix(`/sessions/session-4bus/twincr-core`)",
+              "traefik.http.routers.twincr-core-session-4bus.entrypoints=web,websecure",
+              "traefik.http.routers.twincr-core-session-4bus.tls=true",
+              "traefik.http.routers.twincr-core-session-4bus.middlewares=strip-twincr-core-session-4bus",
+              "traefik.http.middlewares.strip-twincr-core-session-4bus.stripprefix.prefixes=/sessions/session-4bus/twincr-core"
+            ],
+            "TaskName": "",
+            "Weights": null
+          },
+          {
+            "Address": "",
+            "AddressMode": "auto",
+            "CanaryMeta": null,
+            "CanaryTags": null,
+            "CheckRestart": null,
+            "Checks": null,
+            "Cluster": "default",
+            "Connect": null,
+            "EnableTagOverride": false,
+            "Identity": null,
+            "Kind": "",
+            "Meta": null,
+            "Name": "session-session-4bus-clickhouse",
+            "OnUpdate": "require_healthy",
+            "PortLabel": "clickhouse",
+            "Provider": "consul",
+            "TaggedAddresses": null,
+            "Tags": [
+              "traefik.enable=true",
+              "traefik.http.routers.clickhouse-session-4bus.rule=Host(`sessions.twin.local`) && PathPrefix(`/sessions/session-4bus/clickhouse`)",
+              "traefik.http.routers.clickhouse-session-4bus.entrypoints=web,websecure",
+              "traefik.http.routers.clickhouse-session-4bus.tls=true",
+              "traefik.http.routers.clickhouse-session-4bus.middlewares=strip-clickhouse-session-4bus",
+              "traefik.http.middlewares.strip-clickhouse-session-4bus.stripprefix.prefixes=/sessions/session-4bus/clickhouse"
+            ],
+            "TaskName": "",
+            "Weights": null
+          }
+        ],
+        "ShutdownDelay": null,
+        "Spreads": null,
+        "StopAfterClientDisconnect": null,
+        "Tasks": [
+          {
+            "Actions": null,
+            "Affinities": null,
+            "Artifacts": null,
+            "Config": {
+              "args": [
+                "-js"
+              ],
+              "ports": [
+                "nats"
+              ],
+              "image": "nats:latest"
+            },
+            "Constraints": null,
+            "Consul": null,
+            "DispatchPayload": null,
+            "Driver": "docker",
+            "Env": null,
+            "Identities": null,
+            "Identity": null,
+            "KillSignal": "",
+            "KillTimeout": 5000000000,
+            "Kind": "",
+            "Leader": false,
+            "Lifecycle": {
+              "Hook": "prestart",
+              "Sidecar": true
+            },
+            "LogConfig": {
+              "Disabled": false,
+              "Enabled": null,
+              "MaxFileSizeMB": 10,
+              "MaxFiles": 10
+            },
+            "Meta": null,
+            "Name": "nats",
+            "Resources": {
+              "CPU": 150,
+              "Cores": 0,
+              "Devices": null,
+              "DiskMB": null,
+              "IOPS": null,
+              "MemoryMB": 128,
+              "MemoryMaxMB": null,
+              "NUMA": null,
+              "Networks": null,
+              "SecretsMB": null
+            },
+            "RestartPolicy": {
+              "Attempts": 2,
+              "Delay": 15000000000,
+              "Interval": 1800000000000,
+              "Mode": "fail",
+              "RenderTemplates": false
+            },
+            "ScalingPolicies": null,
+            "Schedule": null,
+            "Secrets": null,
+            "Services": null,
+            "ShutdownDelay": 0,
+            "Templates": null,
+            "User": "",
+            "Vault": {
+              "AllowTokenExpiration": false,
+              "ChangeMode": "restart",
+              "ChangeSignal": "SIGHUP",
+              "Cluster": "default",
+              "DisableFile": false,
+              "Env": true,
+              "Namespace": "",
+              "Policies": null,
+              "Role": "nomad-workloads"
+            },
+            "VolumeMounts": null
+          },
+          {
+            "Actions": null,
+            "Affinities": null,
+            "Artifacts": null,
+            "Config": {
+              "image": "clickhouse/clickhouse-server:latest",
+              "ports": [
+                "clickhouse"
+              ]
+            },
+            "Constraints": null,
+            "Consul": null,
+            "DispatchPayload": null,
+            "Driver": "docker",
+            "Env": {
+              "TZ": "Europe/Paris",
+              "CLICKHOUSE_SKIP_USER_SETUP": "1"
+            },
+            "Identities": null,
+            "Identity": null,
+            "KillSignal": "",
+            "KillTimeout": 5000000000,
+            "Kind": "",
+            "Leader": false,
+            "Lifecycle": {
+              "Hook": "prestart",
+              "Sidecar": true
+            },
+            "LogConfig": {
+              "Disabled": false,
+              "Enabled": null,
+              "MaxFileSizeMB": 10,
+              "MaxFiles": 10
+            },
+            "Meta": null,
+            "Name": "clickhouse",
+            "Resources": {
+              "CPU": 400,
+              "Cores": 0,
+              "Devices": null,
+              "DiskMB": null,
+              "IOPS": null,
+              "MemoryMB": 512,
+              "MemoryMaxMB": null,
+              "NUMA": null,
+              "Networks": null,
+              "SecretsMB": null
+            },
+            "RestartPolicy": {
+              "Attempts": 2,
+              "Delay": 15000000000,
+              "Interval": 1800000000000,
+              "Mode": "fail",
+              "RenderTemplates": false
+            },
+            "ScalingPolicies": null,
+            "Schedule": null,
+            "Secrets": null,
+            "Services": null,
+            "ShutdownDelay": 0,
+            "Templates": null,
+            "User": "",
+            "Vault": {
+              "AllowTokenExpiration": false,
+              "ChangeMode": "restart",
+              "ChangeSignal": "SIGHUP",
+              "Cluster": "default",
+              "DisableFile": false,
+              "Env": true,
+              "Namespace": "",
+              "Policies": null,
+              "Role": "nomad-workloads"
+            },
+            "VolumeMounts": null
+          },
+          {
+            "Actions": null,
+            "Affinities": null,
+            "Artifacts": null,
+            "Config": {
+              "image": "172.28.0.2:5000/configurator-client:latest",
+              "ports": [
+                "configurator"
+              ]
+            },
+            "Constraints": null,
+            "Consul": null,
+            "DispatchPayload": null,
+            "Driver": "docker",
+            "Env": {
+              "NATS_URL": "nats://127.0.0.1:4222",
+              "AWS_ENDPOINT_URL_S3": "http://172.28.0.2:3900",
+              "STORAGE_TYPE": "S3",
+              "BUCKET": "context-library",
+              "BUCKET_ARCHIVE": "archive",
+              "MODE": "CLICKHOUSE"
+            },
+            "Identities": null,
+            "Identity": null,
+            "KillSignal": "",
+            "KillTimeout": 5000000000,
+            "Kind": "",
+            "Leader": false,
+            "Lifecycle": {
+              "Hook": "prestart",
+              "Sidecar": true
+            },
+            "LogConfig": {
+              "Disabled": false,
+              "Enabled": null,
+              "MaxFileSizeMB": 10,
+              "MaxFiles": 10
+            },
+            "Meta": null,
+            "Name": "configurator-client",
+            "Resources": {
+              "CPU": 200,
+              "Cores": 0,
+              "Devices": null,
+              "DiskMB": null,
+              "IOPS": null,
+              "MemoryMB": 256,
+              "MemoryMaxMB": null,
+              "NUMA": null,
+              "Networks": null,
+              "SecretsMB": null
+            },
+            "RestartPolicy": {
+              "Attempts": 2,
+              "Delay": 15000000000,
+              "Interval": 1800000000000,
+              "Mode": "fail",
+              "RenderTemplates": false
+            },
+            "ScalingPolicies": null,
+            "Schedule": null,
+            "Secrets": null,
+            "Services": null,
+            "ShutdownDelay": 0,
+            "Templates": [
+              {
+                "ChangeMode": "restart",
+                "ChangeScript": null,
+                "ChangeSignal": "",
+                "DestPath": "secrets/s3.env",
+                "EmbeddedTmpl": "{{ with secret \"secret/data/garage\" }}\nAWS_ACCESS_KEY_ID=\"{{ .Data.data.access_key }}\"\nAWS_SECRET_ACCESS_KEY=\"{{ .Data.data.secret_key }}\"\n{{ end }}\n",
+                "Envvars": true,
+                "ErrMissingKey": false,
+                "Gid": null,
+                "LeftDelim": "{{",
+                "Once": false,
+                "Perms": "0644",
+                "RightDelim": "}}",
+                "SourcePath": "",
+                "Splay": 5000000000,
+                "Uid": null,
+                "VaultGrace": 0,
+                "Wait": null
+              }
+            ],
+            "User": "",
+            "Vault": {
+              "AllowTokenExpiration": false,
+              "ChangeMode": "restart",
+              "ChangeSignal": "SIGHUP",
+              "Cluster": "default",
+              "DisableFile": false,
+              "Env": true,
+              "Namespace": "",
+              "Policies": null,
+              "Role": "nomad-workloads"
+            },
+            "VolumeMounts": null
+          },
+          {
+            "Actions": null,
+            "Affinities": null,
+            "Artifacts": null,
+            "Config": {
+              "command": "/bin/sh",
+              "args": [
+                "-c",
+                "echo 'Waiting for configurator-client...'; until curl -sf http://127.0.0.1:8080/status >/dev/null; do sleep 1; done; echo 'Initializing context 4Bus...'; until curl -fsSL -X GET 'http://127.0.0.1:8080/init/4Bus?config_path=config.toml' >/dev/null; do sleep 2; done; echo 'Session initialized!'"
+              ],
+              "image": "curlimages/curl:latest"
+            },
+            "Constraints": null,
+            "Consul": null,
+            "DispatchPayload": null,
+            "Driver": "docker",
+            "Env": null,
+            "Identities": null,
+            "Identity": null,
+            "KillSignal": "",
+            "KillTimeout": 5000000000,
+            "Kind": "",
+            "Leader": false,
+            "Lifecycle": null,
+            "LogConfig": {
+              "Disabled": false,
+              "Enabled": null,
+              "MaxFileSizeMB": 10,
+              "MaxFiles": 10
+            },
+            "Meta": null,
+            "Name": "session-init",
+            "Resources": {
+              "CPU": 50,
+              "Cores": 0,
+              "Devices": null,
+              "DiskMB": null,
+              "IOPS": null,
+              "MemoryMB": 64,
+              "MemoryMaxMB": null,
+              "NUMA": null,
+              "Networks": null,
+              "SecretsMB": null
+            },
+            "RestartPolicy": {
+              "Attempts": 2,
+              "Delay": 15000000000,
+              "Interval": 1800000000000,
+              "Mode": "fail",
+              "RenderTemplates": false
+            },
+            "ScalingPolicies": null,
+            "Schedule": null,
+            "Secrets": null,
+            "Services": null,
+            "ShutdownDelay": 0,
+            "Templates": null,
+            "User": "",
+            "Vault": {
+              "AllowTokenExpiration": false,
+              "ChangeMode": "restart",
+              "ChangeSignal": "SIGHUP",
+              "Cluster": "default",
+              "DisableFile": false,
+              "Env": true,
+              "Namespace": "",
+              "Policies": null,
+              "Role": "nomad-workloads"
+            },
+            "VolumeMounts": null
+          },
+          {
+            "Actions": null,
+            "Affinities": null,
+            "Artifacts": null,
+            "Config": {
+              "image": "172.28.0.2:5000/twincr-core:latest",
+              "command": "/usr/local/bin/orchestrator_exec",
+              "args": [
+                "--from-clickhouse"
+              ],
+              "ports": [
+                "core_dsl"
+              ],
+              "volumes": [
+                "/opt/twincr/simulators:/home/orchestrator/simulators:ro"
+              ]
+            },
+            "Constraints": null,
+            "Consul": null,
+            "DispatchPayload": null,
+            "Driver": "docker",
+            "Env": {
+              "TZ": "Europe/Paris",
+              "NATS_URL": "nats://127.0.0.1:4222",
+              "MODE": "CLICKHOUSE"
+            },
+            "Identities": null,
+            "Identity": null,
+            "KillSignal": "",
+            "KillTimeout": 5000000000,
+            "Kind": "",
+            "Leader": false,
+            "Lifecycle": null,
+            "LogConfig": {
+              "Disabled": false,
+              "Enabled": null,
+              "MaxFileSizeMB": 10,
+              "MaxFiles": 10
+            },
+            "Meta": null,
+            "Name": "twincr-core",
+            "Resources": {
+              "CPU": 1000,
+              "Cores": 0,
+              "Devices": null,
+              "DiskMB": null,
+              "IOPS": null,
+              "MemoryMB": 1024,
+              "MemoryMaxMB": null,
+              "NUMA": null,
+              "Networks": null,
+              "SecretsMB": null
+            },
+            "RestartPolicy": {
+              "Attempts": 2,
+              "Delay": 15000000000,
+              "Interval": 1800000000000,
+              "Mode": "fail",
+              "RenderTemplates": false
+            },
+            "ScalingPolicies": null,
+            "Schedule": null,
+            "Secrets": null,
+            "Services": null,
+            "ShutdownDelay": 0,
+            "Templates": null,
+            "User": "",
+            "Vault": {
+              "AllowTokenExpiration": false,
+              "ChangeMode": "restart",
+              "ChangeSignal": "SIGHUP",
+              "Cluster": "default",
+              "DisableFile": false,
+              "Env": true,
+              "Namespace": "",
+              "Policies": null,
+              "Role": "nomad-workloads"
+            },
+            "VolumeMounts": null
+          },
+          {
+            "Actions": null,
+            "Affinities": null,
+            "Artifacts": null,
+            "Config": {
+              "args": [
+                "--http-port",
+                "8081",
+                "--nats-url",
+                "nats://127.0.0.1:4222",
+                "--config-path",
+                "config.toml",
+                "--clickhouse-host",
+                "127.0.0.1",
+                "--clickhouse-port",
+                "8123",
+                "--configurator-host",
+                "127.0.0.1",
+                "--configurator-port",
+                "8080",
+                "--mode",
+                "CLICKHOUSE",
+                "--estim-period",
+                "60"
+              ],
+              "image": "172.28.0.2:5000/argus-backend-scada:latest",
+              "ports": [
+                "scada_http"
+              ],
+              "entrypoint": [
+                "java",
+                "-Xmx4g",
+                "-XX:+ExitOnOutOfMemoryError",
+                "-jar",
+                "/app/app_scada.jar"
+              ]
+            },
+            "Constraints": null,
+            "Consul": null,
+            "DispatchPayload": null,
+            "Driver": "docker",
+            "Env": null,
+            "Identities": null,
+            "Identity": null,
+            "KillSignal": "",
+            "KillTimeout": 5000000000,
+            "Kind": "",
+            "Leader": false,
+            "Lifecycle": null,
+            "LogConfig": {
+              "Disabled": false,
+              "Enabled": null,
+              "MaxFileSizeMB": 10,
+              "MaxFiles": 10
+            },
+            "Meta": null,
+            "Name": "argus-scada",
+            "Resources": {
+              "CPU": 800,
+              "Cores": 0,
+              "Devices": null,
+              "DiskMB": null,
+              "IOPS": null,
+              "MemoryMB": 4096,
+              "MemoryMaxMB": null,
+              "NUMA": null,
+              "Networks": null,
+              "SecretsMB": null
+            },
+            "RestartPolicy": {
+              "Attempts": 2,
+              "Delay": 15000000000,
+              "Interval": 1800000000000,
+              "Mode": "fail",
+              "RenderTemplates": false
+            },
+            "ScalingPolicies": null,
+            "Schedule": null,
+            "Secrets": null,
+            "Services": null,
+            "ShutdownDelay": 0,
+            "Templates": null,
+            "User": "",
+            "Vault": {
+              "AllowTokenExpiration": false,
+              "ChangeMode": "restart",
+              "ChangeSignal": "SIGHUP",
+              "Cluster": "default",
+              "DisableFile": false,
+              "Env": true,
+              "Namespace": "",
+              "Policies": null,
+              "Role": "nomad-workloads"
+            },
+            "VolumeMounts": null
+          },
+          {
+            "Actions": null,
+            "Affinities": null,
+            "Artifacts": null,
+            "Config": {
+              "ports": [
+                "gm_http"
+              ],
+              "entrypoint": [
+                "java",
+                "-Xmx4g",
+                "-XX:+ExitOnOutOfMemoryError",
+                "-jar",
+                "/app/app_gm.jar"
+              ],
+              "args": [
+                "--http-port",
+                "8082",
+                "--nats-url",
+                "nats://127.0.0.1:4222",
+                "--config-path",
+                "config.toml",
+                "--clickhouse-host",
+                "127.0.0.1",
+                "--clickhouse-port",
+                "8123",
+                "--configurator-host",
+                "127.0.0.1",
+                "--configurator-port",
+                "8080",
+                "--mode",
+                "CLICKHOUSE"
+              ],
+              "image": "172.28.0.2:5000/argus-backend-gm:latest"
+            },
+            "Constraints": null,
+            "Consul": null,
+            "DispatchPayload": null,
+            "Driver": "docker",
+            "Env": null,
+            "Identities": null,
+            "Identity": null,
+            "KillSignal": "",
+            "KillTimeout": 5000000000,
+            "Kind": "",
+            "Leader": false,
+            "Lifecycle": null,
+            "LogConfig": {
+              "Disabled": false,
+              "Enabled": null,
+              "MaxFileSizeMB": 10,
+              "MaxFiles": 10
+            },
+            "Meta": null,
+            "Name": "argus-gm",
+            "Resources": {
+              "CPU": 800,
+              "Cores": 0,
+              "Devices": null,
+              "DiskMB": null,
+              "IOPS": null,
+              "MemoryMB": 4096,
+              "MemoryMaxMB": null,
+              "NUMA": null,
+              "Networks": null,
+              "SecretsMB": null
+            },
+            "RestartPolicy": {
+              "Attempts": 2,
+              "Delay": 15000000000,
+              "Interval": 1800000000000,
+              "Mode": "fail",
+              "RenderTemplates": false
+            },
+            "ScalingPolicies": null,
+            "Schedule": null,
+            "Secrets": null,
+            "Services": null,
+            "ShutdownDelay": 0,
+            "Templates": null,
+            "User": "",
+            "Vault": {
+              "AllowTokenExpiration": false,
+              "ChangeMode": "restart",
+              "ChangeSignal": "SIGHUP",
+              "Cluster": "default",
+              "DisableFile": false,
+              "Env": true,
+              "Namespace": "",
+              "Policies": null,
+              "Role": "nomad-workloads"
+            },
+            "VolumeMounts": null
+          }
+        ],
+        "Update": {
+          "AutoPromote": false,
+          "AutoRevert": false,
+          "Canary": 0,
+          "HealthCheck": "checks",
+          "HealthyDeadline": 300000000000,
+          "MaxParallel": 1,
+          "MinHealthyTime": 10000000000,
+          "ProgressDeadline": 600000000000,
+          "Stagger": 30000000000
+        },
+        "Volumes": null
+      }
+    ],
+    "Type": "service",
+    "UI": {
+      "Description": "Twin-CR simulation session session-4bus",
+      "Links": [
+        {
+          "Label": "argus-scada",
+          "URL": "https://sessions.twin.local/sessions/session-4bus/argus-scada"
+        },
+        {
+          "Label": "argus-gm",
+          "URL": "https://sessions.twin.local/sessions/session-4bus/argus-gm"
+        },
+        {
+          "Label": "configurator-client",
+          "URL": "https://sessions.twin.local/sessions/session-4bus/configurator-client"
+        },
+        {
+          "Label": "twincr-core",
+          "URL": "https://sessions.twin.local/sessions/session-4bus/twincr-core"
+        },
+        {
+          "Label": "clickhouse",
+          "URL": "https://sessions.twin.local/sessions/session-4bus/clickhouse"
+        }
+      ]
+    },
+    "Update": {
+      "AutoPromote": false,
+      "AutoRevert": false,
+      "Canary": 0,
+      "HealthCheck": "checks",
+      "HealthyDeadline": 300000000000,
+      "MaxParallel": 1,
+      "MinHealthyTime": 10000000000,
+      "ProgressDeadline": 600000000000,
+      "Stagger": 30000000000
+    },
+    "VaultNamespace": "",
+    "Version": 0,
+    "VersionTag": null
+  }
+}
