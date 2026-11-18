@@ -10,6 +10,7 @@ co-simulation of power systems.
 #ifndef LAUNCHER_H
 #define LAUNCHER_H
 
+#include "AlarmDetector.h"
 #include "AssetSimulator.h"
 #include "ClickHouseLogger.h"
 #include "CycosimInterface.h"
@@ -82,6 +83,7 @@ class Launcher {
         std::optional<HMIInterface> hmi_interface_;
         std::optional<GameMasterInterface> game_master_interface_;
         std::optional<CycosimInterface> cycosim_interface_;
+        std::unique_ptr<AlarmDetector> alarm_detector_;
 };
 
 #endif // LAUNCHER_H

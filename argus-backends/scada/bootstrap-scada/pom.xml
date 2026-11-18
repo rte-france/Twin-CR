@@ -29,10 +29,6 @@ co-simulation of power systems.
         </dependency>
         <dependency>
             <groupId>${project.groupId}</groupId>
-            <artifactId>alarms-scada</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>${project.groupId}</groupId>
             <artifactId>commands-scada</artifactId>
         </dependency>
         <dependency>

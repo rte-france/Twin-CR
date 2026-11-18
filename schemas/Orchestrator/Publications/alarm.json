@@ -1,0 +1,27 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "AlarmPublication",
+  "description": "Alarm or event published by the AlarmDetector on 'Alarms.GameMaster' (true values and all controls) or 'Alarms.HMI.<destination>' (values received by the destination, controls sent from the HMI), destination sanitized as the NATS topics",
+  "type": "object",
+  "properties": {
+    "id": {"type": "string", "description": "Measurement or control id"},
+    "label": {"type": "string", "description": "Displayed name (alarm label, or the id)"},
+    "time": {"type": "number", "description": "Simulation time (time_sent for the SCADA side)"},
+    "value": {"type": "number", "description": "Value (the measurement for a threshold)"},
+    "state": {"type": "string", "description": "Displayed state, e.g. Open"},
+    "kind": {"enum": ["state", "threshold", "command"]},
+    "alarm": {"type": "boolean", "description": "True for an alarm (alarm and event lists), false for an event only"},
+    "priority": {"type": "integer"},
+    "color": {"type": "string"},
+    "sound": {"type": ["string", "null"]},
+    "mode": {"enum": ["momentary", "persistent"]},
+    "retain": {"type": "boolean"},
+    "normal": {"type": "boolean", "description": "Back to the normal state: ends the persistent alarms of this id"},
+    "initial": {"type": "boolean", "description": "Condition already on at start (t = 0, first value of a measurement, or after a restart from a dump): a persistent alarm not in its normal state, or a threshold crossed (OverloadMonitor only, not an alarm when momentary)"},
+    "limit": {"type": "number", "description": "Threshold types: threshold of the level crossed (absent when back to normal)"},
+    "equipment_id": {"type": "string"},
+    "side": {"enum": ["ONE", "TWO", "THREE"], "description": "Side of the equipment (branch, 3 windings transformer)"},
+    "substation_id": {"type": "string", "description": "Substation of the alarm config, used by Locate when the equipment is not found in the network of a backend"}
+  },
+  "required": ["id", "label", "time", "value", "state", "kind", "alarm", "priority", "color", "sound", "mode", "retain", "normal", "initial"]
+}

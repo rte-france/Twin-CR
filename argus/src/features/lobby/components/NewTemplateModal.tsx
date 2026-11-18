@@ -87,6 +87,7 @@ export function NewTemplateModal(props: NewTemplateModalProps) {
   const [jobPath, setJobPath] = createSignal<string>("");
   const [cyberConfigFile, setCyberConfigFile] = createSignal<File>();
   const [assetSimulatorConfigFile, setAssetSimulatorConfigFile] = createSignal<File>();
+  const [alarmsFile, setAlarmsFile] = createSignal<File>();
   const [extraIoFile, setExtraIoFile] = createSignal<File>();
   const [otherFiles, setOtherFiles] = createSignal<File[]>([]);
   const [automataCommands, setAutomataCommands] = createSignal("");
@@ -96,6 +97,9 @@ export function NewTemplateModal(props: NewTemplateModalProps) {
   const [scadaIidmFile, setScadaIidmFile] = createSignal<File>();
   const [gmIidmFile, setGmIidmFile] = createSignal<File>();
   const [period, setPeriod] = createSignal(1);
+  const [hmiLocation, setHmiLocation] = createSignal("SCADA");
+  // Without a cyber network file, the HMI location is the root of the generated network: SCADA
+  const effectiveHmiLocation = () => (cyberConfigFile() ? hmiLocation().trim() || "SCADA" : "SCADA");
   const [dynawoVariant, setDynawoVariant] = createSignal<"public" | "rte">(
     "rte",
   );
@@ -389,6 +393,7 @@ export function NewTemplateModal(props: NewTemplateModalProps) {
         ["dsl_file", dslFile],
         ["cyber_config_file", cyberConfigFile],
         ["asset_simulator_config_file", assetSimulatorConfigFile],
+        ["alarms_file", alarmsFile],
         ["extra_io_file", extraIoFile],
         ["geo_data", geoDataFile],
         ["scenario_file", scenarioFile],
@@ -406,7 +411,7 @@ export function NewTemplateModal(props: NewTemplateModalProps) {
       );
       await createTemplate(
         templateName(), parent, job, dynawoFiles, optional, period(),
-        dynawoVariant(), otherFiles(),
+        effectiveHmiLocation(), dynawoVariant(), otherFiles(),
         automataCommands().split("\n").map((c) => c.trim()).filter((c) => c.length > 0),
       );
     } catch (err) {
@@ -564,6 +569,22 @@ export function NewTemplateModal(props: NewTemplateModalProps) {
                     onInput={(e) =>
                       setPeriod(Number(e.currentTarget.value))}
                   />
+
+                  <label
+                    class="text-xs text-gray-500"
+                    title="Node of the cyber network whose measurements and alarms the HMI shows. Without a cyber network file, it is the root of the generated network: SCADA."
+                  >
+                    HMI location
+                  </label>
+                  <input
+                    type="text"
+                    class="border border-gray-300 rounded px-2 py-1 disabled:bg-gray-100 disabled:text-gray-400"
+                    disabled={!cyberConfigFile()}
+                    title={cyberConfigFile() ? undefined : "Needs a cyber network file"}
+                    value={cyberConfigFile() ? hmiLocation() : "SCADA"}
+                    placeholder="SCADA"
+                    onInput={(e) => setHmiLocation(e.currentTarget.value)}
+                  />
                 </>
               </Show>
 
@@ -660,6 +681,14 @@ export function NewTemplateModal(props: NewTemplateModalProps) {
                       exts: ["json"],
                       get: assetSimulatorConfigFile,
                       set: setAssetSimulatorConfigFile,
+                    },
+                    {
+                      label: "Alarm config",
+                      hint:
+                        "Alarm types and the list of alarms (breakers, overloads, current thresholds). Generated from the grid model and the SCADA outputs when left out.",
+                      exts: ["json"],
+                      get: alarmsFile,
+                      set: setAlarmsFile,
                     },
                     {
                       label: "Extra IO",

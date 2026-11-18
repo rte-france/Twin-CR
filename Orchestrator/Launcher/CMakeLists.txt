@@ -33,6 +33,7 @@ target_include_directories(launcher
 # Link the 3rdparty library
 target_link_libraries(launcher
     PUBLIC
+    alarms
     asset_simulator
     broker
     credentials

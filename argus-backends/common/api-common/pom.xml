@@ -27,6 +27,11 @@ co-simulation of power systems.
         </dependency>
         <dependency>
             <groupId>org.TwinCR</groupId>
+            <artifactId>alarms-common</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.TwinCR</groupId>
             <artifactId>ifl-common</artifactId>
             <version>${project.version}</version>
         </dependency>

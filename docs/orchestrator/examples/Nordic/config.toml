@@ -33,6 +33,7 @@ scada_inputs_file = "scada_inputs_no_map.json"
 scada_outputs_file = "scada_outputs_no_map.json"
 cyber_config_file = "cyber_config_fake.json"
 extra_io_file = "extra_io.json"  # Added to the generated io files by cfg.sh (SCADA input of the TCB automaton tcp_blocker.py)
+alarms_file = "alarms.json"
 other_files = ["tcp_blocker.py"]
 other_dirs = []
 

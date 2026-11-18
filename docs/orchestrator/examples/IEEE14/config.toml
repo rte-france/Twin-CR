@@ -30,6 +30,7 @@ game_master_inputs_file = "game_master_inputs.json"
 game_master_outputs_file = "game_master_outputs.json"
 scada_inputs_file = "scada_inputs_no_map.json"
 scada_outputs_file = "scada_outputs_no_map.json"
+alarms_file = "alarms.json"
 cyber_config_file = "cyber_config_fake.json"
 other_files = []
 other_dirs = []

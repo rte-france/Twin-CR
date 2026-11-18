@@ -169,6 +169,7 @@ class TemplateFileRole(str, Enum):
     scenario = "scenario_file"
     geo_data = "geo_data"
     asset_simulator_config = "asset_simulator_config_file"
+    alarms = "alarms_file"
     extra_io = "extra_io_file"
     mapping = "mapping_file"
     scada_iidm = "scada_backend.iidm_file"
