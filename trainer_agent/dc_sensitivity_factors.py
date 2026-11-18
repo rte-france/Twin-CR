@@ -1,10 +1,9 @@
 """
-Copyright (c) 2025-2026, RTE (http://www.rte-france.com)
-This Source Code Form is subject to the terms of the Mozilla Public
-License, v. 2.0. If a copy of the MPL was not distributed with this
-file, You can obtain one at http://mozilla.org/MPL/2.0/.
+Copyright (c) 2025-2026, RTE (https://www.rte-france.com)
+See AUTHORS.md
 SPDX-License-Identifier: MPL-2.0
-This file is part of the TwinEU-core project.
+This file is part of Twin-CR, a platform for real-time cyber-physical
+co-simulation of power systems.
 
 N-2 screening with compound LODF on a pandapower network (DC model).
 
@@ -245,9 +244,12 @@ class DCSensitivityFactors:
         reduced_b_lu = spla.splu(
             (reduced_incidence.T @ branch_susceptance @ reduced_incidence).tocsc())
 
-        self.branch_transfer = np.asarray(
+        # PTDF without the reference columns, B_d A B^-1, and Phi = PTDF A^T: one factorisation solve for both.
+        # The padded PTDF is built lazily by ptdf().
+        self._ptdf_reduced = np.asarray(
             (branch_susceptance @ reduced_incidence)
-            @ reduced_b_lu.solve(reduced_incidence.T.toarray()))
+            @ reduced_b_lu.solve(np.eye(len(non_ref_positions))))
+        self.branch_transfer = np.asarray(reduced_incidence @ self._ptdf_reduced.T).T
         labels = _branch_labels(net)
         self.branches = pd.DataFrame(
             {"type": [labels[row][0] for row in rows],
@@ -303,8 +305,11 @@ class DCSensitivityFactors:
         others are scaled by their ratio to it. Branches without limit data get their
         rating as a permanent limit. Permanent limits have a duration of -1."""
         rating_mw = np.asarray(self.rating_mw, float)
-        levels = [[rating] if np.isfinite(rating) else [] for rating in rating_mw]
-        durations = [[-1] if np.isfinite(rating) else [] for rating in rating_mw]
+        has_rating = np.isfinite(rating_mw)
+        n_branches = len(rating_mw)
+        # (branch position, rank among the branch's limits, level MW, duration s) of the branches with limit data
+        limit_positions = limit_ranks = np.empty(0, int)
+        limit_levels = limit_durations = np.empty(0, float)
 
         if operational_limits is not None and len(operational_limits):
             limits = operational_limits
@@ -323,26 +328,42 @@ class DCSensitivityFactors:
                 # pypowsybl: -1 (or infinite) for the permanent limit
                 "duration": np.where((acceptable_duration < 0) | ~np.isfinite(acceptable_duration),
                                      -1, acceptable_duration).astype(int)})
-            limits_by_element = {element_id: group.sort_values("value")
-                                 for element_id, group in limits.groupby("element_id")}
+            # Per element: limits sorted ascending, rank in that order, and the lowest one (the reference of the scaling)
+            limits = limits.sort_values(["element_id", "value"], kind="stable", ignore_index=True)
+            limits["rank"] = limits.groupby("element_id").cumcount()
+            limits["lowest_value"] = limits.groupby("element_id")["value"].transform("min")
+            limits = limits[limits["lowest_value"] > 0]
 
-            for position, (element_type, element_index) in enumerate(
-                    zip(self.branches["type"], self.branches["index"])):
-                if not np.isfinite(rating_mw[position]) or element_type not in ("line", "trafo"):
-                    continue
-                element_limits = limits_by_element.get(self.net[element_type].at[element_index, "name"])
-                if element_limits is None or not (element_limits["value"].min() > 0):
-                    continue
-                levels[position] = list(rating_mw[position] * element_limits["value"]
-                                        / element_limits["value"].min())
-                durations[position] = list(element_limits["duration"])
+            # Name of the pandapower element behind each branch that can take limit data
+            branch_element_name = np.full(n_branches, None, dtype=object)
+            for element_type in ("line", "trafo"):
+                is_type = (self.branches["type"] == element_type).to_numpy()
+                if is_type.any():
+                    element_indices = self.branches.loc[is_type, "index"].to_numpy()
+                    branch_element_name[is_type] = (
+                        self.net[element_type]["name"].reindex(element_indices).to_numpy(object))
+            has_limit_data = has_rating & pd.notna(branch_element_name)
+            branches_with_name = pd.DataFrame({"position": np.where(has_limit_data)[0],
+                                               "element_id": branch_element_name[has_limit_data]})
+            matched = branches_with_name.merge(limits, on="element_id", how="inner")
+            limit_positions = matched["position"].to_numpy(int)
+            limit_ranks = matched["rank"].to_numpy(int)
+            limit_levels = (rating_mw[limit_positions] * matched["value"].to_numpy(float)
+                            / matched["lowest_value"].to_numpy(float))
+            limit_durations = matched["duration"].to_numpy(float)
 
-        n_levels = max(1, max(len(row) for row in levels))
-        levels_mw = np.full((len(levels), n_levels), np.inf)
-        duration_s = np.full((len(levels), n_levels), np.nan)
-        for position, (row_levels, row_durations) in enumerate(zip(levels, durations)):
-            levels_mw[position, :len(row_levels)] = row_levels
-            duration_s[position, :len(row_durations)] = row_durations
+        n_levels = max(1, limit_ranks.max() + 1 if len(limit_ranks) else 1)
+        levels_mw = np.full((n_branches, n_levels), np.inf)
+        duration_s = np.full((n_branches, n_levels), np.nan)
+        # Default: the rating as only, permanent, limit
+        levels_mw[has_rating, 0] = rating_mw[has_rating]
+        duration_s[has_rating, 0] = -1
+        # Branches with limit data: their limits replace the default
+        replaced_positions = np.unique(limit_positions)
+        levels_mw[replaced_positions] = np.inf
+        duration_s[replaced_positions] = np.nan
+        levels_mw[limit_positions, limit_ranks] = limit_levels
+        duration_s[limit_positions, limit_ranks] = limit_durations
         return levels_mw, duration_s
 
     def exceeded_limit_durations(self, positions, flows_mw) -> np.ndarray:
@@ -375,10 +396,10 @@ class DCSensitivityFactors:
         Computed once (topology is fixed), the returned array is shared: do not modify it.
         """
         if self._ptdf is None:
-            inverse_reduced_b = self.reduced_b_lu.solve(np.eye(len(self.non_ref_positions)))
             ptdf = np.zeros((len(self.base_flows_mw), self.n_buses))
-            ptdf[:, self.non_ref_positions] = (self.branch_susceptance @ self.reduced_incidence) @ inverse_reduced_b
+            ptdf[:, self.non_ref_positions] = self._ptdf_reduced
             self._ptdf = ptdf
+            self._ptdf_reduced = None   # free the unpadded copy
         return self._ptdf
 
     def lodf(self) -> np.ndarray:
