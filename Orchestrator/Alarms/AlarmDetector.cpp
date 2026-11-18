@@ -337,6 +337,9 @@ void AlarmDetector::processValue(AlarmSide& side, const std::string& id, const V
     const AlarmEntry& entry = alarms_.at(id);
     const AlarmType& type = *entry.type;
     double v = value.to_double();
+    if (std::isnan(v)) {
+        return;  // No value (NaN never equals the last state: each one would be a change)
+    }
 
     bool known = side.states.contains(id);  // A previous value was seen on this side
     double state = v;
