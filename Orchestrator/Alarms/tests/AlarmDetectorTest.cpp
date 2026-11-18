@@ -122,6 +122,11 @@ int main() {
     CHECK(open.payload["initial"] == false);
     detector.onActualMeasurement(gm("breaker", 2, 3.0));
     CHECK(published.back().payload["state"] == "Closed");
+    size_t before_nan = published.size();
+    detector.onActualMeasurement(gm("breaker", NAN, 3.1));  // No value: ignored, the last state is kept
+    detector.onActualMeasurement(gm("breaker", NAN, 3.2));
+    detector.onActualMeasurement(gm("breaker", 2, 3.3));
+    CHECK(published.size() == before_nan);
     CHECK(published.back().payload["sound"] == "yellow");  // From the priority rule (priority 6)
 
     // SCADA side: the time sent decides the initial values, per destination
