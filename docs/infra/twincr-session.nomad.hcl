@@ -301,7 +301,7 @@ EOT
         image = "${var.registry}/argus-backend-scada:latest"
         ports = ["scada_http"]
         entrypoint = [
-          "java", "-Xmx1g", "-XX:+ExitOnOutOfMemoryError", "-jar", "/app/app_scada.jar"
+          "java", "-Xmx4g", "-XX:+ExitOnOutOfMemoryError", "-jar", "/app/app_scada.jar"
         ]
         args = [
           "--http-port", "8081",
@@ -317,8 +317,8 @@ EOT
       }
 
       resources {
-        cpu    = 400
-        memory = 1024
+        cpu    = 800
+        memory = 4096
       }
     }
 
@@ -329,7 +329,7 @@ EOT
         image = "${var.registry}/argus-backend-gm:latest"
         ports = ["gm_http"]
         entrypoint = [
-          "java", "-Xmx1g", "-XX:+ExitOnOutOfMemoryError", "-jar", "/app/app_gm.jar"
+          "java", "-Xmx4g", "-XX:+ExitOnOutOfMemoryError", "-jar", "/app/app_gm.jar"
         ]
         args = [
           "--http-port", "8082",
@@ -344,8 +344,8 @@ EOT
       }
 
       resources {
-        cpu    = 400
-        memory = 1024
+        cpu    = 800
+        memory = 4096
       }
     }
 
