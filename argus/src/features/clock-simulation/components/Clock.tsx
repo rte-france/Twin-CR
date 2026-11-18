@@ -10,22 +10,15 @@ import { createSignal, createMemo, onMount, onCleanup, Show } from "solid-js";
 import { Effect, Stream, Schedule } from "effect";
 import { TimeClient } from "@/services/time/service";
 import { systemRuntime } from "@/config/runtime";
+import { formatTimeHHMMSS } from "@/utils/formatTimeHHMMSS";
 
 export const Clock = () => {
   const [time, setTime] = createSignal<number>(0);
   const [isPaused, setIsPaused] = createSignal<boolean>(true);
 
-  const formattedTime = createMemo(() => {
-    const t = time();
-    const hours = Math.floor(t / 3600)
-      .toString()
-      .padStart(2, "0");
-    const minutes = Math.floor((t % 3600) / 60)
-      .toString()
-      .padStart(2, "0");
-    const seconds = (t % 60).toString().padStart(2, "0");
-    return `${hours}:${minutes}:${seconds}`;
-  });
+  // Fixed formats: with sub-second periods (e.g. 0.1 s), the raw times (12.300000000000002) made the clock resize
+  const formattedTime = createMemo(() => formatTimeHHMMSS(time()));
+  const formattedSeconds = createMemo(() => time().toFixed(1));
 
   onMount(() => {
     let timeoutId: ReturnType<typeof setTimeout>;
@@ -75,7 +68,7 @@ export const Clock = () => {
         {formattedTime()}
       </span>
       <span class="text-[10px] font-medium text-(--icons)">
-        {time()}
+        {formattedSeconds()}
         <span class="text-[8px] opacity-70 ml-[2px]">s</span>
       </span>
     </div>
