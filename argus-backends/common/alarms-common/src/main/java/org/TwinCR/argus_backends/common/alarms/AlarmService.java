@@ -32,7 +32,10 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -62,8 +65,9 @@ public class AlarmService {
     private final Map<String, ObjectNode> monitor = new LinkedHashMap<>();  // OverloadMonitor: thresholds crossed, by id
     private final Deque<ObjectNode> events = new ArrayDeque<>();
     private final Set<SseClient> clients = ConcurrentHashMap.newKeySet();
-    private long nextUid = 1;
-    private long nextSeq = 1;
+    // Unique across the restarts of the backend (clients keep their uids/seqs across a reconnection)
+    private long nextUid = System.currentTimeMillis() * 1000;
+    private long nextSeq = System.currentTimeMillis() * 1000;
     private volatile double currentTime = 0;
 
     /**
@@ -251,15 +255,17 @@ public class AlarmService {
     /** Send the snapshot to a new client, then the changes */
     public void register(SseClient client) throws IOException {
         DeferredSseClient deferred = new DeferredSseClient(client);
+        QueuedClient queued = new QueuedClient(deferred);
         String snapshot;
         synchronized (this) {
             snapshot = snapshot().toString();
-            clients.add(deferred);
+            clients.add(queued);
         }
         try {
             deferred.start(List.of(snapshot));
         } catch (IOException e) {
-            clients.remove(deferred);
+            clients.remove(queued);
+            queued.close();
             throw e;
         }
     }
@@ -308,7 +314,7 @@ public class AlarmService {
         broadcast(message.toString());
     }
 
-    /** Called with the lock held, so that all the clients get the changes in the same order */
+    /** Called with the lock held, so that all the clients get the changes in the same order; only queues the sending */
     private void broadcast(String payload) {
         Iterator<SseClient> it = clients.iterator();
         while (it.hasNext()) {
@@ -318,6 +324,54 @@ public class AlarmService {
             } catch (IOException e) {
                 it.remove();
             }
+        }
+    }
+
+    /**
+     * Sends to one client from its own thread, so that a slow or stalled client delays neither the others nor the alarm
+     * processing (which queues under the lock). A client that fails, or falls MAX_QUEUED messages behind, is closed: it
+     * is removed on the next broadcast (at least every keepalive) and resynchronises with a snapshot when it reconnects.
+     */
+    private static final class QueuedClient implements SseClient {
+        private static final int MAX_QUEUED = 10_000;
+        private final SseClient delegate;
+        private final ThreadPoolExecutor executor;
+        private volatile boolean closed = false;
+
+        QueuedClient(SseClient delegate) {
+            this.delegate = delegate;
+            this.executor = new ThreadPoolExecutor(1, 1, 0, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<>(MAX_QUEUED), r -> {
+                Thread t = new Thread(r, "alarm-sse");
+                t.setDaemon(true);
+                return t;
+            });
+        }
+
+        @Override
+        public void send(String data) throws IOException {
+            if (closed) {
+                throw new IOException("Alarm SSE client closed");
+            }
+            try {
+                executor.execute(() -> {
+                    if (closed) {
+                        return;
+                    }
+                    try {
+                        delegate.send(data);
+                    } catch (IOException e) {
+                        close();
+                    }
+                });
+            } catch (RejectedExecutionException e) {
+                close();
+                throw new IOException("Alarm SSE client too slow, dropped", e);
+            }
+        }
+
+        void close() {
+            closed = true;
+            executor.shutdownNow();
         }
     }
 }
