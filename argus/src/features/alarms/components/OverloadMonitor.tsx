@@ -6,7 +6,7 @@ This file is part of Twin-CR, a platform for real-time cyber-physical
 co-simulation of power systems.
 */
 
-import { createEffect, createMemo, createSignal, onCleanup, onMount, Show } from "solid-js";
+import { createEffect, createMemo, createSignal, on, onCleanup, onMount, Show, untrack } from "solid-js";
 import { Effect, Schedule } from "effect";
 import {
   AllCommunityModule,
@@ -118,14 +118,15 @@ export function OverloadMonitor() {
 
   // Subscribe to the topics of the monitored measurements, again when they change (useDynamicValues reads the measurement ids at start)
   const monitoredIds = createMemo(() => monitoredItems().map((item) => item.id).sort().join("\n"));
-  createEffect(() => {
-    if (monitoredIds() === "") {
+  // Only on a change of the ids or of the mode: monitoredItems() is a new array at each store flush or mapping poll
+  createEffect(on([monitoredIds, alarmStore.mode], ([ids, mode]) => {
+    if (ids === "") {
       stop();
       return;
     }
-    const topics = [...new Set(monitoredItems().map((item) => item.topic))];
-    start(topics, [], alarmStore.mode());
-  });
+    const topics = [...new Set(untrack(monitoredItems).map((item) => item.topic))];
+    start(topics, [], mode);
+  }));
 
   const rows = createMemo((): Row[] => {
     const match = textMatcher(text());
