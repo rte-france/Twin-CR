@@ -581,7 +581,8 @@ export function NewTemplateModal(props: NewTemplateModalProps) {
                     class="border border-gray-300 rounded px-2 py-1 disabled:bg-gray-100 disabled:text-gray-400"
                     disabled={!cyberConfigFile()}
                     title={cyberConfigFile() ? undefined : "Needs a cyber network file"}
-                    value={effectiveHmiLocation()}
+                    value={cyberConfigFile() ? hmiLocation() : "SCADA"}
+                    placeholder="SCADA"
                     onInput={(e) => setHmiLocation(e.currentTarget.value)}
                   />
                 </>

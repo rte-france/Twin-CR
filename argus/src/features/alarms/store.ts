@@ -6,7 +6,7 @@ This file is part of Twin-CR, a platform for real-time cyber-physical
 co-simulation of power systems.
 */
 
-import { createMemo, createRoot, createSignal, createEffect, on } from "solid-js";
+import { batch, createMemo, createRoot, createSignal, createEffect, on } from "solid-js";
 import { Duration, Effect, Schedule, Stream } from "effect";
 import { systemRuntime } from "@/config/runtime";
 import { GmClient } from "@/services/game-master/service";
@@ -92,7 +92,11 @@ const MAX_EVENTS = 10_000;
 
 const store = createRoot(() => {
   const [mode] = useAppMode();
-  const [version, setVersion] = createSignal(0);
+  // One version per collection: a change only recomputes the views of its collection
+  const [alarmsVersion, setAlarmsVersion] = createSignal(0);
+  const [eventsVersion, setEventsVersion] = createSignal(0);
+  const [monitorVersion, setMonitorVersion] = createSignal(0);
+  const dirty = { alarms: false, events: false, monitor: false };
   const [connected, setConnected] = createSignal(false);
   const alarmsByUid = new Map<number, Alarm>();
   const monitorById = new Map<string, MonitorEntry>();
@@ -100,11 +104,21 @@ const store = createRoot(() => {
   let flushTimer: ReturnType<typeof setTimeout> | undefined;
   let cancelStream: (() => void) | undefined;
 
-  const scheduleFlush = () => {
+  const flush = () => {
+    batch(() => {
+      if (dirty.alarms) setAlarmsVersion((v) => v + 1);
+      if (dirty.events) setEventsVersion((v) => v + 1);
+      if (dirty.monitor) setMonitorVersion((v) => v + 1);
+    });
+    dirty.alarms = dirty.events = dirty.monitor = false;
+  };
+
+  const scheduleFlush = (...changed: (keyof typeof dirty)[]) => {
+    for (const collection of changed) dirty[collection] = true;
     if (flushTimer !== undefined) return;
     flushTimer = setTimeout(() => {
       flushTimer = undefined;
-      setVersion((v) => v + 1);
+      flush();
     }, FLUSH_MS);
   };
 
@@ -116,27 +130,32 @@ const store = createRoot(() => {
         events = [...message.events];
         monitorById.clear();
         for (const m of message.monitor ?? []) monitorById.set(m.id, m);
+        scheduleFlush("alarms", "events", "monitor");
         break;
       case "alarm":
         alarmsByUid.set(message.alarm.uid, message.alarm);
+        scheduleFlush("alarms");
         break;
       case "alarm_removed":
         alarmsByUid.delete(message.uid);
+        scheduleFlush("alarms");
         break;
       case "monitor":
         monitorById.set(message.entry.id, message.entry);
+        scheduleFlush("monitor");
         break;
       case "monitor_removed":
         monitorById.delete(message.id);
+        scheduleFlush("monitor");
         break;
       case "event":
         events.push(message.event);
         if (events.length > MAX_EVENTS) events.splice(0, events.length - MAX_EVENTS);
+        scheduleFlush("events");
         break;
       default:
         return;
     }
-    scheduleFlush();
   };
 
   const parse = (raw: unknown): AlarmMessage | null => {
@@ -153,7 +172,8 @@ const store = createRoot(() => {
     alarmsByUid.clear();
     monitorById.clear();
     events = [];
-    setVersion((v) => v + 1);
+    dirty.alarms = dirty.events = dirty.monitor = true;
+    flush();
 
     const consume = Effect.gen(function* () {
       const stream = currentMode === Mode.Scada
@@ -187,16 +207,16 @@ const store = createRoot(() => {
 
   // Newest first
   const alarms = createMemo(() => {
-    version();
+    alarmsVersion();
     return [...alarmsByUid.values()].sort((a, b) => b.time - a.time || b.uid - a.uid);
   });
   const eventList = createMemo(() => {
-    version();
+    eventsVersion();
     return [...events].reverse();
   });
   // Highest priority first, then the oldest crossing
   const monitor = createMemo(() => {
-    version();
+    monitorVersion();
     return [...monitorById.values()].sort((a, b) => b.priority - a.priority || a.since - b.since);
   });
 
