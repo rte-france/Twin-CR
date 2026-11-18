@@ -17,7 +17,8 @@
     "mode": {"enum": ["momentary", "persistent"]},
     "retain": {"type": "boolean"},
     "normal": {"type": "boolean", "description": "Back to the normal state: ends the persistent alarms of this id"},
-    "initial": {"type": "boolean", "description": "Raised at start (persistent alarm not in its normal state at t = 0 or after a restart from a dump)"},
+    "initial": {"type": "boolean", "description": "Condition already on at start (t = 0, first value of a measurement, or after a restart from a dump): a persistent alarm not in its normal state, or a threshold crossed (OverloadMonitor only, not an alarm when momentary)"},
+    "limit": {"type": "number", "description": "Threshold types: threshold of the level crossed (absent when back to normal)"},
     "equipment_id": {"type": "string"},
     "side": {"enum": ["ONE", "TWO", "THREE"], "description": "Side of the equipment (branch, 3 windings transformer)"},
     "substation_id": {"type": "string", "description": "Substation of the alarm config, used by Locate when the equipment is not found in the network of a backend"}

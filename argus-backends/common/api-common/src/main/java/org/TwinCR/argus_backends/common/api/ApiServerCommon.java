@@ -868,10 +868,11 @@ public abstract class ApiServerCommon {
 
         @GET
         @Tag(name = "Alarms")
-        @Operation(summary = "Subscribe to the alarms and events via SSE",
-            description = "First a snapshot {\"type\": \"snapshot\", \"alarms\": [...], \"events\": [...]}, then the changes: "
-                + "{\"type\": \"alarm\", \"alarm\": {...}} (added or updated), {\"type\": \"alarm_removed\", \"uid\": n}, "
-                + "{\"type\": \"event\", \"event\": {...}}, {\"type\": \"keepalive\"}")
+        @Operation(summary = "Subscribe to the alarms, events and OverloadMonitor via SSE",
+            description = "First a snapshot {\"type\": \"snapshot\", \"alarms\": [...], \"events\": [...], \"monitor\": [...]}, "
+                + "then the changes: {\"type\": \"alarm\", \"alarm\": {...}} (added or updated), {\"type\": \"alarm_removed\", \"uid\": n}, "
+                + "{\"type\": \"event\", \"event\": {...}}, {\"type\": \"monitor\", \"entry\": {...}} (threshold crossed, added "
+                + "or updated), {\"type\": \"monitor_removed\", \"id\": \"...\"}, {\"type\": \"keepalive\"}")
         @ApiResponse(responseCode = "200", description = "SSE stream of the alarm changes")
         @Override
         public void handle(String target, HttpServletRequest req, HttpServletResponse resp) throws Exception {
@@ -897,7 +898,7 @@ public abstract class ApiServerCommon {
 
         @POST
         @Tag(name = "Alarms")
-        @Operation(summary = "Act on alarms (GET /alarms: current alarms and events)",
+        @Operation(summary = "Act on alarms (GET /alarms: current alarms, events and OverloadMonitor)",
             description = "acknowledge: {\"uids\": [...]}, removes the momentary alarms. "
                 + "clear: {\"uids\": [...]}, removes the persistent alarms acknowledged and ended. "
                 + "comment: {\"uid\": n, \"comment\": \"...\"} (null or blank removes it). "

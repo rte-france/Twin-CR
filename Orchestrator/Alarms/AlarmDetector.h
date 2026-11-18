@@ -115,7 +115,7 @@ class AlarmDetector {
         void loadState(const std::string& bin);
 
         /**
-         * Publish again the persistent alarms that are not in their normal state (after a restart from a dump)
+         * Publish again the persistent alarms that are not in their normal state and the thresholds crossed (after a restart from a dump)
          */
         void republishActive(double time);
 

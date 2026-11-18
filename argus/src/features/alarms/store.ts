@@ -57,11 +57,29 @@ export interface AlarmEvent {
   substation_id?: string;
 }
 
+/** OverloadMonitor entry: a threshold currently crossed (whatever the acknowledgements), by id */
+export interface MonitorEntry {
+  id: string;
+  label: string;
+  state: string;  // Level crossed, e.g. Limit 1 overload
+  value: number;  // At the last level change
+  limit?: number;  // Threshold of the level
+  time: number;  // Last level change
+  since: number;  // First crossing
+  priority: number;
+  color: string;
+  equipment_id?: string;
+  side?: string;
+  substation_id?: string;
+}
+
 type AlarmMessage =
-  | { type: "snapshot"; alarms: Alarm[]; events: AlarmEvent[] }
+  | { type: "snapshot"; alarms: Alarm[]; events: AlarmEvent[]; monitor?: MonitorEntry[] }
   | { type: "alarm"; alarm: Alarm }
   | { type: "alarm_removed"; uid: number }
   | { type: "event"; event: AlarmEvent }
+  | { type: "monitor"; entry: MonitorEntry }
+  | { type: "monitor_removed"; id: string }
   | { type: "keepalive" };
 
 /** A persistent alarm acknowledged and ended, that the operator has to clear */
@@ -77,6 +95,7 @@ const store = createRoot(() => {
   const [version, setVersion] = createSignal(0);
   const [connected, setConnected] = createSignal(false);
   const alarmsByUid = new Map<number, Alarm>();
+  const monitorById = new Map<string, MonitorEntry>();
   let events: AlarmEvent[] = [];  // Oldest first
   let flushTimer: ReturnType<typeof setTimeout> | undefined;
   let cancelStream: (() => void) | undefined;
@@ -95,12 +114,20 @@ const store = createRoot(() => {
         alarmsByUid.clear();
         for (const a of message.alarms) alarmsByUid.set(a.uid, a);
         events = [...message.events];
+        monitorById.clear();
+        for (const m of message.monitor ?? []) monitorById.set(m.id, m);
         break;
       case "alarm":
         alarmsByUid.set(message.alarm.uid, message.alarm);
         break;
       case "alarm_removed":
         alarmsByUid.delete(message.uid);
+        break;
+      case "monitor":
+        monitorById.set(message.entry.id, message.entry);
+        break;
+      case "monitor_removed":
+        monitorById.delete(message.id);
         break;
       case "event":
         events.push(message.event);
@@ -124,6 +151,7 @@ const store = createRoot(() => {
   const connect = (currentMode: Mode) => {
     cancelStream?.();
     alarmsByUid.clear();
+    monitorById.clear();
     events = [];
     setVersion((v) => v + 1);
 
@@ -166,6 +194,11 @@ const store = createRoot(() => {
     version();
     return [...events].reverse();
   });
+  // Highest priority first, then the oldest crossing
+  const monitor = createMemo(() => {
+    version();
+    return [...monitorById.values()].sort((a, b) => b.priority - a.priority || a.since - b.since);
+  });
 
   const post = (endpoint: string, body: unknown) => {
     const program = Effect.gen(function* () {
@@ -183,6 +216,7 @@ const store = createRoot(() => {
     connected,
     alarms,
     events: eventList,
+    monitor,
     acknowledge: (uids: number[]) => uids.length > 0 && post("/alarms/acknowledge", { uids }),
     clear: (uids: number[]) => uids.length > 0 && post("/alarms/clear", { uids }),
     comment: (uid: number, comment: string | null) => post("/alarms/comment", { uid, comment }),

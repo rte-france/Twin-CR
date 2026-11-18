@@ -44,9 +44,13 @@ import java.util.concurrent.TimeUnit;
  *  - retain = false (NO RETAIN): a new state of an id replaces its alarms, else each occurrence has its own alarm.
  * Acknowledgements, clearings and comments are shared by all the clients of the backend, and logged in the event journal.
  *
+ * OverloadMonitor: the thresholds currently crossed (kind "threshold", not back to normal), by id, whatever the
+ * acknowledgements; includes those already crossed at start ("initial", which are not alarms when momentary).
+ *
  * Clients follow the state through an SSE stream: a snapshot, then the changes:
- *  {"type": "snapshot", "alarms": [...], "events": [...]}, {"type": "alarm", "alarm": {...}} (added or updated),
- *  {"type": "alarm_removed", "uid": n}, {"type": "event", "event": {...}}, {"type": "keepalive"}.
+ *  {"type": "snapshot", "alarms": [...], "events": [...], "monitor": [...]}, {"type": "alarm", "alarm": {...}} (added or
+ *  updated), {"type": "alarm_removed", "uid": n}, {"type": "event", "event": {...}}, {"type": "monitor", "entry": {...}}
+ *  (added or updated), {"type": "monitor_removed", "id": "..."}, {"type": "keepalive"}.
  */
 public class AlarmService {
     private static final Logger LOGGER = LoggerFactory.getLogger(AlarmService.class);
@@ -55,6 +59,7 @@ public class AlarmService {
     private static final String KEEPALIVE = "{\"type\":\"keepalive\"}";
 
     private final Map<Long, ObjectNode> alarms = new LinkedHashMap<>();  // By uid, in order of arrival
+    private final Map<String, ObjectNode> monitor = new LinkedHashMap<>();  // OverloadMonitor: thresholds crossed, by id
     private final Deque<ObjectNode> events = new ArrayDeque<>();
     private final Set<SseClient> clients = ConcurrentHashMap.newKeySet();
     private long nextUid = 1;
@@ -95,6 +100,14 @@ public class AlarmService {
 
     /** Handle an alarm or event published by the AlarmDetector */
     private synchronized void onAlarm(ObjectNode message) {
+        boolean persistent = "persistent".equals(message.path("mode").asText());
+        if ("threshold".equals(message.path("kind").asText())) {
+            updateMonitor(message);
+            if (message.path("initial").asBoolean(false) && !persistent) {
+                return;  // Already crossed at start: in the OverloadMonitor only, neither an alarm nor a change
+            }
+        }
+
         ObjectNode event = MAPPER.createObjectNode();
         event.put("seq", nextSeq++);
         for (String field : List.of("time", "id", "label", "state", "kind", "alarm", "priority", "color", "equipment_id", "side", "substation_id")) {
@@ -105,7 +118,6 @@ public class AlarmService {
         addEvent(event);
 
         String id = message.path("id").asText();
-        boolean persistent = "persistent".equals(message.path("mode").asText());
         // An event (even with "alarm": false) can end an alarm
         if (persistent && message.path("normal").asBoolean(false)) {
             // End of the persistent alarms of this id: they can now be cleared
@@ -205,7 +217,35 @@ public class AlarmService {
         alarms.values().forEach(alarmArray::add);
         ArrayNode eventArray = snapshot.putArray("events");
         events.forEach(eventArray::add);
+        ArrayNode monitorArray = snapshot.putArray("monitor");
+        monitor.values().forEach(monitorArray::add);
         return snapshot;
+    }
+
+    /** OverloadMonitor: a threshold crossed is added or updated (keeping the time it was first crossed), removed when back to normal */
+    private void updateMonitor(ObjectNode message) {
+        String id = message.path("id").asText();
+        if (message.path("normal").asBoolean(false)) {
+            if (monitor.remove(id) != null) {
+                ObjectNode removed = MAPPER.createObjectNode();
+                removed.put("type", "monitor_removed");
+                removed.put("id", id);
+                broadcast(removed.toString());
+            }
+            return;
+        }
+        ObjectNode entry = MAPPER.createObjectNode();
+        for (String field : List.of("id", "label", "state", "value", "limit", "time", "priority", "color", "equipment_id", "side", "substation_id")) {
+            if (message.has(field)) {
+                entry.set(field, message.get(field));
+            }
+        }
+        entry.put("since", monitor.containsKey(id) ? monitor.get(id).path("since").asDouble() : message.path("time").asDouble());
+        monitor.put(id, entry);
+        ObjectNode update = MAPPER.createObjectNode();
+        update.put("type", "monitor");
+        update.set("entry", entry);
+        broadcast(update.toString());
     }
 
     /** Send the snapshot to a new client, then the changes */
