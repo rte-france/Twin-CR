@@ -12,4 +12,8 @@ import java.io.IOException;
 
 public interface SseClient {
     void send(String data) throws IOException;
+
+    /** Ends the stream (e.g. a client dropped for being too slow), so that the client reconnects. Default: nothing */
+    default void close() {
+    }
 }

@@ -884,8 +884,19 @@ public abstract class ApiServerCommon {
             AsyncContext async = req.startAsync();
             async.setTimeout(0);
             respondSse(resp);
+            SseClient stream = sseClient(resp);
             try {
-                alarmService.register(sseClient(resp));
+                alarmService.register(new SseClient() {
+                    @Override
+                    public void send(String data) throws IOException {
+                        stream.send(data);
+                    }
+
+                    @Override
+                    public void close() {
+                        async.complete();  // Dropped by the alarm service: the client reconnects
+                    }
+                });
             } catch (IOException e) {
                 async.complete();
             }

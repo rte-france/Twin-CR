@@ -369,9 +369,16 @@ public class AlarmService {
             }
         }
 
-        void close() {
+        @Override
+        public void close() {
+            if (closed) {
+                return;
+            }
             closed = true;
             executor.shutdownNow();
+            // Ends the HTTP stream so that the client reconnects (and gets a snapshot). Own thread: may be called with
+            // the service lock held, while the sending thread is blocked in a write
+            Thread.startVirtualThread(delegate::close);
         }
     }
 }
