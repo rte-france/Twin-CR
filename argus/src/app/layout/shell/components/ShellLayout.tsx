@@ -13,7 +13,8 @@ import { RightPanel } from "./panels/RightPanel";
 import { CentralPanel } from "./panels/CentralPanel";
 import { Footer } from "./footer";
 import { HeaderProvider } from "../providers/HeaderProvider";
-import { BottomPanel, hasVisibleBottomPanels } from "./panels/BottomPanel";
+import { BottomPanel} from "./panels/BottomPanel";
+import { hasVisibleBottomPanels } from "../utils";
 
 export function ShellLayout() {
   const [bottomHeight, setBottomHeight] = createSignal(

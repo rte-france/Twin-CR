@@ -30,24 +30,34 @@ interface ThemeProviderProps {
 }
 
 export const ThemeProvider: ParentComponent<ThemeProviderProps> = (props) => {
-  const STORAGE_KEY = `theme-${props.syncId}`;
+  const getStorageKey = () => `theme-${props.syncId}`;
 
   const [theme, setThemeState] = createSignal<Theme>(
-    (!isServer && (localStorage.getItem(STORAGE_KEY) as Theme)) || "system",
+    (!isServer && (localStorage.getItem(getStorageKey()) as Theme)) || "system",
   );
+
+  createEffect(() => {
+    if (isServer) return;
+    const key = getStorageKey();
+    const saved = localStorage.getItem(key) as Theme;
+    if (saved && saved !== theme()) {
+      setThemeState(saved);
+    }
+  });
 
   const setTheme = (newTheme: Theme) => {
     setThemeState(newTheme);
     if (!isServer) {
-      localStorage.setItem(STORAGE_KEY, newTheme);
+      localStorage.setItem(getStorageKey(), newTheme);
     }
   };
 
   createEffect(() => {
     if (isServer) return;
+    const key = getStorageKey();
 
     const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === STORAGE_KEY && e.newValue) {
+      if (e.key === key && e.newValue) {
         setThemeState(e.newValue as Theme);
       }
     };
@@ -105,6 +115,6 @@ export const ThemeProvider: ParentComponent<ThemeProviderProps> = (props) => {
 export const useTheme = () => {
   const context = useContext(ThemeContext);
   if (!context)
-    throw new Error("useTheme doit être utilisé dans un ThemeProvider");
+    throw new Error("useTheme should be use in ThemeProvider");
   return context;
 };

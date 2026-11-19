@@ -9,6 +9,7 @@ co-simulation of power systems.
 import { invoke } from "@tauri-apps/api/core";
 import { Effect, Context, Layer } from "effect";
 import { getCurrentWindow } from "@tauri-apps/api/window";
+import { getParentLabelFromUrl } from "@/app/routes/routingUtils";
 
 export interface WindowError {
   _tag: "WindowError";
@@ -59,7 +60,7 @@ export const WindowBootstrapperLive = Layer.succeed(
     getParentLabel: () =>
       Effect.sync(() => {
         const params = new URLSearchParams(window.location.search);
-        return params.get("parent");
+        return params.get("parent") || getParentLabelFromUrl();
       }),
 
     getCurrentLabel: () => Effect.sync(() => getCurrentWindow().label),

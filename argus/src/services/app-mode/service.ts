@@ -32,7 +32,11 @@ export const AppModeLive = Layer.scoped(
   Effect.gen(function* () {
     const wm = yield* WindowManager;
     const windowLabel = yield* wm.getCurrentLabel();
-    const STORAGE_KEY = `argus:app-mode-${windowLabel}`;
+    const parentLabel = yield* wm.getParentLabel();
+
+    // Children inherit the mode of their parent window
+    const syncId = parentLabel || windowLabel;
+    const STORAGE_KEY = `argus:app-mode-${syncId}`;
 
     const initialMode =
       (localStorage.getItem(STORAGE_KEY) as Mode) || Mode.GameMaster;
@@ -43,6 +47,20 @@ export const AppModeLive = Layer.scoped(
       Stream.runForEach((mode) =>
         Effect.sync(() => localStorage.setItem(STORAGE_KEY, mode)),
       ),
+      Effect.forkScoped,
+    );
+
+    // Sync mode across windows sharing the same syncId (parent <-> children)
+    yield* Stream.async<Mode, never>((emit) => {
+      const handleStorage = (e: StorageEvent) => {
+        if (e.key === STORAGE_KEY && e.newValue) {
+          emit.single(e.newValue as Mode);
+        }
+      };
+      window.addEventListener("storage", handleStorage);
+      return Effect.sync(() => window.removeEventListener("storage", handleStorage));
+    }).pipe(
+      Stream.runForEach((mode) => SubscriptionRef.set(ref, mode)),
       Effect.forkScoped,
     );
 

@@ -12,6 +12,7 @@ import type { DockviewPanelApi } from "dockview-core";
 import { FiLayout, FiSidebar, FiArrowDown, FiX } from "solid-icons/fi";
 import { Effect } from "effect";
 import { WindowBootstrapper } from "@/services/window-bootstrap";
+import { buildPanelRoute } from "../../utils";
 import { getSystemRuntime } from "@/utils/getSystemRuntime";
 
 interface CustomTabProps {
@@ -55,6 +56,7 @@ export const DockviewTab: Component<CustomTabProps> = (props) => {
   const handleDetach = () => {
     const id = props.api.id;
     const title = props.params?.label || props.title || "Detached Panel";
+    const viewType = props.params?.elementTag || "default";
 
     if (props.params) {
       localStorage.setItem(
@@ -63,9 +65,15 @@ export const DockviewTab: Component<CustomTabProps> = (props) => {
       );
     }
 
-    const targetRoute = encodeURIComponent(
-      `/floating/${props.params?.elementTag || "default"}/${id}`,
-    );
+    const targetRoute = buildPanelRoute({
+      id,
+      title,
+      viewType,
+      entryUrl: props.params?.entryUrl,
+      isLocalFile: props.params?.isLocalFile,
+      props: props.params,
+      groupId: props.api.group?.id,
+    });
 
     const program = Effect.gen(function* () {
       const wm = yield* WindowBootstrapper;

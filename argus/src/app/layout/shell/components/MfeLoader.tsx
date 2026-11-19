@@ -77,8 +77,11 @@ export const MfeLoader = (props: any) => {
       </Show>
 
       <Show when={!isReady() && !error()}>
-        <div class="absolute inset-0 flex items-center justify-center bg-bg z-10">
-          <div class="w-4 h-4 border-2 border-primary/30 border-t-primary animate-spin rounded-full" />
+        <div class="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-bg z-10 text-fg/60">
+          <div class="w-5 h-5 border-2 border-border border-t-links animate-spin rounded-full" />
+          <span class="text-xs font-mono">
+            Loading {props.manifest?.label || props.manifest?.id || "panel"}...
+          </span>
         </div>
       </Show>
     </div>

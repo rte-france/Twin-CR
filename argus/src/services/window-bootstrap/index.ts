@@ -6,4 +6,6 @@ This file is part of Twin-CR, a platform for real-time cyber-physical
 co-simulation of power systems.
 */
 
-export * from "./service";
+export * from "../window-manager";
+export { WindowManager as WindowBootstrapper } from "../window-manager";
+export { WindowManagerLive as WindowBootstrapperLive } from "../window-manager";
