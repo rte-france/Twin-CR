@@ -178,6 +178,7 @@ public abstract class ApiServerCommon {
             new HttpConnectionFactory(httpConfig),
             new HTTP2CServerConnectionFactory(httpConfig));
         connector.setPort(config.httpPort());
+        connector.setIdleTimeout(120_000);  // Longer that Argus 90s idle connections
         server.addConnector(connector);
 
         RouteRegistry registry = new RouteRegistry();
