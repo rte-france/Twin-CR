@@ -23,8 +23,8 @@ import { LobbyClientLive } from "@/services/lobby";
 import { HergeClientLive } from "@/services/herge";
 import { ExtensionLive, ExtensionRendererLive } from "@/services/extensions";
 import { BackendLive } from "@/services/backend";
-import { ConfigServiceLive } from "@/services/config";
 import { FileSystemLive } from "@/services/file-system";
+import { SettingsLive } from "@/services/settings";
 
 import {
   HttpClientLayer,
@@ -32,13 +32,12 @@ import {
   FetchBridgeLive,
 } from "@/services/http-client";
 
-const HttpServicesLayer = Layer.mergeAll(
-  HttpClientLayer,
-  FetchBridgeLive,
-).pipe(Layer.provide(HttpClientRegistryLive));
+const HttpServicesLayer = Layer.mergeAll(HttpClientLayer, FetchBridgeLive).pipe(
+  Layer.provide(HttpClientRegistryLive),
+);
 
 const BaseServicesLayer = Layer.mergeAll(
-  ConfigServiceLive,
+  SettingsLive,
   FileSystemLive,
   ExtensionLive,
   ExtensionRendererLive,

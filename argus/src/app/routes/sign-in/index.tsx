@@ -11,12 +11,17 @@ import { useNavigate } from "@solidjs/router";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import { FiX, FiServer, FiLogIn, FiAlertCircle } from "solid-icons/fi";
 
-import { accessToken, authError, loginWithKeycloak } from "@/features/auth";
-import { getConfigSync, setCustomKeycloakUrl } from "@/hooks/useConfig";
+import {
+  accessToken,
+  authError,
+  loginWithKeycloak,
+  getKeycloakConfig,
+  setCustomKeycloakUrl,
+} from "@/features/auth";
 
 export const SignIn = () => {
   const appWindow = getCurrentWindow();
-  const config = getConfigSync();
+  const config = getKeycloakConfig();
   const navigate = useNavigate();
 
   const [authUrl, setAuthUrl] = createSignal<string>(config.keycloakUrl);
@@ -47,7 +52,6 @@ export const SignIn = () => {
     setCustomKeycloakUrl(customUrl);
 
     await loginWithKeycloak({
-      ...config,
       keycloakUrl: customUrl,
     });
 

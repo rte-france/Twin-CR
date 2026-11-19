@@ -9,7 +9,7 @@ co-simulation of power systems.
 import { invoke } from "@tauri-apps/api/core";
 import { createStore } from "solid-js/store";
 import { createMemo } from "solid-js";
-import { getConfigSync } from "@/hooks/useConfig";
+import { getKeycloakConfig } from "../api/keycloak";
 
 export interface JwtPayload {
   exp?: number;
@@ -115,7 +115,7 @@ export const getValidToken = async (): Promise<string | null> => {
   refreshPromise = (async () => {
     try {
       const parsedToken = parseJwt(currentAccess);
-      const config = getConfigSync();
+      const config = getKeycloakConfig();
       const issuer = parsedToken?.iss;
       const clientId = parsedToken?.azp || config.keycloakClientId;
       const baseUrl = issuer || `${config.keycloakUrl}/realms/${config.keycloakRealm}`;

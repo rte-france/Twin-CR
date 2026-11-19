@@ -9,19 +9,13 @@ co-simulation of power systems.
 import { render } from "solid-js/web";
 import { App } from "./app";
 
-import { initArgusConfig } from "@/services/config/config";
 import { bootstrapFetchBridge } from "@/utils/bootstrapFetchBridge";
 import { bootstrapFileSystemBridge } from "@/utils/bootstrapFileSystemBridge";
 
 import "./icons-bundle";
 import "./styles/index.css";
 
-async function bootstrap() {
-  await initArgusConfig();
-
-  render(() => <App />, document.getElementById("root") as HTMLElement);
-}
-
-bootstrap();
 bootstrapFetchBridge();
 bootstrapFileSystemBridge();
+
+render(() => <App />, document.getElementById("root") as HTMLElement);

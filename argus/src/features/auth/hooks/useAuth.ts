@@ -8,11 +8,11 @@ co-simulation of power systems.
 
 import { createMemo } from "solid-js";
 import { openUrl } from "@tauri-apps/plugin-opener";
-import { getConfigSync, setCustomKeycloakUrl } from "@/hooks/useConfig";
+import { getKeycloakConfig, setCustomKeycloakUrl } from "../api/keycloak";
 import { tokenParsed, setAccessToken, setRefreshToken } from "../stores/authStore";
 
 export const useAuth = () => {
-  const getClientId = () => getConfigSync().keycloakClientId;
+  const getClientId = () => getKeycloakConfig().keycloakClientId;
 
   const user = () => {
     const parsed = tokenParsed();
@@ -41,7 +41,7 @@ export const useAuth = () => {
   });
 
   const logout = async () => {
-    const config = getConfigSync();
+    const config = getKeycloakConfig();
     setAccessToken(null);
     setRefreshToken(null);
     sessionStorage.removeItem("oauth_verifier");
@@ -53,7 +53,7 @@ export const useAuth = () => {
   };
 
   const manageAccount = async () => {
-    const config = getConfigSync();
+    const config = getKeycloakConfig();
     const accountUrl = `${config.keycloakUrl}/realms/${config.keycloakRealm}/account/`;
     await openUrl(accountUrl);
   };

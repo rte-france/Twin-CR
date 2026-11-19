@@ -7,7 +7,8 @@ co-simulation of power systems.
 */
 
 import { getValidToken } from "@/features/auth";
-import { getArgusConfig } from "@/services/config";
+const DEFAULT_SESSION_MANAGER_URL = "http://localhost:8090";
+const getSessionManagerUrl = () => DEFAULT_SESSION_MANAGER_URL;
 import {
   AccessKeyTyped,
   GameSession,
@@ -79,20 +80,20 @@ export async function apiFetch(url: string, options: RequestInit = {}) {
 // SESSIONS
 
 export async function getSessions(): Promise<GameSession[]> {
-  return apiFetch(getArgusConfig().session_manager_url + "/sessions", {
+  return apiFetch(getSessionManagerUrl() + "/sessions", {
     method: "GET",
   });
 }
 
 export async function getMySessions(): Promise<GameSession[]> {
-  return apiFetch(getArgusConfig().session_manager_url + "/sessions/me", {
+  return apiFetch(getSessionManagerUrl() + "/sessions/me", {
     method: "GET",
   });
 }
 
 export async function createSession(sessionData: GameSessionCreate) {
   return apiFetch(
-    getArgusConfig().session_manager_url + "/sessions/new_session",
+    getSessionManagerUrl() + "/sessions/new_session",
     {
       method: "POST",
       body: JSON.stringify(sessionData),
@@ -104,7 +105,7 @@ export async function getAccessKeys(
   sessionId: number,
 ): Promise<AccessKeyTyped[]> {
   return apiFetch(
-    `${getArgusConfig().session_manager_url}/sessions/keys/${sessionId}`,
+    `${getSessionManagerUrl()}/sessions/keys/${sessionId}`,
     {
       method: "GET",
     },
@@ -112,7 +113,7 @@ export async function getAccessKeys(
 }
 
 export async function setAccessKeys(accessKeyData: AccessKeyTyped) {
-  return apiFetch(getArgusConfig().session_manager_url + "/sessions/key", {
+  return apiFetch(getSessionManagerUrl() + "/sessions/key", {
     method: "POST",
     body: JSON.stringify(accessKeyData),
   });
@@ -120,7 +121,7 @@ export async function setAccessKeys(accessKeyData: AccessKeyTyped) {
 
 export async function launchSession(sessionId: number) {
   return apiFetch(
-    `${getArgusConfig().session_manager_url}/sessions/${sessionId}/launch`,
+    `${getSessionManagerUrl()}/sessions/${sessionId}/launch`,
     {
       method: "POST",
     },
@@ -129,7 +130,7 @@ export async function launchSession(sessionId: number) {
 
 export async function stopSession(sessionId: number) {
   return apiFetch(
-    `${getArgusConfig().session_manager_url}/sessions/${sessionId}/stop`,
+    `${getSessionManagerUrl()}/sessions/${sessionId}/stop`,
     {
       method: "POST",
     },
@@ -138,7 +139,7 @@ export async function stopSession(sessionId: number) {
 
 export async function deleteSession(sessionId: number) {
   return apiFetch(
-    `${getArgusConfig().session_manager_url}/sessions/${sessionId}/delete`,
+    `${getSessionManagerUrl()}/sessions/${sessionId}/delete`,
     {
       method: "DELETE",
     },
@@ -150,7 +151,7 @@ export async function connectSession(params: {
   password_gm: string;
   password_operator: string;
 }) {
-  return apiFetch(`${getArgusConfig().session_manager_url}/sessions/connect`, {
+  return apiFetch(`${getSessionManagerUrl()}/sessions/connect`, {
     method: "POST",
     body: JSON.stringify(params), // Credentials in body, not query string that is logged
   });
@@ -160,7 +161,7 @@ export async function connectSession(params: {
 
 export async function getFolderChildren(folderId: number): Promise<TreeNode[]> {
   return apiFetch(
-    `${getArgusConfig().session_manager_url}/tree/${folderId}/children`,
+    `${getSessionManagerUrl()}/tree/${folderId}/children`,
     {
       method: "GET",
     },
@@ -168,25 +169,25 @@ export async function getFolderChildren(folderId: number): Promise<TreeNode[]> {
 }
 
 export async function getTree(folderId: number): Promise<TreeNode[]> {
-  return apiFetch(`${getArgusConfig().session_manager_url}/tree/${folderId}/subtree`, {
+  return apiFetch(`${getSessionManagerUrl()}/tree/${folderId}/subtree`, {
     method: "GET",
   });
 }
 
 export async function getTemplateFolders(): Promise<TemplateFolder[]> {
-  return apiFetch(`${getArgusConfig().session_manager_url}/tree/folders`, {
+  return apiFetch(`${getSessionManagerUrl()}/tree/folders`, {
     method: "GET",
   });
 }
 
 export async function initUserTree(): Promise<TreeNode[]> {
-  return apiFetch(`${getArgusConfig().session_manager_url}/tree/init_user`, {
+  return apiFetch(`${getSessionManagerUrl()}/tree/init_user`, {
     method: "GET",
   });
 }
 
 export async function newFolder(newFolder: NewFolder) {
-  return apiFetch(getArgusConfig().session_manager_url + "/tree/new_folder", {
+  return apiFetch(getSessionManagerUrl() + "/tree/new_folder", {
     method: "POST",
     body: JSON.stringify(newFolder),
   });
@@ -195,7 +196,7 @@ export async function newFolder(newFolder: NewFolder) {
 export async function deleteNode(
   nodeId: number,
 ): Promise<{ parent_id: number | null }> {
-  return apiFetch(getArgusConfig().session_manager_url + `/tree/${nodeId}`, {
+  return apiFetch(getSessionManagerUrl() + `/tree/${nodeId}`, {
     method: "DELETE",
   });
 }
@@ -206,7 +207,7 @@ export async function getTemplateDetails(
   template_id: number,
 ): Promise<TemplateDetails> {
   return apiFetch(
-    `${getArgusConfig().session_manager_url}/templates/${template_id}`,
+    `${getSessionManagerUrl()}/templates/${template_id}`,
     {
       method: "GET",
     },
@@ -248,7 +249,7 @@ export async function createTemplate(
   }
 
   return apiFetch(
-    getArgusConfig().session_manager_url + "/templates/new_template",
+    getSessionManagerUrl() + "/templates/new_template",
     {
       method: "POST",
       body: formData,
@@ -265,7 +266,7 @@ export async function dynawoDependencies(file: File): Promise<string[]> {
   const formData = new FormData();
   formData.append("xml_file", file);
   const result = await apiFetch(
-    getArgusConfig().session_manager_url + "/templates/dynawo_dependencies",
+    getSessionManagerUrl() + "/templates/dynawo_dependencies",
     { method: "POST", body: formData },
   );
   return result.references;
@@ -289,7 +290,7 @@ export async function createTemplateExpert(
   }
 
   return apiFetch(
-    getArgusConfig().session_manager_url + "/templates/new_template_expert",
+    getSessionManagerUrl() + "/templates/new_template_expert",
     {
       method: "POST",
       body: formData,
@@ -306,7 +307,7 @@ export async function renameTemplate(
   });
 
   return apiFetch(
-    `${getArgusConfig().session_manager_url}/templates/rename/${templateId}?${params}`, {
+    `${getSessionManagerUrl()}/templates/rename/${templateId}?${params}`, {
       method: "PATCH",
     }
   );
@@ -328,7 +329,7 @@ function keyAsPath(key: string) {
 /** A stored file's raw bytes; call .text() or .bytes() on the result as fits. */
 export async function getFileContent(key: string): Promise<Response> {
   return apiFetchRaw(
-    `${getArgusConfig().session_manager_url}/file/${keyAsPath(key)}`,
+    `${getSessionManagerUrl()}/file/${keyAsPath(key)}`,
     {
       method: "GET",
     },
@@ -337,7 +338,7 @@ export async function getFileContent(key: string): Promise<Response> {
 
 export async function getFileInfo(storageKey: string): Promise<FileInfo> {
   return apiFetch(
-    `${getArgusConfig().session_manager_url}/file-info/${keyAsPath(storageKey)}`,
+    `${getSessionManagerUrl()}/file-info/${keyAsPath(storageKey)}`,
     {
       method: "GET",
     },

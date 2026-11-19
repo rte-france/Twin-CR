@@ -10,8 +10,7 @@ import { DropdownMenu } from "@kobalte/core/dropdown-menu";
 import { Show } from "solid-js";
 
 import { useAuth } from "../hooks/useAuth";
-import { loginWithKeycloak } from "@/features/auth";
-import { getConfigSync } from "@/hooks/useConfig";
+import { loginWithKeycloak, getKeycloakConfig } from "@/features/auth";
 
 const itemClass =
   "flex cursor-default items-center justify-between rounded-sm px-3 py-1.5 outline-none text-fg data-[highlighted]:bg-sidebar-active-bg data-[highlighted]:text-sidebar-active transition-colors";
@@ -26,11 +25,8 @@ export const UserBadge = () => {
 
   const handleLogin = async (e: Event) => {
     e.preventDefault();
-    const config = getConfigSync();
-    await loginWithKeycloak({
-      ...config,
-      keycloakUrl: config.keycloakUrl,
-    });
+    const config = getKeycloakConfig();
+    await loginWithKeycloak(config);
   };
 
   return (

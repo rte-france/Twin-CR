@@ -10,9 +10,77 @@ import { invoke } from "@tauri-apps/api/core";
 import { onOpenUrl, getCurrent } from "@tauri-apps/plugin-deep-link";
 import { openUrl } from "@tauri-apps/plugin-opener";
 import { listen } from "@tauri-apps/api/event";
-import { type AppConfig } from "@/services/config";
-import { getConfigSync } from "@/hooks/useConfig";
-import { setAccessToken, setAuthError, setRefreshToken } from "../stores/authStore";
+import { Effect } from "effect";
+import { getSystemRuntime } from "@/utils/getSystemRuntime";
+import { Settings } from "@/services/settings";
+import { SETTINGS } from "@/config/settings";
+import {
+  setAccessToken,
+  setAuthError,
+  setRefreshToken,
+} from "../stores/authStore";
+
+export interface KeycloakConfig {
+  keycloakUrl: string;
+  keycloakRealm: string;
+  keycloakClientId: string;
+  oauthDevPort: number;
+}
+
+const getKeycloakDefault = (key: string): any =>
+  SETTINGS.find((s) => s.id === "keycloak")?.fields.find((f) => f.key === key)
+    ?.defaultValue;
+
+let cachedSettings: Record<string, any> = {};
+
+// Keep cachedSettings up-to-date from the Settings service
+listen<Record<string, any>>("settings-changed", (event) => {
+  cachedSettings = event.payload;
+});
+
+export const loadKeycloakConfig = async (): Promise<KeycloakConfig> => {
+  try {
+    const settings = await getSystemRuntime().runPromise(
+      Effect.gen(function* () {
+        const service = yield* Settings;
+        return yield* service.loadSettings;
+      }),
+    );
+    cachedSettings = settings;
+  } catch (e) {
+    console.warn("[Auth] Failed to load settings from service, using cache/defaults", e);
+  }
+  return getKeycloakConfig();
+};
+
+export const getKeycloakConfig = (): KeycloakConfig => {
+  const customUrl = sessionStorage.getItem("oauth_keycloak_url");
+  const kcSection = cachedSettings.keycloak || {};
+  return {
+    keycloakUrl:
+      customUrl ||
+      kcSection.keycloak_url ||
+      cachedSettings.keycloak_url ||
+      getKeycloakDefault("keycloak_url"),
+    keycloakRealm:
+      kcSection.keycloak_realm ||
+      cachedSettings.keycloak_realm ||
+      getKeycloakDefault("keycloak_realm"),
+    keycloakClientId:
+      kcSection.keycloak_client_id ||
+      cachedSettings.keycloak_client_id ||
+      getKeycloakDefault("keycloak_client_id"),
+    oauthDevPort: Number(
+      kcSection.oauth_dev_port ||
+        cachedSettings.oauth_dev_port ||
+        getKeycloakDefault("oauth_dev_port"),
+    ),
+  };
+};
+
+export const setCustomKeycloakUrl = (url: string): void => {
+  sessionStorage.setItem("oauth_keycloak_url", url);
+};
 
 export type AuthBackendError =
   | { _tag: "ClientInit"; message: string }
@@ -41,7 +109,7 @@ export const getAuthErrorMessage = (err: unknown): string => {
   if (typeof err === "string") {
     return err;
   }
-  return "Une erreur inconnue est survenue.";
+  return "Unknown error occurred";
 };
 
 interface TokenResponse {
@@ -55,7 +123,9 @@ interface TokenResponse {
 const generateRandomString = (length = 28): string => {
   const array = new Uint32Array(length);
   window.crypto.getRandomValues(array);
-  return Array.from(array, (dec) => ("0" + dec.toString(16)).slice(-2)).join("");
+  return Array.from(array, (dec) => ("0" + dec.toString(16)).slice(-2)).join(
+    "",
+  );
 };
 
 const generateCodeChallenge = async (verifier: string): Promise<string> => {
@@ -68,14 +138,15 @@ const generateCodeChallenge = async (verifier: string): Promise<string> => {
     .replace(/=+$/, "");
 };
 
-export const loginWithKeycloak = async (config: AppConfig): Promise<void> => {
+export const loginWithKeycloak = async (config?: Partial<KeycloakConfig>): Promise<void> => {
+  const resolvedConfig = { ...getKeycloakConfig(), ...config };
   setAuthError(null);
   const state = generateRandomString();
   const verifier = generateRandomString();
 
   sessionStorage.setItem("oauth_state", state);
   sessionStorage.setItem("oauth_verifier", verifier);
-  sessionStorage.setItem("oauth_keycloak_url", config.keycloakUrl);
+  sessionStorage.setItem("oauth_keycloak_url", resolvedConfig.keycloakUrl);
   // Potential left over of an earlier attempt
   sessionStorage.removeItem("oauth_redirect_uri");
 
@@ -87,18 +158,21 @@ export const loginWithKeycloak = async (config: AppConfig): Promise<void> => {
 
   let redirectUri = "twincr://login";
   if (useOAuthServer) {
-    const devPort = config.oauthDevPort;
+    const devPort = resolvedConfig.oauthDevPort;
     try {
       await invoke<number>("start_oauth_server", { port: devPort });
       redirectUri = `http://localhost:${devPort}`;
       sessionStorage.setItem("oauth_redirect_uri", redirectUri);
     } catch (e) {
-      console.warn("Failed to start local oauth server, falling back to twincr://login", e);
+      console.warn(
+        "Failed to start local oauth server, falling back to twincr://login",
+        e,
+      );
     }
   }
 
   const params = new URLSearchParams({
-    client_id: config.keycloakClientId,
+    client_id: resolvedConfig.keycloakClientId,
     response_type: "code",
     redirect_uri: redirectUri,
     scope: "openid profile email",
@@ -106,7 +180,7 @@ export const loginWithKeycloak = async (config: AppConfig): Promise<void> => {
     code_challenge: challenge,
     code_challenge_method: "S256",
   });
-  const authUrl = `${config.keycloakUrl}/realms/${config.keycloakRealm}/protocol/openid-connect/auth?${params}`;
+  const authUrl = `${resolvedConfig.keycloakUrl}/realms/${resolvedConfig.keycloakRealm}/protocol/openid-connect/auth?${params}`;
 
   await openUrl(authUrl);
 };
@@ -118,9 +192,12 @@ export const initAuth = (): void => {
   if (isInitialized) return;
   isInitialized = true;
 
+  // Trigger initial settings fetch to populate cachedSettings
+  loadKeycloakConfig();
+
   const handleAuthRedirect = async (deepLinkUrl: string) => {
     try {
-      console.log("[Auth] Handling redirect URL:", deepLinkUrl);
+      console.debug("[Auth] Handling redirect URL:", deepLinkUrl);
       const url = new URL(deepLinkUrl);
       const code = url.searchParams.get("code");
       const state = url.searchParams.get("state");
@@ -128,22 +205,25 @@ export const initAuth = (): void => {
       const savedState = sessionStorage.getItem("oauth_state");
       const verifier = sessionStorage.getItem("oauth_verifier");
 
-      console.log("[Auth] Code present:", !!code, "State:", state, "SavedState:", savedState);
 
       // No saved state means no login was started from this window (or it already
       // completed): reject rather than exchange a code we did not ask for.
       if (!code || !savedState || state !== savedState) {
-        console.warn("[Auth] Code missing or state mismatch, skipping exchange");
+        console.warn(
+          "[Auth] Code missing or state mismatch, skipping exchange",
+        );
         return;
       }
 
       if (exchangingCode === code) {
-        console.log("[Auth] Code already being exchanged, ignoring duplicate event");
+        console.debug(
+          "[Auth] Code already being exchanged, ignoring duplicate event",
+        );
         return;
       }
       exchangingCode = code;
 
-      const config = getConfigSync();
+      const config = getKeycloakConfig();
       const tokenEndpoint = `${config.keycloakUrl}/realms/${config.keycloakRealm}/protocol/openid-connect/token`;
       const savedRedirectUri = sessionStorage.getItem("oauth_redirect_uri");
 
@@ -163,7 +243,6 @@ export const initAuth = (): void => {
       sessionStorage.removeItem("oauth_state");
       sessionStorage.removeItem("oauth_verifier");
       sessionStorage.removeItem("oauth_redirect_uri");
-      sessionStorage.removeItem("oauth_keycloak_url");
 
       setAccessToken(tokens.access_token);
       if (tokens.refresh_token) {
@@ -194,7 +273,7 @@ export const initAuth = (): void => {
   });
 
   listen<string>("deep-link-received", (event) => {
-    console.log("[Auth] Event deep-link-received payload:", event.payload);
+    console.debug("[Auth] Event deep-link-received payload:", event.payload);
     handleAuthRedirect(event.payload);
   });
 };
