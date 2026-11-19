@@ -19,6 +19,6 @@
     dest: /tmp/registry.nomad.hcl
 
 - name: Deploy Registry via Nomad CLI
-  ansible.builtin.command: nomad job run -detach /tmp/registry.nomad.hcl
+  ansible.builtin.command: nomad job run /tmp/registry.nomad.hcl
   register: nomad_run_registry
   changed_when: "'Job registration successful' in nomad_run_registry.stdout"
