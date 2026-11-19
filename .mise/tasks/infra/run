@@ -63,8 +63,10 @@ if [ "$TARGET_ENV" = "dev" ]; then
         echo "ERROR: unknown TWINCR_INFRA_BACKEND='${BACKEND}' (expected orbstack or docker)" >&2
         exit 1
     fi
-    exec ../.mise/tasks/infra/push
+    ../.mise/tasks/infra/push
+    # The applications (session manager) are deployed once their images are in the registry
+    exec make apps
 fi
 
-# Generic deployment (e.g. ENV=opf)
+# Generic deployment (e.g. ENV=opf). Then, once the images are in its registry: make apps ENV=...
 make deploy ${FORWARD_ARGS[@]+"${FORWARD_ARGS[@]}"}

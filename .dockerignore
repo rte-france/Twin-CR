@@ -1,5 +1,6 @@
 /cache
 /docs
+!/docs/infra/twincr-session.nomad.hcl
 /argus/build
 /argus/node_modules
 /argus/src-tauri/target
