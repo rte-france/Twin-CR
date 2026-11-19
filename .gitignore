@@ -127,3 +127,6 @@ Windows/
 
 # Per-user mise config (e.g. TWINCR_* settings of the infra tasks, see mise.toml)
 mise.local.toml
+
+# Nomad jobs exported to JSON (nomad job run -output), generated from the .nomad.hcl jobs
+*.job.json
