@@ -8,8 +8,10 @@ co-simulation of power systems.
 
 import { defineConfig } from "vitest/config";
 import { fileURLToPath } from "node:url";
+import solid from "vite-plugin-solid";
 
 export default defineConfig({
+  plugins: [solid()],
   test: {
     include: ["tests/**/*.test.ts"],
     environment: "jsdom",

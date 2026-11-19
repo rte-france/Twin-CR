@@ -147,25 +147,12 @@ export const BottomPanel = () => {
         setActiveBottomRightId,
       );
 
-    const onToggleLeft = () => leftData() && setIsLeftOpen((prev) => !prev);
-    const onToggleRight = () => rightData() && setIsRightOpen((prev) => !prev);
-
     window.addEventListener(ADD_BOTTOM_LEFT_EVENT, onOpenLeft);
     window.addEventListener(ADD_BOTTOM_RIGHT_EVENT, onOpenRight);
-    window.addEventListener("argus:toggle-left-bottom-panel", onToggleLeft);
-    window.addEventListener("argus:toggle-right-bottom-panel", onToggleRight);
 
     onCleanup(() => {
       window.removeEventListener(ADD_BOTTOM_LEFT_EVENT, onOpenLeft);
       window.removeEventListener(ADD_BOTTOM_RIGHT_EVENT, onOpenRight);
-      window.removeEventListener(
-        "argus:toggle-left-bottom-panel",
-        onToggleLeft,
-      );
-      window.removeEventListener(
-        "argus:toggle-right-bottom-panel",
-        onToggleRight,
-      );
     });
   });
 
