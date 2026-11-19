@@ -12,7 +12,9 @@
 unset http_proxy https_proxy ftp_proxy no_proxy HTTP_PROXY HTTPS_PROXY FTP_PROXY NO_PROXY
 cd /home/orchestrator/configurator_client
 if [ "${MODE:-CLICKHOUSE}" = "CLICKHOUSE" ]; then
-    exec python -u -m fastapi run src/main.py --host 0.0.0.0 --port "${CONFIGURATOR_PORT:-8080}"
+    # Keep-alive longer than the idle connections kept by the HTTP clients (Argus: 90 s): otherwise a client may reuse a
+    # connection the server is closing (uvicorn default: 5 s), and the request fails without response.
+    exec python -u -m uvicorn src.main:app --host 0.0.0.0 --port "${CONFIGURATOR_PORT:-8080}" --timeout-keep-alive 120
 else
     echo "MODE=$MODE, configurator is thus not used";
     tail -f /dev/null

@@ -105,6 +105,11 @@ export function MySessionsView() {
                   >
                     {session.state}
                   </span>
+                  <Show when={session.status_detail}>
+                    <span class="text-xs text-amber-700" title={session.status_detail ?? ""}>
+                      {session.status_detail}
+                    </span>
+                  </Show>
 
                   <span class="text-xs text-slate-400">
                     #{session.id}
@@ -189,6 +194,11 @@ export function MySessionsView() {
                   >
                     {session.state}
                   </span>
+                  <Show when={session.status_detail}>
+                    <span class="text-xs text-amber-700" title={session.status_detail ?? ""}>
+                      {session.status_detail}
+                    </span>
+                  </Show>
 
                   <span class="text-sm text-gray-500">#{session.id}</span>
                 </div>

@@ -26,6 +26,8 @@ class SessionState(str, Enum):
 class GameSessionBase(SQLModel):
     name: str = Field(index=True)
     state: SessionState
+    # Progress or failure reason of the state, shown by Argus (Nomad infrastructure: e.g. waiting for cluster resources)
+    status_detail: str | None = None
 
 class AccessKey(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
