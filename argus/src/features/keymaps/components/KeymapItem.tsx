@@ -14,53 +14,78 @@ interface KeymapItemProps {
   command: CommandDefinition;
   currentKey: string;
   isSaving: boolean;
+  isRecording?: boolean;
+  onStartRecording?: () => void;
+  onStopRecording?: () => void;
   onUpdate: (newKey: string) => Promise<void>;
   getEventString: (e: KeyboardEvent) => string;
 }
 
 export function KeymapItem(props: KeymapItemProps) {
-  const [isRecording, setIsRecording] = createSignal(false);
+  const [internalRecording, setInternalRecording] = createSignal(false);
   const [livePreview, setLivePreview] = createSignal<string>("");
   const [success, setSuccess] = createSignal(false);
+
+  const isRecording = () =>
+    props.isRecording !== undefined ? Boolean(props.isRecording) : internalRecording();
+
+  const stopRecording = () => {
+    setLivePreview("");
+    if (props.onStopRecording) {
+      props.onStopRecording();
+    } else {
+      setInternalRecording(false);
+    }
+  };
+
+  const startRecording = () => {
+    setLivePreview("");
+    if (props.onStartRecording) {
+      props.onStartRecording();
+    } else {
+      setInternalRecording(true);
+    }
+  };
 
   const displayKeys = () => {
     if (props.currentKey) return [props.currentKey];
     return props.command.defaultKeys;
   };
 
+  const isModifierKey = (key: string) =>
+    ["control", "shift", "alt", "meta", "os"].includes(key.toLowerCase());
+
   const handleKeyDown = (e: KeyboardEvent) => {
     e.preventDefault();
     e.stopPropagation();
 
     if (e.key === "Escape") {
-      setIsRecording(false);
-      setLivePreview("");
+      stopRecording();
       return;
     }
 
     const keyStr = props.getEventString(e);
     if (!keyStr) return;
 
-    // A key event is only a modifier if e.key is Control, Shift, Alt, Meta, etc.
-    const isModifierKey = [
-      "control",
-      "shift",
-      "alt",
-      "meta",
-      "os",
-    ].includes(e.key.toLowerCase());
-
     setLivePreview(keyStr);
 
     // Only commit once a non-modifier key is pressed (e.g. mod+shift+t)
-    if (!isModifierKey) {
+    if (!isModifierKey(e.key)) {
       commitShortcut(keyStr);
     }
   };
 
+  const handleKeyUp = (e: KeyboardEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    if (isModifierKey(e.key)) {
+      setLivePreview("");
+    }
+  };
+
   const commitShortcut = (shortcut: string) => {
-    setIsRecording(false);
-    setLivePreview("");
+    stopRecording();
     props.onUpdate(shortcut).then(() => {
       setSuccess(true);
       setTimeout(() => setSuccess(false), 1500);
@@ -111,6 +136,7 @@ export function KeymapItem(props: KeymapItemProps) {
             <div
               tabIndex={0}
               onKeyDown={handleKeyDown}
+              onKeyUp={handleKeyUp}
               class="flex items-center gap-2 px-3 py-1 bg-[var(--bg)] border-2 border-[var(--sidebar-active)] rounded-md text-xs font-mono text-[var(--fg)] shadow-sm outline-none"
               ref={(el) => setTimeout(() => el?.focus(), 10)}
             >
@@ -134,10 +160,7 @@ export function KeymapItem(props: KeymapItemProps) {
               </Show>
               <button
                 type="button"
-                onClick={() => {
-                  setIsRecording(false);
-                  setLivePreview("");
-                }}
+                onClick={stopRecording}
                 class="text-[var(--sidebar-non-existant)] hover:text-[var(--fg)] ml-1"
               >
                 <FiX class="w-3.5 h-3.5" />
@@ -173,10 +196,7 @@ export function KeymapItem(props: KeymapItemProps) {
           <button
             type="button"
             title="Edit shortcut"
-            onClick={() => {
-              setLivePreview("");
-              setIsRecording(true);
-            }}
+            onClick={startRecording}
             class="opacity-0 group-hover:opacity-100 p-1.5 rounded text-[var(--sidebar-fg)] hover:text-[var(--fg)] hover:bg-[var(--media-bg)] transition-opacity"
           >
             <FiEdit2 class="w-3.5 h-3.5" />

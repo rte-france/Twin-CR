@@ -76,6 +76,7 @@ export function KeymapsSettings() {
   );
   const [searchQuery, setSearchQuery] = createSignal("");
   const [viewJsonMode, setViewJsonMode] = createSignal(false);
+  const [recordingCommandId, setRecordingCommandId] = createSignal<string | null>(null);
 
   const fullTree = createMemo(() => buildTree(commands()));
 
@@ -359,6 +360,9 @@ export function KeymapsSettings() {
                       command={cmd}
                       currentKey={getCurrentKey(cmd.id)}
                       isSaving={savingId() === cmd.id}
+                      isRecording={recordingCommandId() === cmd.id}
+                      onStartRecording={() => setRecordingCommandId(cmd.id)}
+                      onStopRecording={() => setRecordingCommandId(null)}
                       onUpdate={(newKey) => handleUpdate(cmd.id, newKey)}
                       getEventString={getEventString}
                     />
