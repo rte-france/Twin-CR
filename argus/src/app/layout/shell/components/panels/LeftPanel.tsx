@@ -23,6 +23,7 @@ import { IconResolver } from "../IconResolver";
 import { Separator } from "@kobalte/core/separator";
 import { activeBottomLeftId } from "./BottomPanel";
 import { ADD_BOTTOM_LEFT_EVENT } from "@/utils/openInCentral";
+import { setLeftToggleHandler } from "../../actions";
 
 export const LeftPanel = () => {
   const layout = useLayout();
@@ -34,6 +35,20 @@ export const LeftPanel = () => {
   const config = () => layoutConfigs[mode()];
   const panels = () => config().leftSidebarPanels || [];
   const tools = () => config().leftSidebarTools || [];
+
+  const handleKeyboardToggle = () => {
+    if (!layout.isOpen("left")) {
+      if (!activeTopId() && !activeBottomId()) {
+        const firstPanel = panels().find(
+          (m) => (m.position || "top") === "top",
+        );
+        if (firstPanel) setActiveTopId(firstPanel.id);
+      }
+      layout.toggle("left");
+    } else {
+      layout.toggle("left");
+    }
+  };
 
   createEffect(
     on(mode, (currentMode) => {
@@ -140,31 +155,15 @@ export const LeftPanel = () => {
       }
     };
 
-    const handleKeyboardToggle = () => {
-      if (!layout.isOpen("left")) {
-        if (!activeTopId() && !activeBottomId()) {
-          const firstPanel = panels().find(
-            (m) => (m.position || "top") === "top",
-          );
-          if (firstPanel) setActiveTopId(firstPanel.id);
-        }
-        layout.toggle("left");
-      } else {
-        layout.toggle("left");
-      }
-    };
+    setLeftToggleHandler(handleKeyboardToggle);
 
     window.addEventListener("argus:toggle-tool", handleToggle);
     window.addEventListener("argus:remove-panel", handleRemove);
-    window.addEventListener("argus:toggle-left-panel", handleKeyboardToggle);
 
     onCleanup(() => {
+      setLeftToggleHandler(null);
       window.removeEventListener("argus:toggle-tool", handleToggle);
       window.removeEventListener("argus:remove-panel", handleRemove);
-      window.removeEventListener(
-        "argus:toggle-left-panel",
-        handleKeyboardToggle,
-      );
     });
   });
 

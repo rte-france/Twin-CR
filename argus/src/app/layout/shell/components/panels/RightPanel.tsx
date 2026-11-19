@@ -23,6 +23,7 @@ import { IconResolver } from "../IconResolver";
 import { Separator } from "@kobalte/core/separator";
 import { activeBottomRightId } from "./BottomPanel";
 import { ADD_BOTTOM_RIGHT_EVENT } from "@/utils/openInCentral";
+import { setRightToggleHandler } from "../../actions";
 
 export const RightPanel = () => {
   const layout = useLayout();
@@ -34,6 +35,20 @@ export const RightPanel = () => {
   const config = () => layoutConfigs[mode()];
   const panels = () => config().rightSidebarPanels || [];
   const tools = () => config().rightSidebarTools || [];
+
+  const handleKeyboardToggle = () => {
+    if (!layout.isOpen("right")) {
+      if (!activeTopId() && !activeBottomId()) {
+        const firstPanel = panels().find(
+          (m) => (m.position || "top") === "top",
+        );
+        if (firstPanel) setActiveTopId(firstPanel.id);
+      }
+      layout.toggle("right");
+    } else {
+      layout.toggle("right");
+    }
+  };
 
   createEffect(
     on(mode, (currentMode) => {
@@ -139,31 +154,15 @@ export const RightPanel = () => {
       }
     };
 
-    const handleKeyboardToggle = () => {
-      if (!layout.isOpen("right")) {
-        if (!activeTopId() && !activeBottomId()) {
-          const firstPanel = panels().find(
-            (m) => (m.position || "top") === "top",
-          );
-          if (firstPanel) setActiveTopId(firstPanel.id);
-        }
-        layout.toggle("right");
-      } else {
-        layout.toggle("right");
-      }
-    };
+    setRightToggleHandler(handleKeyboardToggle);
 
     window.addEventListener("argus:toggle-tool", handleToggle);
     window.addEventListener("argus:remove-panel", handleRemove);
-    window.addEventListener("argus:toggle-right-panel", handleKeyboardToggle);
 
     onCleanup(() => {
+      setRightToggleHandler(null);
       window.removeEventListener("argus:toggle-tool", handleToggle);
       window.removeEventListener("argus:remove-panel", handleRemove);
-      window.removeEventListener(
-        "argus:toggle-right-panel",
-        handleKeyboardToggle,
-      );
     });
   });
 
