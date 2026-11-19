@@ -47,6 +47,7 @@ if ! docker ps --format '{{.Names}}' | grep -q "^${TARGET_CONTAINER}$"; then
         docker start "${TARGET_CONTAINER}"
     else
         echo "Creating and starting container ${TARGET_CONTAINER}..."
+        # The systemd-binfmt.service masked by /dev/null would overwrite the binfmt_misc shared by the whole Docker host (VM of Docker Desktop), breaking its amd64 emulation
         docker run -d --name "${TARGET_CONTAINER}" \
           --network "${DOCKER_NETWORK}" \
           --privileged \
@@ -54,6 +55,7 @@ if ! docker ps --format '{{.Names}}' | grep -q "^${TARGET_CONTAINER}$"; then
           -v /sys/fs/cgroup:/sys/fs/cgroup:rw \
           -v twincr_docker_data:/var/lib/docker \
           -v twincr_containerd_data:/var/lib/containerd \
+          -v /dev/null:/etc/systemd/system/systemd-binfmt.service:ro \
           -v "$(pwd)":/home/orchestrator \
           -p 80:80 \
           -p 443:443 \
@@ -98,6 +100,7 @@ if [ "$NODES_COUNT" -gt 1 ]; then
                 docker start "${WORKER_NAME}"
             else
                 echo "Creating and starting worker ${WORKER_NAME}..."
+                # The systemd-binfmt.service masked by /dev/null would overwrite the binfmt_misc shared by the whole Docker host (VM of Docker Desktop), breaking its amd64 emulation
                 docker run -d --name "${WORKER_NAME}" \
                   --network "${DOCKER_NETWORK}" \
                   --privileged \
@@ -105,6 +108,7 @@ if [ "$NODES_COUNT" -gt 1 ]; then
                   -v /sys/fs/cgroup:/sys/fs/cgroup:rw \
                   -v "twincr_worker_${i}_docker_data":/var/lib/docker \
                   -v "twincr_worker_${i}_containerd_data":/var/lib/containerd \
+                  -v /dev/null:/etc/systemd/system/systemd-binfmt.service:ro \
                   -e http_proxy="${http_proxy:-}" \
                   -e https_proxy="${https_proxy:-}" \
                   -e no_proxy="${no_proxy:-},localhost,127.0.0.1,172.17.0.0/16,172.28.0.0/16,10.0.0.0/8" \
