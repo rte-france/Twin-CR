@@ -119,6 +119,8 @@ job "twincr-session" {
       role = "nomad-workloads"
     }
 
+    shutdown_delay = "5s"
+
     network {
       mode = "bridge"
       port "clickhouse"   { to = 8123 }
