@@ -208,6 +208,8 @@ class SessionService:
 
     def launch_session(self, session_id: int, storage=None):
         game_session = self.get_or_404(session_id)
+        if game_session.state != SessionState.READY:
+            raise HTTPException(status_code=409, detail=f"Session {session_id} is {game_session.state.value}, not ready")
         game_session.started_at = datetime.now(UTC)
         game_session.state = SessionState.ONGOING
 
@@ -276,6 +278,7 @@ class SessionService:
                 raise HTTPException(status_code=400, detail=f"Could not read the resources of {config_key}: {exc}")
             if resources:
                 variables["resources"] = resources
+        nomad.stop(job_id, purge=True)  # Stop any previous failed launch of the session
         nomad.submit(job_id, variables)
 
     def monitor_nomad_sessions(self):
