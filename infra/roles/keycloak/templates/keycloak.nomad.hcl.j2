@@ -35,8 +35,8 @@ job "keycloak" {
         image = "quay.io/keycloak/keycloak:${var.keycloak_tag}"
         extra_hosts = ["host.docker.internal:host-gateway"]
 
-        # Served under /auth at <public_url>/auth (see public_url in group_vars): no host name to resolve for the users
-        args  = ["start", "--import-realm", "--hostname={{ public_url }}/auth", "--http-relative-path=/auth"]
+        # At the root of <public_url> (see public_url in group_vars), like the compose one at https://localhost
+        args  = ["start", "--import-realm", "--hostname={{ public_url }}"]
         ports = ["http", "jgroups"]
 
         volumes = [
@@ -90,14 +90,16 @@ EOF
 
       tags = [
         "traefik.enable=true",
-        "traefik.http.routers.keycloak.rule=Host(`{{ public_host }}`) && PathPrefix(`/auth`)",
+        # Everything of <public_url> not routed elsewhere (/lobby, /sessions/...): lowest priority
+        "traefik.http.routers.keycloak.rule=Host(`{{ public_host }}`)",
+        "traefik.http.routers.keycloak.priority=1",
         "traefik.http.routers.keycloak.entrypoints=websecure",
         "traefik.http.routers.keycloak.tls=true"
       ]
 
       check {
         type     = "http"
-        path     = "/auth/realms/master"
+        path     = "/realms/master"
         interval = "15s"
         timeout  = "5s"
       }
