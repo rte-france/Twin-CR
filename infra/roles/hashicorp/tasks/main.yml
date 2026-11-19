@@ -355,6 +355,12 @@
     mode: "0755"
   when: inventory_hostname in groups['nomad_servers']
 
+# default_scheduler_config of nomad-config.hcl.j2 is only applied when the cluster is bootstrapped (idempotent setting)
+- name: Enable memory oversubscription (memory_max of the session tasks)
+  ansible.builtin.command: nomad operator scheduler set-config -memory-oversubscription=true
+  changed_when: false
+  when: inventory_hostname in groups['nomad_servers']
+
 # ==========================================
 # 4. VAULT ENGINES, POLICIES & JWT AUTH FOR NOMAD (Server only)
 # ==========================================
