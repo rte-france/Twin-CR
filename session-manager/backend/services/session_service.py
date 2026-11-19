@@ -8,6 +8,7 @@ co-simulation of power systems.
 
 import logging
 import secrets
+import threading
 import tomllib
 import time
 import warnings
@@ -93,9 +94,45 @@ def session_routes_live(session_id: int) -> bool:
     return True
 
 
+# Sessions in cleanup whose stop (archive, then job stop) runs in a worker thread (see _stop_session_job)
+_stopping: set[int] = set()
+_stopping_lock = threading.Lock()
+
+
 # Placement time of the jobs of the sessions in warmup: their start timeout (SESSION_INIT_TIMEOUT) counts from there, a
 # session waiting for cluster resources waits as long as needed
 _placed_since: dict[str, float] = {}
+
+
+def _stop_session_job(engine, session_id: int) -> None:
+    """Worker of a stop (session in cleanup): archives the simulation (skipped by the configurator if already done),
+    stops the job (kept in Nomad with its logs), then ends the session. On failure, the session stays in cleanup and
+    the monitor retries."""
+    job_id = session_job_id(session_id)
+
+    def update(**fields):
+        with Session(engine) as db:
+            game_session = db.get(GameSession, session_id)
+            if game_session is not None:
+                for name, value in fields.items():
+                    setattr(game_session, name, value)
+                db.commit()
+
+    try:
+        update(status_detail="Archiving the simulation")
+        nomad.archive(job_id)
+        update(status_detail="Stopping the services")
+        nomad.stop(job_id)
+        _placed_since.pop(job_id, None)
+        update(state=SessionState.ENDED, ended_at=datetime.now(UTC), status_detail=None)
+        logger.info(f"Session {session_id} stopped")
+    except Exception as exc:
+        detail = getattr(exc, "detail", str(exc))
+        logger.error(f"Stop of session {session_id} failed, retried: {detail}")
+        update(status_detail=f"Stop failed, retrying: {detail}")
+    finally:
+        with _stopping_lock:
+            _stopping.discard(session_id)
 
 
 def session_private_view(game_session: GameSession) -> GameSessionPrivate:
@@ -285,11 +322,20 @@ class SessionService:
         """Follows the jobs of the sessions in warmup and ongoing (called periodically in the Nomad infrastructure):
         warmup → ongoing once ready, or back to ready if the launch fails; ongoing → ended if the job failed or
         disappeared (e.g. lost with its node). The progress is shown in status_detail."""
-        sessions = self.session.exec(
-            select(GameSession).where(GameSession.state.in_([SessionState.WARMUP, SessionState.ONGOING]))
-        ).all()
+        sessions = self.session.exec(select(GameSession).where(
+            GameSession.state.in_([SessionState.WARMUP, SessionState.ONGOING, SessionState.CLEANUP])
+        )).all()
         for game_session in sessions:
             job_id = session_job_id(game_session.id)
+            if game_session.state == SessionState.CLEANUP:
+                # Stop requested: archive and stop in a worker (also resumes a stop interrupted by a restart)
+                with _stopping_lock:
+                    if game_session.id in _stopping:
+                        continue
+                    _stopping.add(game_session.id)
+                threading.Thread(target=_stop_session_job, args=(self.session.get_bind(), game_session.id),
+                                 daemon=True).start()
+                continue
             try:
                 progress = nomad.progress(job_id)
                 if game_session.state == SessionState.WARMUP:
@@ -341,11 +387,15 @@ class SessionService:
     def stop_session(self, session_id: int):
         game_session = self.get_or_404(session_id)
         if nomad is not None:
-            # Archive first (skipped if already done at the end of the simulation), the services are then removed
-            job_id = session_job_id(session_id)
-            nomad.archive(job_id)
-            nomad.stop(job_id)
-            _placed_since.pop(job_id, None)
+            if game_session.state in (SessionState.ENDED, SessionState.CLEANUP):
+                return game_session
+            # Not waited (archiving a long simulation takes minutes): the session is in cleanup until the session
+            # monitor has archived it and stopped its job (_stop_session_job), then ended
+            game_session.state = SessionState.CLEANUP
+            game_session.status_detail = "Stopping requested"
+            self.session.commit()
+            self.session.refresh(game_session)
+            return game_session
         game_session.status_detail = None
         game_session.ended_at = datetime.now(UTC)
         game_session.state = SessionState.ENDED

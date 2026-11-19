@@ -181,7 +181,7 @@ export function SessionsView(props: SessionsViewProps) {
                   class={`w-2 h-2 rounded-full ${
                     session.state === SessionState.Ended
                       ? "bg-red-500"
-                      : session.state === SessionState.Warmup
+                      : session.state === SessionState.Warmup || session.state === SessionState.Cleanup
                         ? "bg-amber-500 animate-pulse"
                         : "bg-green-500"
                   }`}
@@ -232,7 +232,7 @@ export function SessionsView(props: SessionsViewProps) {
               {/* Boutons */}
               <div class="flex flex-col gap-1.5 shrink-0 w-24">
                 <button
-                  disabled={session.state === SessionState.Ended || session.state === SessionState.Warmup}
+                  disabled={session.state === SessionState.Ended || session.state === SessionState.Warmup || session.state === SessionState.Cleanup}
                   onClick={() => openAccessModal(Mode.GameMaster, session)}
                   class="w-full flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-medium border border-slate-300 bg-white text-slate-700 hover:bg-slate-800 hover:text-white hover:border-slate-800 transition-colors disabled:opacity-40 disabled"
                 >
@@ -241,7 +241,7 @@ export function SessionsView(props: SessionsViewProps) {
                 </button>
 
                 <button
-                  disabled={session.state === SessionState.Ended || session.state === SessionState.Warmup}
+                  disabled={session.state === SessionState.Ended || session.state === SessionState.Warmup || session.state === SessionState.Cleanup}
                   onClick={() => openAccessModal(Mode.Scada, session)}
                   class="w-full flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-medium border border-slate-300 bg-white text-slate-700 hover:bg-slate-800 hover:text-white hover:border-slate-800 transition-colors disabled:opacity-40 disabled"
                 >
