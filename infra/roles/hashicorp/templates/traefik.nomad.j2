@@ -33,7 +33,7 @@ job "traefik" {
         destination = "secrets/cert.pem"
         data        = <<EOF
 {% raw %}
-{{ with secret "pki/issue/twincr-workloads" "common_name=traefik.twin.local" "alt_names=keycloak.twin.local,nomad.twin.local,consul.twin.local,vault.twin.local,registry.twin.local,s3.twin.local,sessions.twin.local,lobby.twin.local" "ip_sans=127.0.0.1,172.28.0.2" "ttl=8760h" }}
+{{ with secret "pki/issue/twincr-workloads" "common_name=traefik.twin.local" "alt_names={% endraw %}{{ public_host }}{% raw %},keycloak.twin.local,nomad.twin.local,consul.twin.local,vault.twin.local,registry.twin.local,s3.twin.local" "ip_sans=127.0.0.1,172.28.0.2" "ttl=8760h" }}
 {{ .Data.certificate }}
 {{ .Data.issuing_ca }}
 {{ end }}
@@ -44,7 +44,7 @@ EOF
         destination = "secrets/key.pem"
         data        = <<EOF
 {% raw %}
-{{ with secret "pki/issue/twincr-workloads" "common_name=traefik.twin.local" "alt_names=keycloak.twin.local,nomad.twin.local,consul.twin.local,vault.twin.local,registry.twin.local,s3.twin.local,sessions.twin.local,lobby.twin.local" "ip_sans=127.0.0.1,172.28.0.2" "ttl=8760h" }}
+{{ with secret "pki/issue/twincr-workloads" "common_name=traefik.twin.local" "alt_names={% endraw %}{{ public_host }}{% raw %},keycloak.twin.local,nomad.twin.local,consul.twin.local,vault.twin.local,registry.twin.local,s3.twin.local" "ip_sans=127.0.0.1,172.28.0.2" "ttl=8760h" }}
 {{ .Data.private_key }}
 {{ end }}
 {% endraw %}
@@ -93,7 +93,7 @@ EOF
           auth-redirect-middleware:
             redirectRegex:
               regex: "^https?://auth\\.[^/]+/(.*)"
-              replacement: "https://keycloak.{{ base_domain }}/$${1}"
+              replacement: "{{ public_url }}/auth/$${1}"
               permanent: false
         services:
           nomad-svc:

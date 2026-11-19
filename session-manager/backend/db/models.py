@@ -104,9 +104,12 @@ class GameSessionOwn(GameSessionBase):
     template_name: str | None
 
 class GameSessionPrivate(GameSessionPublic):
-    scada_backend_url: str | None
-    gm_backend_url: str | None
-    dsl_backend_url: str | None
+    # URLs of the services of the session, applied by Argus when joining it (None: Argus keeps its own settings, e.g.
+    # with compose where the services of the single session are at fixed addresses)
+    scada_backend_url: str | None = None
+    gm_backend_url: str | None = None
+    dsl_backend_url: str | None = None
+    lobby_backend_url: str | None = None  # Configurator of the session
 
 class User(SQLModel, table=True):
     """

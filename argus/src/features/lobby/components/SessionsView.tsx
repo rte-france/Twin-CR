@@ -13,6 +13,7 @@ import { FiLogIn } from "solid-icons/fi";
 import { For } from "solid-js";
 import { AccessModal } from "./AccessModal";
 import { connectSession, launchSession, parseUtcDate } from "@/services/session-manager";
+import { applySessionBackends } from "../sessionBackends";
 import { useNavigate } from "@solidjs/router";
 import { useAppMode } from "@/hooks/useAppMode";
 import { useAuth } from "@/features/auth/hooks/useAuth";
@@ -59,11 +60,13 @@ export function SessionsView(props: SessionsViewProps) {
   };
 
   const handleJoin = async (mode: Mode, session: GameSession, password: string) => {
-    await connectSession({
+    const joined: GameSession = await connectSession({
       game_session_id: session.id,
       password_gm: mode === Mode.GameMaster ? password : "",
       password_operator: mode === Mode.Scada ? password : "",
     });
+    // Services of this session, when each session has its own (Nomad infrastructure)
+    await applySessionBackends(joined);
 
     setMode(mode);
     navigate("/home");

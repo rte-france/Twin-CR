@@ -82,9 +82,11 @@ export type GameSession = {
   password_gm: string | null;
   password_operator: string | null;
   author: string | null;
+  // URLs of the services of the session, set when they are per session (Nomad infrastructure), applied when joining it
   scada_backend_url: string | null;
   gm_backend_url: string | null;
   dsl_backend_url: string | null;
+  lobby_backend_url?: string | null;  // Configurator of the session
   template_name: string | null;
 };
 

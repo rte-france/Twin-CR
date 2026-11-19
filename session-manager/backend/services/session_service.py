@@ -6,20 +6,82 @@ This file is part of Twin-CR, a platform for real-time cyber-physical
 co-simulation of power systems.
 """
 
+import logging
 import secrets
+import time
+import warnings
 from datetime import datetime, timedelta, UTC
+from urllib.parse import urlsplit
 
 import requests
+from urllib3.exceptions import InsecureRequestWarning
 from fastapi import HTTPException
 from sqlmodel import select, Session
 
 from backend.config import CONFIGURATOR_CLIENT_ENDPOINT, UPDATE_SESSION_STATE_TIMEOUT, NOMAD_ADDR, NOMAD_TOKEN, \
-    SESSION_JOB_HCL, SESSION_JOB_VARIABLES, SESSION_INIT_TIMEOUT
-from backend.db.models import AccessKey, GameSession, GameSessionCreate, AccessKeyTyped, SessionState, Template
+    SESSION_JOB_HCL, SESSION_JOB_VARIABLES, SESSION_INIT_TIMEOUT, SESSION_PUBLIC_URL, SESSION_ROUTER_URL
+from backend.db.models import AccessKey, GameSession, GameSessionCreate, AccessKeyTyped, SessionState, Template, \
+    GameSessionPrivate
 from backend.services.nomad_service import NomadSessionClient, session_job_id
 
 # Sessions as Nomad jobs in the Nomad infrastructure, else the session services of compose
 nomad = NomadSessionClient(NOMAD_ADDR, NOMAD_TOKEN, SESSION_JOB_HCL, SESSION_JOB_VARIABLES) if NOMAD_ADDR else None
+
+
+# Path of each service under the URL of a session: those of the Traefik routes of the session job
+SESSION_SERVICE_PATHS = {
+    "scada_backend_url": "argus-scada",
+    "gm_backend_url": "argus-gm",
+    "dsl_backend_url": "twincr-core",
+    "lobby_backend_url": "configurator-client",
+}
+
+
+# Endpoint answering once each service is ready
+SESSION_SERVICE_READY_PATHS = {
+    "scada_backend_url": "/health",
+    "gm_backend_url": "/health",
+    "dsl_backend_url": "/status",
+    "lobby_backend_url": "/status",
+}
+SESSION_ROUTES_TIMEOUT = 60
+
+logger = logging.getLogger("uvicorn.error")
+
+
+def wait_session_routes(session_id: int) -> None:
+    """Waits until the public URLs of the services of a session answer through Traefik (it routes a service once its
+    health check passes, then picks it up from Consul): the URLs given to Argus then work when it joins. Best effort:
+    on timeout, a warning only (Argus connects to its backends once they answer)."""
+    public = urlsplit(SESSION_PUBLIC_URL)
+    base_path = f"{public.path.rstrip('/')}/{session_job_id(session_id)}"
+    deadline = time.monotonic() + SESSION_ROUTES_TIMEOUT
+    for field, service_path in SESSION_SERVICE_PATHS.items():
+        url = f"{SESSION_ROUTER_URL.rstrip('/')}{base_path}/{service_path}{SESSION_SERVICE_READY_PATHS[field]}"
+        while True:
+            try:
+                # Reached by address: the Host header selects the route, the certificate is that of the public name
+                with warnings.catch_warnings():
+                    warnings.simplefilter("ignore", InsecureRequestWarning)
+                    if requests.get(url, headers={"Host": public.netloc}, verify=False, timeout=5).ok:
+                        break
+            except requests.RequestException:
+                pass
+            if time.monotonic() > deadline:
+                logger.warning(f"Route of {service_path} of session {session_id} not live after "
+                               f"{SESSION_ROUTES_TIMEOUT} s ({url}, Host: {public.netloc})")
+                return
+            time.sleep(1)
+    logger.info(f"Routes of session {session_id} live")
+
+
+def session_private_view(game_session: GameSession) -> GameSessionPrivate:
+    """The session with the URLs of its services, when they are per session (Nomad infrastructure)."""
+    urls = {}
+    if SESSION_PUBLIC_URL and game_session.id is not None:
+        base = f"{SESSION_PUBLIC_URL.rstrip('/')}/{session_job_id(game_session.id)}"
+        urls = {field: f"{base}/{path}" for field, path in SESSION_SERVICE_PATHS.items()}
+    return GameSessionPrivate.model_validate(game_session, update=urls)
 
 
 class SessionService:
@@ -155,18 +217,24 @@ class SessionService:
     def launch_session_job(self, session_id: int, context_id: str, scenario_id: str | None, config_path: str):
         """Submits the Nomad job of the session and waits for its initialization (done by the job itself)."""
         job_id = session_job_id(session_id)
-        nomad.submit(job_id, {
+        variables = {
             "context_id": context_id,
             "config_path": config_path,
             # Empty when the template has no DSL, so the configurator generates its minimal script
             "scenario_id": scenario_id or "",
-        })
+        }
+        if SESSION_PUBLIC_URL:
+            # Host of the Traefik routes of the session, matching the URLs given to Argus
+            variables["public_host"] = urlsplit(SESSION_PUBLIC_URL).hostname or ""
+        nomad.submit(job_id, variables)
         try:
             nomad.wait_initialized(job_id, SESSION_INIT_TIMEOUT)
         except HTTPException:
             # Stopped but not purged: its logs stay available in Nomad to understand the failure
             nomad.stop(job_id)
             raise
+        if SESSION_PUBLIC_URL and SESSION_ROUTER_URL:
+            wait_session_routes(session_id)
 
     def update_sessions_state(self, session_ids: list[int], session_state: SessionState):
         for session_id in session_ids:
