@@ -97,7 +97,13 @@ EOT
         force_pull   = true
         network_mode = "host"
         ports        = ["http"]
-        volumes      = ["/opt/twincr/session-manager/data:/data"]
+        volumes      = [
+          "/opt/twincr/session-manager/data:/data",
+{% if session_manager_rules.stat.isdir | default(false) %}
+          # Extra Dynawo model rules (EXTRA_RULES_PATH), see session_manager_rules_dir
+          "/opt/twincr/session-manager/dynawo_rules:/home/session-manager/dynawo_rules:ro",
+{% endif %}
+        ]
       }
 
       resources {

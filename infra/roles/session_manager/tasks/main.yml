@@ -15,6 +15,27 @@
     state: directory
     mode: "0755"
 
+- name: Check the extra Dynawo model rules (session_manager_rules_dir)
+  ansible.builtin.stat:
+    path: "{{ session_manager_rules_dir }}"
+  delegate_to: localhost
+  become: false
+  register: session_manager_rules
+
+- name: Copy the extra Dynawo model rules
+  ansible.builtin.copy:
+    src: "{{ session_manager_rules_dir }}/"
+    dest: /opt/twincr/session-manager/dynawo_rules/
+    mode: "0644"
+    directory_mode: "0755"
+  when: session_manager_rules.stat.isdir | default(false)
+
+- name: Remove the extra Dynawo model rules of a previous deployment
+  ansible.builtin.file:
+    path: /opt/twincr/session-manager/dynawo_rules
+    state: absent
+  when: not (session_manager_rules.stat.isdir | default(false))
+
 - name: Copy the Nomad ACL policy of the session manager
   ansible.builtin.copy:
     src: session-manager-policy.hcl
