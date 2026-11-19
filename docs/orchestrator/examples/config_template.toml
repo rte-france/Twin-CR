@@ -55,3 +55,10 @@ subscribed_substations = [">"]
 
 [game_master.plot_data]
 Voltages = ["U_B1", "U_B2", "U_B3", "U_B4"]
+
+# Optional: resources of the session services in the Nomad infrastructure (ignored by docker compose)
+# [resources.twincr-core]
+# memory = 1024
+# [resources.argus-scada]
+# memory = 1024
+# java_opts = "-Xmx1g"

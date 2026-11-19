@@ -531,10 +531,10 @@ def get_session(session_id: int, session: SessionDep):
     return game_session
 
 @session_router.post("/{session_id}/launch", response_model=GameSession)
-def launch_session(session_id: int, session_service: SessionServiceDep, session: SessionDep,
+def launch_session(session_id: int, session_service: SessionServiceDep, session: SessionDep, storage: StorageDep,
                    current_user=Depends(require_role("session_launcher"))):
     own_session(session, session_id, current_user)
-    game_session = session_service.launch_session(session_id)
+    game_session = session_service.launch_session(session_id, storage)
     return game_session
 
 @session_router.post("/{session_id}/stop", response_model=GameSession)

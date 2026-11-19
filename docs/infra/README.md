@@ -39,7 +39,9 @@ It:
 1. creates the cluster: a privileged container `twincr_target` (network `twincr_net`, node address 172.28.0.2) running
    Nomad, Consul and Vault, then Traefik, Postgres, a Docker registry, Garage and Keycloak as Nomad jobs
    (`infra/site.yml`);
-2. pushes the Twin-CR images to its registry (`mise run infra:push`, also usable alone after a rebuild);
+2. pushes the Twin-CR images to its registry (`mise run infra:push`, also usable alone after a rebuild), and copies the
+   third-party images of the sessions there (NATS, ClickHouse and curl, at the versions pinned for compose in
+   `docker-compose-dependencies.yaml`): sessions never pull from Docker Hub;
 3. deploys the session manager (`infra/apps.yml`, `make -C infra apps`), once its image is in the registry.
 
 A run takes several minutes and can be repeated: it only changes what differs. Rebuilt images are used by the next
@@ -163,6 +165,26 @@ curl http://localhost:8500/v1/health/checks/session-session-<id>-<service>   # H
 
 The Argus backends of a session have no fixed port: `nomad alloc status <alloc>` shows them (on 172.28.0.2, not
 reachable from macOS, where a relay container on the `twincr_net` network can publish one).
+
+## Sizing a session
+
+The services of a session reserve memory and CPU in the cluster; a session is placed once a node has enough free, else
+it waits (shown in the Argus lobby). The defaults of the session job are sized for a large (French) grid: about 9 GB
+reserved per session. A context can lower (or raise) them in its
+`config.toml`, per service (task of the session job: `nats`, `clickhouse`, `twincr-core`, `configurator-client`,
+`argus-scada`, `argus-gm`, `automata`):
+
+```toml
+[resources.twincr-core]
+memory = 1024          # MB reserved (placement); memory_max: MB limit; cpu: MHz
+
+[resources.argus-scada]
+memory = 1024
+java_opts = "-Xmx1g"   # argus-scada, argus-gm: JVM options
+```
+
+The examples (`4Bus`, `IEEE14`, `Nordic`) set small values: two sessions fit on a 12 GB machine. The session manager
+reads these tables at launch (ignored by docker compose).
 
 ## Troubleshooting
 

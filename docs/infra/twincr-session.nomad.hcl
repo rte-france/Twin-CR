@@ -35,6 +35,16 @@ variable "config_path" {
   description = "Path to the configuration file inside context"
 }
 
+variable "resources" {
+  type        = map(map(string))
+  default     = {}
+  description = <<EOT
+Resources per service of the session, overriding the defaults of the tasks (sized for a French grid): task name ->
+{ cpu (MHz), memory (MB, reserved), memory_max (MB, limit), java_opts (argus-scada, argus-gm: JVM options, e.g. heap) }.
+Set by the session manager from the [resources.<task>] tables of the config.toml of the context.
+EOT
+}
+
 variable "scenario_id" {
   type        = string
   default     = ""
@@ -302,9 +312,9 @@ EOT
       }
 
       resources {
-        cpu        = 150
-        memory     = 128
-        memory_max = 256
+        cpu        = lookup(lookup(var.resources, "nats", {}), "cpu", "150")
+        memory     = lookup(lookup(var.resources, "nats", {}), "memory", "128")
+        memory_max = lookup(lookup(var.resources, "nats", {}), "memory_max", "256")
       }
     }
 
@@ -341,9 +351,9 @@ EOT
       }
 
       resources {
-        cpu        = 800
-        memory     = 1536
-        memory_max = 3072
+        cpu        = lookup(lookup(var.resources, "clickhouse", {}), "cpu", "800")
+        memory     = lookup(lookup(var.resources, "clickhouse", {}), "memory", "1536")
+        memory_max = lookup(lookup(var.resources, "clickhouse", {}), "memory_max", "3072")
       }
     }
 
@@ -378,9 +388,9 @@ EOT
       }
 
       resources {
-        cpu        = 2000
-        memory     = 3072
-        memory_max = 4096
+        cpu        = lookup(lookup(var.resources, "twincr-core", {}), "cpu", "2000")
+        memory     = lookup(lookup(var.resources, "twincr-core", {}), "memory", "3072")
+        memory_max = lookup(lookup(var.resources, "twincr-core", {}), "memory_max", "4096")
       }
     }
 
@@ -414,9 +424,9 @@ EOT
       }
 
       resources {
-        cpu        = 200
-        memory     = 256
-        memory_max = 512
+        cpu        = lookup(lookup(var.resources, "configurator-client", {}), "cpu", "200")
+        memory     = lookup(lookup(var.resources, "configurator-client", {}), "memory", "256")
+        memory_max = lookup(lookup(var.resources, "configurator-client", {}), "memory_max", "512")
       }
     }
 
@@ -427,6 +437,8 @@ EOT
       env {
         NATS_URL = "nats://127.0.0.1:4222"
         MODE     = "CLICKHOUSE"
+        # Empty: the default of argus-backends/start.sh
+        JAVA_OPTS = lookup(lookup(var.resources, "argus-scada", {}), "java_opts", "")
       }
 
       config {
@@ -436,9 +448,9 @@ EOT
       }
 
       resources {
-        cpu        = 1500
-        memory     = 2560
-        memory_max = 3584
+        cpu        = lookup(lookup(var.resources, "argus-scada", {}), "cpu", "1500")
+        memory     = lookup(lookup(var.resources, "argus-scada", {}), "memory", "2560")
+        memory_max = lookup(lookup(var.resources, "argus-scada", {}), "memory_max", "3584")
       }
     }
 
@@ -446,8 +458,9 @@ EOT
       driver = "docker"
 
       env {
-        NATS_URL = "nats://127.0.0.1:4222"
-        MODE     = "CLICKHOUSE"
+        NATS_URL  = "nats://127.0.0.1:4222"
+        MODE      = "CLICKHOUSE"
+        JAVA_OPTS = lookup(lookup(var.resources, "argus-gm", {}), "java_opts", "")
       }
 
       config {
@@ -457,9 +470,9 @@ EOT
       }
 
       resources {
-        cpu        = 200
-        memory     = 1024
-        memory_max = 2048
+        cpu        = lookup(lookup(var.resources, "argus-gm", {}), "cpu", "200")
+        memory     = lookup(lookup(var.resources, "argus-gm", {}), "memory", "1024")
+        memory_max = lookup(lookup(var.resources, "argus-gm", {}), "memory_max", "2048")
       }
     }
 
@@ -528,9 +541,9 @@ EOT
       }
 
       resources {
-        cpu        = 200
-        memory     = 256
-        memory_max = 512
+        cpu        = lookup(lookup(var.resources, "automata", {}), "cpu", "200")
+        memory     = lookup(lookup(var.resources, "automata", {}), "memory", "256")
+        memory_max = lookup(lookup(var.resources, "automata", {}), "memory_max", "512")
       }
     }
   }
