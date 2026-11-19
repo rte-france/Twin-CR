@@ -67,17 +67,13 @@ function buildTree(commands: readonly CommandDefinition[]): KeymapTreeNode[] {
 }
 
 export function KeymapsSettings() {
-  const {
-    commands,
-    config,
-    savingId,
-    error,
-    updateBinding,
-    getEventString,
-  } = useKeymapSettings();
+  const { commands, config, savingId, error, updateBinding, getEventString } =
+    useKeymapSettings();
 
   const [activeNodeId, setActiveNodeId] = createSignal<string>("");
-  const [collapsedNodes, setCollapsedNodes] = createSignal<Set<string>>(new Set());
+  const [collapsedNodes, setCollapsedNodes] = createSignal<Set<string>>(
+    new Set(),
+  );
   const [searchQuery, setSearchQuery] = createSignal("");
   const [viewJsonMode, setViewJsonMode] = createSignal(false);
 
@@ -231,7 +227,9 @@ export function KeymapsSettings() {
               fallback={
                 <Show
                   when={hasChildren}
-                  fallback={<FiTag class="w-3.5 h-3.5 shrink-0 opacity-70 text-[var(--sidebar-fg)]" />}
+                  fallback={
+                    <FiTag class="w-3.5 h-3.5 shrink-0 opacity-70 text-[var(--sidebar-fg)]" />
+                  }
                 >
                   <FiLayers class="w-3.5 h-3.5 shrink-0 opacity-70 text-[var(--sidebar-fg)]" />
                 </Show>
@@ -239,7 +237,9 @@ export function KeymapsSettings() {
             >
               <Show
                 when={isCollapsed(node.id)}
-                fallback={<FiFolder class="w-3.5 h-3.5 shrink-0 opacity-70 text-[var(--sidebar-active)]" />}
+                fallback={
+                  <FiFolder class="w-3.5 h-3.5 shrink-0 opacity-70 text-[var(--sidebar-active)]" />
+                }
               >
                 <FiFolder class="w-3.5 h-3.5 shrink-0 opacity-70" />
               </Show>
@@ -308,13 +308,6 @@ export function KeymapsSettings() {
             </For>
           </nav>
         </div>
-
-        <div class="p-3 border-t border-[var(--border)] text-[11px] text-[var(--sidebar-non-existant)] flex items-center justify-between">
-          <span>Config</span>
-          <span class="font-mono text-[10px] text-[var(--success-color,#10b981)]">
-            keymaps.json
-          </span>
-        </div>
       </aside>
 
       <main class="flex-1 flex flex-col min-w-0 bg-[var(--bg)] overflow-hidden">
@@ -329,7 +322,6 @@ export function KeymapsSettings() {
           fallback={
             <div class="flex-1 flex flex-col overflow-hidden">
               <div class="h-10 px-4 border-b border-[var(--border)] flex items-center justify-between bg-[var(--table-header-bg)] text-xs text-[var(--sidebar-fg)]">
-                <span class="font-mono">keymaps.json (raw bindings)</span>
                 <span class="text-[11px] text-[var(--sidebar-non-existant)]">
                   Live in-memory configuration
                 </span>
