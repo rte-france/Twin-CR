@@ -93,4 +93,23 @@ for name in "${SERVICES[@]}"; do
     fi
 done
 
+# Third-party images of the sessions
+THIRD_PARTY_IMAGES=(
+    "$(jq -r '.services.nats.image' <<<"$COMPOSE_JSON")"
+    "$(jq -r '.services.clickhouse.image' <<<"$COMPOSE_JSON")"
+    "curlimages/curl:8.22.0"
+)
+for img in "${THIRD_PARTY_IMAGES[@]}"; do
+    if [[ "${img##*/}" != *:* ]] || [[ "$img" == *:latest ]]; then
+        echo "ERROR: $img has no pinned version (set it in docker-compose-dependencies.yaml)" >&2
+        exit 1
+    fi
+    TARGET_IMG="${REGISTRY_HOST}/${img}"
+    echo "  -> Copying $img as $TARGET_IMG"
+    docker pull -q "$img" >/dev/null
+    docker tag "$img" "$TARGET_IMG"
+    # Only the platform of this machine is present locally: docker pushes that one
+    docker push -q "$TARGET_IMG" >/dev/null
+done
+
 echo "==> All Twin-CR images pushed to registry successfully."

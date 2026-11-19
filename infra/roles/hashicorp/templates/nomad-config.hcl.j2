@@ -37,6 +37,10 @@ plugin "docker" {
     volumes { enabled = true }
     infra_image = "registry.k8s.io/pause:3.3"
     pull_activity_timeout = "2m"
+    # Garbage collect unused images after 24h (default is 3min)
+    gc {
+      image_delay = "24h"
+    }
   }
 }
 

@@ -306,7 +306,8 @@ EOT
       }
 
       config {
-        image = "nats:latest"
+        # Same version as compose
+        image = "${var.registry}/nats:2.14.3"
         args  = ["-c", "/local/nats.conf"]
         ports = ["nats"]
       }
@@ -345,7 +346,8 @@ EOT
       }
 
       config {
-        image   = "clickhouse/clickhouse-server:latest"
+        # Same version as compose
+        image   = "${var.registry}/clickhouse/clickhouse-server:26.6.1.1193"
         ports   = ["clickhouse"]
         volumes = ["local/clickhouse_config.xml:/etc/clickhouse-server/config.d/config.xml"]
       }
@@ -488,7 +490,8 @@ EOT
       }
 
       config {
-        image   = "curlimages/curl:latest"
+        # Pinned, from the registry of the cluster (copied by infra:push)
+        image   = "${var.registry}/curlimages/curl:8.22.0"
         command = "/bin/sh"
         args = [
           "-c",
