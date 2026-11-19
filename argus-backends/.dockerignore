@@ -9,4 +9,6 @@
 !itools_config.yml
 !set_mvn_opts.sh
 !unset_mvn_opts.sh
+!start.sh
+!healthcheck.sh
 **/target/
