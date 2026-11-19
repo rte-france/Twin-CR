@@ -1,18 +1,20 @@
 #!/usr/bin/env bash
-#MISE description="Stop the Twin-CR local infrastructure on macOS or Linux"
+#MISE description="Stop the Twin-CR local infrastructure (OrbStack VMs and/or Docker containers)"
 
 set -euo pipefail
 
-if [ "$(uname -s)" = "Darwin" ]; then
-    if command -v orb >/dev/null 2>&1; then
-        echo "==> Stopping OrbStack machines (twincr-dev)..."
-        for vm in $(orb list 2>/dev/null | awk '/^twincr-(dev|worker)/ {print $1}'); do
-            echo "  Stopping $vm..."
-            orb stop "$vm" || true
-        done
-    fi
-else
-    for c in $(docker ps -a --format '{{.Names}}' | grep -E '^twincr_(target|worker_[0-9]+)$'); do
+# OrbStack VMs (mac task)
+if [ "$(uname -s)" = "Darwin" ] && command -v orb >/dev/null 2>&1; then
+    echo "==> Stopping OrbStack machines (twincr-dev)..."
+    for vm in $(orb list 2>/dev/null | awk '/^twincr-(dev|worker)/ {print $1}'); do
+        echo "  Stopping $vm..."
+        orb stop "$vm" || true
+    done
+fi
+
+# Docker containers (linux task: Linux, or Docker Desktop on macOS)
+if command -v docker >/dev/null 2>&1 && docker info >/dev/null 2>&1; then
+    for c in $(docker ps -a --format '{{.Names}}' | grep -E '^twincr_(target|worker_[0-9]+)$' || true); do
         echo "==> Stopping container $c..."
         docker stop "$c" || true
     done

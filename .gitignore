@@ -124,3 +124,6 @@ estimOutput.*
 # Argus build dir
 AppImage/
 Windows/
+
+# Per-user mise config (e.g. TWINCR_* settings of the infra tasks, see mise.toml)
+mise.local.toml

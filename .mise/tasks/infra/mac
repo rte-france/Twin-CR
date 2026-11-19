@@ -27,7 +27,7 @@ while [ $# -gt 0 ]; do
 done
 
 if ! command -v orb >/dev/null 2>&1; then
-    echo "ERROR: OrbStack CLI 'orb' is required on macOS." >&2
+    echo "ERROR: OrbStack CLI 'orb' is required by this task. With Docker Desktop, use 'mise run infra' (or infra:linux)." >&2
     exit 1
 fi
 
