@@ -6,7 +6,7 @@ This file is part of Twin-CR, a platform for real-time cyber-physical
 co-simulation of power systems.
 */
 
-import { createSignal, Show, For } from "solid-js";
+import { createSignal, onCleanup, Show, For } from "solid-js";
 import { FiCheck, FiEdit2, FiX } from "solid-icons/fi";
 import type { CommandDefinition } from "@/types/keymap.type";
 
@@ -22,6 +22,11 @@ export function KeymapItem(props: KeymapItemProps) {
   const [isRecording, setIsRecording] = createSignal(false);
   const [livePreview, setLivePreview] = createSignal<string>("");
   const [success, setSuccess] = createSignal(false);
+  let cleanupCapture: (() => void) | null = null;
+
+  onCleanup(() => {
+    cleanupCapture?.();
+  });
 
   const displayKeys = () => {
     if (props.currentKey) return [props.currentKey];
@@ -33,8 +38,7 @@ export function KeymapItem(props: KeymapItemProps) {
     e.stopPropagation();
 
     if (e.key === "Escape") {
-      setIsRecording(false);
-      setLivePreview("");
+      stopRecording();
       return;
     }
 
@@ -58,9 +62,32 @@ export function KeymapItem(props: KeymapItemProps) {
     }
   };
 
-  const commitShortcut = (shortcut: string) => {
+  const startRecording = () => {
+    setLivePreview("");
+    setIsRecording(true);
+    // Intercept in capture phase so global KeymapEngine and browser defaults don't swallow keys
+    const captureHandler = (e: KeyboardEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      e.stopImmediatePropagation();
+      handleKeyDown(e);
+    };
+
+    window.addEventListener("keydown", captureHandler, true);
+    cleanupCapture = () => {
+      window.removeEventListener("keydown", captureHandler, true);
+      cleanupCapture = null;
+    };
+  };
+
+  const stopRecording = () => {
+    cleanupCapture?.();
     setIsRecording(false);
     setLivePreview("");
+  };
+
+  const commitShortcut = (shortcut: string) => {
+    stopRecording();
     props.onUpdate(shortcut).then(() => {
       setSuccess(true);
       setTimeout(() => setSuccess(false), 1500);
@@ -110,7 +137,6 @@ export function KeymapItem(props: KeymapItemProps) {
           fallback={
             <div
               tabIndex={0}
-              onKeyDown={handleKeyDown}
               class="flex items-center gap-2 px-3 py-1 bg-[var(--bg)] border-2 border-[var(--sidebar-active)] rounded-md text-xs font-mono text-[var(--fg)] shadow-sm outline-none"
               ref={(el) => setTimeout(() => el?.focus(), 10)}
             >
@@ -134,10 +160,7 @@ export function KeymapItem(props: KeymapItemProps) {
               </Show>
               <button
                 type="button"
-                onClick={() => {
-                  setIsRecording(false);
-                  setLivePreview("");
-                }}
+                onClick={stopRecording}
                 class="text-[var(--sidebar-non-existant)] hover:text-[var(--fg)] ml-1"
               >
                 <FiX class="w-3.5 h-3.5" />
@@ -173,10 +196,7 @@ export function KeymapItem(props: KeymapItemProps) {
           <button
             type="button"
             title="Edit shortcut"
-            onClick={() => {
-              setLivePreview("");
-              setIsRecording(true);
-            }}
+            onClick={startRecording}
             class="opacity-0 group-hover:opacity-100 p-1.5 rounded text-[var(--sidebar-fg)] hover:text-[var(--fg)] hover:bg-[var(--media-bg)] transition-opacity"
           >
             <FiEdit2 class="w-3.5 h-3.5" />

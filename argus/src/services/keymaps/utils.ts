@@ -63,8 +63,16 @@ export function getEventString(
       rawKey = e.code.replace("Digit", "").toLowerCase();
     else rawKey = e.code.toLowerCase();
   } else {
-    rawKey = e.key.toLowerCase();
+    // Standard key lookup with fallback to e.code when the browser cannot resolve the key symbol
+    const keyLower = e.key ? e.key.toLowerCase() : "";
+    if (!keyLower || keyLower === "unidentified") {
+      rawKey = e.code ? e.code.toLowerCase() : "";
+    } else {
+      rawKey = keyLower;
+    }
   }
+
+  if (!rawKey) return "";
 
   const finalKey = SPECIAL_KEYS[rawKey] || rawKey;
   const isModifierOnly = MODIFIER_NAMES.some((mod) => finalKey.includes(mod));

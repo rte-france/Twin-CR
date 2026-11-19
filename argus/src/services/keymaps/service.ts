@@ -247,6 +247,7 @@ export const KeymapEngineLive = Layer.scoped(
 
         if (exactMatch) {
           event.preventDefault();
+          event.stopImmediatePropagation?.();
           yield* clearSequenceBuffer;
           yield* executeCommand(exactMatch.commandId);
           return;
