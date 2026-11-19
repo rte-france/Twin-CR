@@ -6,6 +6,7 @@ This file is part of Twin-CR, a platform for real-time cyber-physical
 co-simulation of power systems.
 """
 
+import threading
 from typing import Optional
 
 import nats
@@ -19,6 +20,10 @@ class ServerState:
         self.context_id: Optional[str] = None
         self.scenario_id: Optional[str] = None
         self.nats_client: Optional[nats.NATS] = None
+        # Archiving is requested both by the orchestrator stop message and by GET /archive (e.g. after an orchestrator
+        # crash, or before stopping a session): each simulation is archived once. Not cleared by reset().
+        self.archive_lock = threading.Lock()
+        self.archived_simulation_ids: set[str] = set()
 
     def reset(self):
         self.status = "NOT READY"

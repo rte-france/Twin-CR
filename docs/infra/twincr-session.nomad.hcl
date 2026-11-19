@@ -11,6 +11,11 @@
 # Startup order: nats and clickhouse are prestart sidecars, the other services are main tasks that retry their
 # dependencies (NATS connection retried at startup, argus waits for an initialized session), and session-init is
 # a poststart task that initializes the session once (what session-manager does with compose).
+#
+# End of the simulation (normal or crash): the twincr-core container stays up (KEEP_ALIVE_AFTER_EXIT, see
+# envs/run_orchestrator.sh) after requesting the archive of the simulation, so the session, its services and logs remain
+# available until the session is stopped explicitly (nomad job stop, by the session manager). Its health check turns
+# critical when the orchestrator has exited.
 
 variable "session_id" {
   type        = string
@@ -322,8 +327,9 @@ job "twincr-session" {
       }
     }
 
-    # A crash of the orchestrator ends the session: the configurator would keep a stale state (with compose,
-    # restart: true restarts it with twincr-core), so the allocation fails instead of restarting it.
+    # The orchestrator exiting does not end the task (KEEP_ALIVE_AFTER_EXIT). If the task itself dies, it is not
+    # restarted: a new orchestrator would not match the state of the configurator (with compose, restart: true restarts
+    # it with twincr-core), so the allocation fails instead.
     task "twincr-core" {
       driver = "docker"
 
@@ -336,6 +342,8 @@ job "twincr-session" {
         TZ       = "Europe/Paris"
         NATS_URL = "nats://127.0.0.1:4222"
         MODE     = "CLICKHOUSE"
+        # Stay up after the simulation (end or crash) until the session is stopped
+        KEEP_ALIVE_AFTER_EXIT = "true"
       }
 
       config {
@@ -454,7 +462,9 @@ EOT
           <<EOT
 url='http://127.0.0.1:8080/init/${var.context_id}?config_path=${var.config_path}${var.scenario_id != "" ? "&scenario_id=${var.scenario_id}" : ""}'
 for i in $(seq 1 60); do
-  code=$(curl -s --noproxy '*' --max-time 300 -o /tmp/init.out -w '%%{http_code}' "$url")
+  rm -f /tmp/init.out /tmp/init.headers
+  curl -s --noproxy '*' --max-time 300 -o /tmp/init.out -D /tmp/init.headers "$url"
+  code=$(head -n 1 /tmp/init.headers 2>/dev/null | cut -d ' ' -f 2)
   case "$code" in
     200) echo "Session initialized: $(cat /tmp/init.out)"; exit 0 ;;
     409) echo "Session already initialized"; exit 0 ;;
