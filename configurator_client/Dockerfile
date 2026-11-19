@@ -26,4 +26,6 @@ RUN uv sync --frozen --no-cache --no-install-project
 # Copy the source code
 COPY . /home/orchestrator/configurator_client
 
-CMD ["fastapi", "run", "src/main.py", "--port", "8080", "--host", "0.0.0.0"]
+HEALTHCHECK --interval=5s --timeout=5s --start-period=10s CMD ["bash", "/home/orchestrator/configurator_client/healthcheck.sh"]
+# Serves on CONFIGURATOR_PORT (default 8080) if MODE=CLICKHOUSE (default), else idles
+CMD ["bash", "/home/orchestrator/configurator_client/configurator_client.sh"]
