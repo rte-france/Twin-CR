@@ -1,0 +1,19 @@
+#
+# Copyright (c) 2026, RTE (https://www.rte-france.com)
+# See AUTHORS.md
+# SPDX-License-Identifier: MPL-2.0
+# This file is part of Twin-CR, a platform for real-time cyber-physical
+# co-simulation of power systems.
+#
+
+---
+# Twin-CR applications of the infrastructure, deployed with their images from the registry of the cluster: run after
+# site.yml (which deploys that registry) and the push of the images (infra:push), by .mise/tasks/infra/run or with
+# make apps [ENV=...].
+- name: Deploy Twin-CR applications
+  hosts: nomad_servers
+  become: true
+  environment: "{{ proxy_env | default({}) }}"
+  roles:
+    - role: session_manager
+      tags: session_manager

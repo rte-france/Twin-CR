@@ -38,6 +38,16 @@ S3_ENDPOINT = f"http://{GARAGE_HOST}:{GARAGE_PORT}"
 
 UPDATE_SESSION_STATE_TIMEOUT = 5
 
+# Nomad infrastructure: when NOMAD_ADDR is set, each session runs as a Nomad job (see services/nomad_service.py)
+# instead of the single set of session services of compose (CONFIGURATOR_CLIENT_ENDPOINT).
+NOMAD_ADDR = os.getenv("NOMAD_ADDR", "")
+NOMAD_TOKEN = os.getenv("NOMAD_TOKEN", "")  # Workload identity of the session manager job in the infrastructure
+SESSION_JOB_HCL = os.getenv("SESSION_JOB_HCL", "/home/session-manager/twincr-session.nomad.hcl")
+# HCL variable assignments added to each session job, one per line (e.g. registry = "10.0.0.1:5000")
+SESSION_JOB_VARIABLES = os.getenv("SESSION_JOB_VARIABLES", "").replace("\\n", "\n")
+# Startup of the session services (image pulls included) and initialization of the session
+SESSION_INIT_TIMEOUT = float(os.getenv("SESSION_INIT_TIMEOUT", "600"))
+
 KEYCLOAK_VERIFY_TLS = os.getenv("KEYCLOAK_VERIFY_TLS","TRUE").casefold() == "true"
 SIMULATORS_PATH = os.getenv("SIMULATORS_PATH", "/home/session-manager/simulators")
 EXTRA_RULES_PATH = os.getenv("EXTRA_RULES_PATH", "/home/session-manager/dynawo_rules")

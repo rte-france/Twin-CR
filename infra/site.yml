@@ -41,3 +41,4 @@
       tags: garage
     - role: keycloak
       tags: keycloak
+# The applications (e.g. the session manager), which need their images in the registry deployed here, are in apps.yml

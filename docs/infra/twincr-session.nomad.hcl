@@ -1,8 +1,8 @@
 # Nomad job of one Twin-CR simulation session: the Nomad counterpart of docker-compose-session.yaml.
 #
-# Run it from the Twin-CR root (file() paths are relative to the current directory):
-#   nomad job run -var session_id=... docs/infra/twincr-session.nomad.hcl
-# The JSON of the HTTP API (embedding the file() contents) is printed with "nomad job run -output", not committed.
+# Self-contained (no file(), refused when Nomad parses a job for its HTTP API): submitted by the session manager through
+# that API (/v1/jobs/parse then /v1/jobs, see session-manager/backend/services/nomad_service.py), or with the CLI:
+#   nomad job run -var session_id=... -var context_id=... docs/infra/twincr-session.nomad.hcl
 #
 # The services run their image defaults (start and healthcheck scripts baked in the images, see the Dockerfiles), as
 # with compose: only the environment differs. All tasks share the network namespace of the group: they reach each
@@ -279,8 +279,19 @@ job "twincr-session" {
         sidecar = true
       }
 
+      # Same configuration as envs/nats.conf (compose)
       template {
-        data        = file("envs/nats.conf")
+        data        = <<EOT
+port: 4222
+http_port: 8222
+websocket {
+  port: 9222
+  no_tls: true
+}
+jetstream {
+  enable: true
+}
+EOT
         destination = "local/nats.conf"
       }
 
@@ -306,8 +317,15 @@ job "twincr-session" {
       }
 
       # S3 settings for the archive to Garage (INSERT INTO FUNCTION s3 of the configurator)
+      # Same configuration as clickhouse/clickhouse_config.xml (compose)
       template {
-        data        = file("clickhouse/clickhouse_config.xml")
+        data        = <<EOT
+<clickhouse>
+    <s3>
+        <region>garage</region>
+    </s3>
+</clickhouse>
+EOT
         destination = "local/clickhouse_config.xml"
       }
 

@@ -37,7 +37,7 @@ from backend.db.models import GameSession, GameSessionCreate, GameSessionPrivate
     NodeType, NewFolder, SessionState, Template, TemplateFileRole, TemplateFilePublic, TemplateDetails, \
     TemplateFolder, AccessKey, AccessKeyTyped, GameSessionOwn, SessionConnect, TemplateRenamedResponse, TreeNodeResponse
 from backend.services import storage_service
-from backend.services.session_service import SessionService
+from backend.services.session_service import SessionService, nomad
 from backend.services.storage_service import StorageService
 
 TEMPLATE_NAME_RE = re.compile(r"[A-Za-z0-9 ._-]{1,100}")
@@ -73,15 +73,18 @@ tree_router = APIRouter(prefix="/tree", tags=["Tree"])
 async def lifespan(app: FastAPI):
     create_db_and_tables()
     app.state.storage_service = StorageService()
-    task = asyncio.create_task(update_session_state_job())
+    # With compose, the state of the sessions follows the single configurator. In the Nomad infrastructure, each
+    # session has its own configurator, and its state is set when it is launched and stopped.
+    task = asyncio.create_task(update_session_state_job()) if nomad is None else None
     try:
         yield
     finally:
-        task.cancel()
-        try:
-            await task
-        except asyncio.CancelledError:
-            pass
+        if task is not None:
+            task.cancel()
+            try:
+                await task
+            except asyncio.CancelledError:
+                pass
 
 app = FastAPI(lifespan=lifespan)
 

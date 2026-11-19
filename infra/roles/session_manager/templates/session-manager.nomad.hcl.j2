@@ -1,0 +1,104 @@
+# Session manager of the infrastructure (session-manager/docker-compose-session-manager.yaml with compose): sessions
+# are Nomad jobs that it submits (NOMAD_ADDR set). Same port as with compose (8090, published by the dev cluster), and
+# routed by Traefik (see the service tags).
+job "session-manager" {
+  datacenters = ["dc1"]
+  type        = "service"
+
+  group "session-manager" {
+    count = 1
+
+    # Its SQLite database is on this node, next to Keycloak, Garage and the Nomad server
+    constraint {
+      attribute = "${node.class}"
+      value     = "control-plane"
+    }
+
+    vault {
+      role = "nomad-workloads"
+    }
+
+    network {
+      mode = "host"
+      port "http" {
+        static = 8090
+      }
+    }
+
+    service {
+      name     = "session-manager"
+      port     = "http"
+      provider = "consul"
+
+      # https://lobby.<base_domain>, and plain HTTP on the lobby-api entrypoint of Traefik (port 8000)
+      tags = [
+        "traefik.enable=true",
+        "traefik.http.routers.session-manager.rule=Host(`lobby.{{ base_domain }}`)",
+        "traefik.http.routers.session-manager.entrypoints=web,websecure",
+        "traefik.http.routers.session-manager.tls=true",
+        "traefik.http.routers.session-manager.service=session-manager",
+        "traefik.http.routers.session-manager-api.rule=PathPrefix(`/`)",
+        "traefik.http.routers.session-manager-api.entrypoints=lobby-api",
+        "traefik.http.routers.session-manager-api.service=session-manager",
+        "traefik.http.services.session-manager.loadbalancer.server.port=${NOMAD_PORT_http}"
+      ]
+
+      check {
+        type     = "script"
+        task     = "session-manager"
+        command  = "bash"
+        args     = ["/home/session-manager/healthcheck.sh"]
+        interval = "5s"
+        timeout  = "5s"
+      }
+    }
+
+    task "session-manager" {
+      driver = "docker"
+
+      # NOMAD_TOKEN: workload identity, granted the session-manager ACL policy (see the session_manager role)
+      identity {
+        env = true
+      }
+
+      template {
+        data        = <<EOT
+{% raw %}
+{{ with secret "secret/data/garage" }}
+AWS_ACCESS_KEY_ID="{{ .Data.data.access_key }}"
+AWS_SECRET_ACCESS_KEY="{{ .Data.data.secret_key }}"
+{{ end }}
+{% endraw %}
+EOT
+        destination = "secrets/s3.env"
+        env         = true
+      }
+
+      env {
+        DB_URL                = "sqlite:////data/database.db"
+        NOMAD_ADDR            = "http://${attr.unique.network.ip-address}:4646"
+        KEYCLOAK_INTERNAL_URL = "http://${attr.unique.network.ip-address}:8081"
+        KEYCLOAK_REALM        = "twincr"
+        KEYCLOAK_CLIENT_ID    = "session-manager-client"
+        GARAGE_HOST           = "${attr.unique.network.ip-address}"
+        GARAGE_PORT           = "3900"
+        BUCKET                = "context-library"
+      }
+
+      config {
+        image        = "{{ ansible_facts['default_ipv4']['address'] }}:5000/session-manager:latest"
+        # Pushed again under the same tag by infra:push
+        force_pull   = true
+        network_mode = "host"
+        ports        = ["http"]
+        volumes      = ["/opt/twincr/session-manager/data:/data"]
+      }
+
+      resources {
+        cpu        = 300
+        memory     = 512
+        memory_max = 1024
+      }
+    }
+  }
+}

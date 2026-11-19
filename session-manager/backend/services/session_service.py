@@ -13,8 +13,13 @@ import requests
 from fastapi import HTTPException
 from sqlmodel import select, Session
 
-from backend.config import CONFIGURATOR_CLIENT_ENDPOINT, UPDATE_SESSION_STATE_TIMEOUT
+from backend.config import CONFIGURATOR_CLIENT_ENDPOINT, UPDATE_SESSION_STATE_TIMEOUT, NOMAD_ADDR, NOMAD_TOKEN, \
+    SESSION_JOB_HCL, SESSION_JOB_VARIABLES, SESSION_INIT_TIMEOUT
 from backend.db.models import AccessKey, GameSession, GameSessionCreate, AccessKeyTyped, SessionState, Template
+from backend.services.nomad_service import NomadSessionClient, session_job_id
+
+# Sessions as Nomad jobs in the Nomad infrastructure, else the session services of compose
+nomad = NomadSessionClient(NOMAD_ADDR, NOMAD_TOKEN, SESSION_JOB_HCL, SESSION_JOB_VARIABLES) if NOMAD_ADDR else None
 
 
 class SessionService:
@@ -112,6 +117,13 @@ class SessionService:
         scenario_id = game_session.session_dsl_name
         config_path = game_session.session_config_toml_name
 
+        if nomad is not None:
+            self.launch_session_job(session_id, context_id, scenario_id, config_path)
+            self.session.add(game_session)
+            self.session.commit()
+            self.session.refresh(game_session)
+            return game_session
+
         response = requests.get(
             f"{CONFIGURATOR_CLIENT_ENDPOINT}/init/{context_id}",
             params={
@@ -140,6 +152,22 @@ class SessionService:
         self.session.refresh(game_session)
         return game_session
 
+    def launch_session_job(self, session_id: int, context_id: str, scenario_id: str | None, config_path: str):
+        """Submits the Nomad job of the session and waits for its initialization (done by the job itself)."""
+        job_id = session_job_id(session_id)
+        nomad.submit(job_id, {
+            "context_id": context_id,
+            "config_path": config_path,
+            # Empty when the template has no DSL, so the configurator generates its minimal script
+            "scenario_id": scenario_id or "",
+        })
+        try:
+            nomad.wait_initialized(job_id, SESSION_INIT_TIMEOUT)
+        except HTTPException:
+            # Stopped but not purged: its logs stay available in Nomad to understand the failure
+            nomad.stop(job_id)
+            raise
+
     def update_sessions_state(self, session_ids: list[int], session_state: SessionState):
         for session_id in session_ids:
             game_session = self.session.get(GameSession, session_id)
@@ -149,6 +177,11 @@ class SessionService:
 
     def stop_session(self, session_id: int):
         game_session = self.get_or_404(session_id)
+        if nomad is not None:
+            # Archive first (skipped if already done at the end of the simulation), the services are then removed
+            job_id = session_job_id(session_id)
+            nomad.archive(job_id)
+            nomad.stop(job_id)
         game_session.ended_at = datetime.now(UTC)
         game_session.state = SessionState.ENDED
         self.session.commit()
@@ -157,6 +190,8 @@ class SessionService:
 
     def delete_session(self, session_id: int):
         game_session = self.get_or_404(session_id)
+        if nomad is not None:
+            nomad.stop(session_job_id(session_id), purge=True)
         # The foreign keys point from the session at its keys, so nothing
         # cascades the other way; participations do, via the relationship.
         keys = [self.session.get(AccessKey, key_id) for key_id in (

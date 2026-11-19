@@ -1,0 +1,40 @@
+#
+# Copyright (c) 2026, RTE (https://www.rte-france.com)
+# See AUTHORS.md
+# SPDX-License-Identifier: MPL-2.0
+# This file is part of Twin-CR, a platform for real-time cyber-physical
+# co-simulation of power systems.
+#
+
+---
+# Session manager: submits each session as a Nomad job (docs/infra/twincr-session.nomad.hcl).
+
+- name: Create the session manager data directory (SQLite database, kept across deployments)
+  ansible.builtin.file:
+    path: /opt/twincr/session-manager/data
+    state: directory
+    mode: "0755"
+
+- name: Copy the Nomad ACL policy of the session manager
+  ansible.builtin.copy:
+    src: session-manager-policy.hcl
+    dest: /tmp/session-manager-policy.hcl
+    mode: "0644"
+
+# Bound to the job: its workload identity (NOMAD_TOKEN in the task) gets these permissions, no token to manage
+- name: Apply the Nomad ACL policy of the session-manager job
+  ansible.builtin.command: >
+    nomad acl policy apply -namespace default -job session-manager
+    -description "Session manager: submits, follows and stops the session jobs"
+    session-manager /tmp/session-manager-policy.hcl
+  changed_when: false
+
+- name: Template the session manager job file
+  ansible.builtin.template:
+    src: session-manager.nomad.hcl.j2
+    dest: /tmp/session-manager.nomad.hcl
+    mode: "0644"
+
+- name: Deploy the session manager via Nomad CLI
+  ansible.builtin.command: nomad job run /tmp/session-manager.nomad.hcl
+  changed_when: false
