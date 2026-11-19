@@ -13,7 +13,7 @@ Argus reads a config file to set up some variables needed at startup. A default 
 It contains URLs for keycloak, session_manager and lobby :
 ```
 {
-  "keycloak_url": "https://localhost:8443",
+  "keycloak_url": "https://localhost",
   "keycloak_realm": "twineu",
   "keycloak_client_id": "session-manager-client",
   "session_manager_url": "http://localhost:8090",

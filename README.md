@@ -264,7 +264,7 @@ pytest tests/nrt.py -vv -s 2>&1 | tee tests/nrt.log
 |                 | 3900     | S3 HTTP API     |
 |                 | 3903     | S3 WEB API      |
 | Session manager | 8090     | FastAPI server  |
-| Keycloak        | 8443     | HTTP API        |
+| Keycloak        | 443      | HTTP API        |
 
 ### Session
 

@@ -79,7 +79,7 @@ EOT
       env {
         DB_URL                = "sqlite:////data/database.db"
         NOMAD_ADDR            = "http://${attr.unique.network.ip-address}:4646"
-        KEYCLOAK_INTERNAL_URL = "http://${attr.unique.network.ip-address}:8081/auth"
+        KEYCLOAK_INTERNAL_URL = "http://${attr.unique.network.ip-address}:8081"
         KEYCLOAK_REALM        = "twincr"
         KEYCLOAK_CLIENT_ID    = "session-manager-client"
         GARAGE_HOST           = "${attr.unique.network.ip-address}"

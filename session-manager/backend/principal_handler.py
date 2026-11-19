@@ -41,7 +41,7 @@ class PrincipalHandler:
 
         try:
             # The issuer is not checked: it is the Keycloak URL as Argus reached it
-            # (e.g. https://localhost:8443), not KEYCLOAK_INTERNAL_URL.
+            # (e.g. https://localhost), not KEYCLOAK_INTERNAL_URL.
             # Keycloak access tokens carry aud="account", hence verify_aud=False;
             # azp is checked below instead.
             claims = jwt.decode(
