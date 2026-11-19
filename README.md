@@ -192,6 +192,11 @@ You can build Argus Windows executable by running :
 Note that this operation takes time. Resulting exe (`argus-debug.exe`, `argus-release.exe`) are placed in a `Windows` directory.
 Argus uses default URLs for some services, stored in a config.json file (by default, localhost is used). See argus/README.md.
 
+## Multi-session infrastructure (Nomad)
+
+To run several simulation sessions at once, Twin-CR can be deployed on a Nomad cluster, locally (`mise run infra`) or
+on remote machines: see [docs/infra/README.md](docs/infra/README.md).
+
 ## Multi machine setup
 
 It is possible to run the services on one machine and to join a session from another machine.
