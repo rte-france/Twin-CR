@@ -47,10 +47,10 @@
 
 - name: Install Nomad, Consul and Vault (Debian)
   ansible.builtin.apt:
-    name:
-      - nomad
-      - consul
-      - vault
+    name:  # Pinned versions (defaults/main.yml)
+      - "nomad={{ nomad_version }}-1"
+      - "consul={{ consul_version }}-1"
+      - "vault={{ vault_version }}-1"
     state: present
   when: ansible_facts['os_family'] == 'Debian'
   environment: "{{ proxy_env | default({}) }}"
@@ -68,10 +68,10 @@
 
 - name: Install Nomad, Consul and Vault (RedHat)
   ansible.builtin.dnf:
-    name:
-      - nomad
-      - consul
-      - vault
+    name:  # Pinned versions (defaults/main.yml)
+      - "nomad-{{ nomad_version }}"
+      - "consul-{{ consul_version }}"
+      - "vault-{{ vault_version }}"
       - jq
       - curl
     state: present
