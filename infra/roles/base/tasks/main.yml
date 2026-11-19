@@ -76,6 +76,15 @@
     - ansible_connection == "docker" or (ansible_virtualization_type | default('')) == "docker"
   changed_when: false
 
+# systemd-binfmt clears every binfmt_misc handler on start and stop, and in a privileged container these are those of
+# the whole Docker host: masked so that the containers do not remove the amd64 emulation of the host (see infra:linux)
+- name: Mask systemd-binfmt in containerized environments
+  ansible.builtin.systemd:
+    name: systemd-binfmt.service
+    masked: true
+  when:
+    - ansible_connection == "docker" or (ansible_virtualization_type | default('')) == "docker"
+
 - name: Ensure base domain records exist in /etc/hosts
   ansible.builtin.shell: |
     grep -q "keycloak.{{ base_domain | default('localhost') }}" /etc/hosts || echo "127.0.0.1 keycloak.{{ base_domain | default('localhost') }} nomad.{{ base_domain | default('localhost') }} consul.{{ base_domain | default('localhost') }} vault.{{ base_domain | default('localhost') }} registry.{{ base_domain | default('localhost') }}" >> /etc/hosts
