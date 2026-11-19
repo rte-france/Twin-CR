@@ -503,22 +503,35 @@ EOT
       }
     }
 
-    // task "automata" {
-    //   driver = "docker"
+    # Automata of the context (automata_commands of its config.toml, e.g. tcp_blocker.py of Nordic), started by the
+    # automata launcher once the session is initialized (it waits for the configurator, then reads the input files of
+    # the simulation). Poststart, not a sidecar: it ends when its automata end, or right away when there are none. As
+    # with compose, its failure does not end the session: its exit code is only logged (a failed task would stop them all).
+    task "automata" {
+      driver = "docker"
 
-    //   env {
-    //     NATS_URL = "nats://127.0.0.1:4222"
-    //     MODE     = "CLICKHOUSE"
-    //   }
+      lifecycle {
+        hook    = "poststart"
+        sidecar = false
+      }
 
-    //   config {
-    //     image   = "${var.registry}/automata:latest"
-    //   }
+      env {
+        NATS_URL = "nats://127.0.0.1:4222"
+        MODE     = "CLICKHOUSE"
+      }
 
-    //   resources {
-    //     cpu    = 200
-    //     memory = 256
-    //   }
-    // }
+      config {
+        image      = "${var.registry}/automata:latest"
+        force_pull = true
+        command    = "sh"
+        args       = ["-c", "python -u automata_launcher.py || echo \"Automata launcher exited with code $?\""]
+      }
+
+      resources {
+        cpu        = 200
+        memory     = 256
+        memory_max = 512
+      }
+    }
   }
 }
