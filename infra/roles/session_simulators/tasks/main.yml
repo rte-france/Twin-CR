@@ -1,0 +1,58 @@
+#
+# Copyright (c) 2026, RTE (https://www.rte-france.com)
+# See AUTHORS.md
+# SPDX-License-Identifier: MPL-2.0
+# This file is part of Twin-CR, a platform for real-time cyber-physical
+# co-simulation of power systems.
+#
+
+---
+# Simulators (Dynawo) mounted read-only by the twincr-core task of the session job (docs/infra/twincr-session.nomad.hcl)
+# at /home/orchestrator/simulators: extracted on every client from Twin-CR/simulators.zip, the archive the
+# session-manager image is built from (top-level simulators/ folder). simulators_archive overrides its path.
+
+- name: Check that the simulators archive exists
+  ansible.builtin.stat:
+    path: "{{ simulators_archive | default(playbook_dir + '/../simulators.zip') }}"
+  delegate_to: localhost
+  become: false
+  register: simulators_archive_stat
+
+- name: Fail if the simulators archive is missing
+  ansible.builtin.fail:
+    msg: >-
+      {{ simulators_archive | default(playbook_dir + '/../simulators.zip') }} not found: sessions need the simulators.
+      Put the simulators archive there (as for the session-manager image) or set simulators_archive.
+  when: not simulators_archive_stat.stat.exists
+
+- name: Create the Twin-CR data directory
+  ansible.builtin.file:
+    path: /opt/twincr
+    state: directory
+    mode: "0755"
+
+- name: Copy the simulators archive
+  ansible.builtin.copy:
+    src: "{{ simulators_archive | default(playbook_dir + '/../simulators.zip') }}"
+    dest: /opt/twincr/simulators.zip
+    mode: "0644"
+  register: simulators_zip
+
+- name: Remove the simulators of a previous archive
+  ansible.builtin.file:
+    path: /opt/twincr/simulators
+    state: absent
+  when: simulators_zip.changed
+
+- name: Extract the simulators
+  ansible.builtin.unarchive:
+    src: /opt/twincr/simulators.zip
+    dest: /opt/twincr
+    remote_src: true
+    creates: /opt/twincr/simulators
+
+- name: Check the archive layout (top-level simulators/ folder)
+  ansible.builtin.stat:
+    path: /opt/twincr/simulators
+  register: simulators_dir
+  failed_when: not simulators_dir.stat.exists
