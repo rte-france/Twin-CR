@@ -3,6 +3,8 @@
 
 set -euo pipefail
 
+cd "$(dirname "$0")/../../../infra"
+
 NODES_COUNT="1"
 PASSTHROUGH_ARGS=()
 while [ $# -gt 0 ]; do
