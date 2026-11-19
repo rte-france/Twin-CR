@@ -37,10 +37,11 @@ export const applySessionBackends = (session: GameSession): Promise<void> => {
 
     yield* Effect.all(
       [
-        apply("SCADA", session.scada_backend_url, (url) => Effect.zipRight(scada.setUrl(url), scada.connect)),
-        apply("GM", session.gm_backend_url, (url) => Effect.zipRight(gm.setUrl(url), gm.connect)),
-        apply("DSL", session.dsl_backend_url, (url) => Effect.zipRight(dsl.setUrl(url), dsl.connect)),
-        apply("lobby", session.lobby_backend_url, (url) => Effect.zipRight(lobby.setUrl(url), lobby.connect)),
+        // setUrl also connects the client to the new URL (set_*_url commands)
+        apply("SCADA", session.scada_backend_url, scada.setUrl),
+        apply("GM", session.gm_backend_url, gm.setUrl),
+        apply("DSL", session.dsl_backend_url, dsl.setUrl),
+        apply("lobby", session.lobby_backend_url, lobby.setUrl),
       ],
       { concurrency: "unbounded" },
     );
