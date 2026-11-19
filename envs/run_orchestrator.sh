@@ -35,10 +35,14 @@ else
     orchestrator_exec --from-nats &
 fi
 ORCHESTRATOR_PID=$!
-# wait returns early when a trapped signal arrives: wait again until the orchestrator has exited
-EXIT_CODE=0
-while kill -0 "$ORCHESTRATOR_PID" 2>/dev/null; do
+# wait gives the exit code of the orchestrator, even if it already exited. It returns early (>128) when a trapped
+# signal arrives: wait again while the orchestrator is still running.
+while true; do
     wait "$ORCHESTRATOR_PID" && EXIT_CODE=0 || EXIT_CODE=$?
+    if [ "$EXIT_CODE" -gt 128 ] && kill -0 "$ORCHESTRATOR_PID" 2>/dev/null; then
+        continue
+    fi
+    break
 done
 echo "Orchestrator exited with code $EXIT_CODE"
 rm -f /tmp/orchestrator_healthcheck  # No longer healthy: the end (or crash) of the simulation shows in the healthcheck
