@@ -201,6 +201,7 @@ class DCSensitivityFactors:
       branch_susceptance : sparse diagonal B_d
       reduced_incidence  : (L, N - n_ref) branch-bus incidence A without reference buses
       reduced_b_lu       : LU factorisation of the reduced bus susceptance matrix
+      fcr_model          : gens and FCR sharing as seen by opf.fcr, snapshot taken at construction
     """
 
     def __init__(self, net: pp.pandapowerNet, operational_limits: pd.DataFrame | None = None,
@@ -270,6 +271,7 @@ class DCSensitivityFactors:
         self.rating_mw = self._compute_ratings_mw()
         self.limit_levels_mw, self.limit_durations = self._compute_limit_levels(operational_limits)
         self.already_overloaded = abs(self.base_flows_mw) > self.rating_mw.values
+        self.fcr_model = self._build_fcr_model()
 
     def _compute_ratings_mw(self) -> pd.Series:
         """Thermal rating in MW: lines sqrt3*Vn*Imax*df*parallel, trafos sn_mva*df
@@ -625,10 +627,11 @@ class DCSensitivityFactors:
     # The FCR model has been complexified when capping generators to pmax and using weights from .par file
     # An simpler implementation would be to keep margin as weight, but only for generators with non 0 weight
     # It would however differ from the dynawo one
-    def _fcr_model(self):
-        """Gens and FCR participation, as seen by opf.fcr, for the current state of the net."""
+    def _build_fcr_model(self):
+        """Gens and FCR participation, as seen by opf.fcr, for the state of the net at construction
+        (like the base flows, which come from the DC power flow run there)."""
         net = self.net
-        gen = net.gen
+        gen = net.gen.copy()   # snapshot: the net can be modified afterwards
         # copies: to_numpy can be a view of the net, which is modified in place by callers (pp_net.gen.loc[..., "p_mw"] *= ...)
         dispatch_mw = net.res_gen["p_mw"].to_numpy(float, copy=True)
         setpoint_mw = gen["p_mw"].to_numpy(float, copy=True)
@@ -664,11 +667,11 @@ class DCSensitivityFactors:
             weighted_ptdf=weighted_ptdf,
             base_mismatch_mw=base_mismatch_mw)
 
-    @staticmethod
-    def _fcr_share_flow(model, is_surplus, amount, gens_stop_sharing):
+    def _fcr_share_flow(self, is_surplus, amount, gens_stop_sharing):
         """(L,): flow change of sharing `amount` >= 0 between the gens (up if `is_surplus`, else down), each
         capped by its headroom, the slack keeping what nobody can take. `gens_stop_sharing`: positions of
         the gens that no longer share (tripped). Exact, the sharing being the one of opf.fcr."""
+        model = self.fcr_model
         gen_ptdf, weights, headroom = model.gen_ptdf, model.weights[is_surplus], model.headroom[is_surplus]
         waterfilling = model.waterfilling[is_surplus]
         if len(gens_stop_sharing):
@@ -684,29 +687,29 @@ class DCSensitivityFactors:
             flow = flow + level * (model.weighted_ptdf[is_surplus] - gen_ptdf[:, not_free] @ weights[not_free])
         return flow
 
-    @staticmethod
-    def _fcr_flow_response(model, lost_mw, lost_flow_mw, gens_stop_sharing):
+    def _fcr_flow_response(self, lost_mw, lost_flow_mw, gens_stop_sharing):
         """
         (L,): flow change after losing `lost_mw` of injection (whose own effect on the flows, slack
         compensating, is `lost_flow_mw`) and FCR redispatch of the resulting slack mismatch, which is the
         base mismatch plus the lost power. FCR shares it as opf.fcr: up if the mismatch is >= 0, else down.
         """
+        model = self.fcr_model
         mismatch = model.base_mismatch_mw + lost_mw
         is_surplus = mismatch >= 0
         # from https://engineering.purdue.edu/~kekatos/psoc/lecture9.pdf: effect of the FCR on all other generators - effect of generator outage
-        shared = DCSensitivityFactors._fcr_share_flow(model, is_surplus, abs(mismatch), gens_stop_sharing)
+        shared = self._fcr_share_flow(is_surplus, abs(mismatch), gens_stop_sharing)
         # base mismatch term: the slack goes back to its setpoint (should be most of the time 0 because
         # a prebalance step is executed in ContingencyFinder constructor)
         return (1.0 if is_surplus else -1.0) * shared - model.base_mismatch_mw * model.slack_ptdf - lost_flow_mw
 
-    @staticmethod
-    def _fcr_pieces(model, is_surplus, amount_start, amount_end=np.inf):
+    def _fcr_pieces(self, is_surplus, amount_start, amount_end=np.inf):
         """
         Yields (amount_lo, amount_hi, constant, slope), (L,) each: for an amount of power mismatch in
         [amount_lo, amount_hi] (inside [amount_start, amount_end]), the flow change due to the FCR sharing
         it is constant + normalized_free_ptdf * amount. Pieces end where a gen reaches its limit, so they are
         generated lazily, in increasing amount, from the pieces already crossed at `amount_start`.
         """
+        model = self.fcr_model
         gen_ptdf, slack_ptdf = model.gen_ptdf, model.slack_ptdf
         weights, headroom = model.weights[is_surplus], model.headroom[is_surplus]
         waterfilling = model.waterfilling[is_surplus]
@@ -743,7 +746,7 @@ class DCSensitivityFactors:
     # Generators clusters add quite some complexity (due to p_max). Simpler implementation would be possible if we define the problem 
     # in a different way (% increase compared to margin rather than percentage increase capped at p_max)
     # In any case, it does not seem to matter as no generator scenario is identified. It might not be worth the code complexity
-    def _segment_regimes(self, model, saturated_lost_mw, group_mw, saturated_lost_flow_mw, group_lost_flow_mw, segment_start, segment_end):
+    def _segment_regimes(self, saturated_lost_mw, group_mw, saturated_lost_flow_mw, group_lost_flow_mw, segment_start, segment_end):
         """
         Yields (fixed_flow, proportional_flow, fraction_start, fraction_end), in increasing fraction: the flows (post FCR) are
         fixed_flow + proportional_flow * fraction on [fraction_start, fraction_end], for a loss of injection of
@@ -752,12 +755,13 @@ class DCSensitivityFactors:
         Pieces end where the FCR regime (sign of the slack mismatch) changes or a gen reaches its limit (see
         _fcr_pieces); they are generated lazily, there can be many. Nobody stops sharing the FCR.
         """
+        model = self.fcr_model
         base_mismatch_mw = model.base_mismatch_mw
         # slack mismatch = fixed_lost_mw + group_mw * fraction (> 0: gens go up, "surplus" regime)
         fixed_lost_mw = base_mismatch_mw + saturated_lost_mw
         if group_mw == 0:
             # nothing changes with fraction
-            flows = self.base_flows_mw + self._fcr_flow_response(model, saturated_lost_mw, saturated_lost_flow_mw, np.empty(0, int))
+            flows = self.base_flows_mw + self._fcr_flow_response(saturated_lost_mw, saturated_lost_flow_mw, np.empty(0, int))
             yield flows, np.zeros_like(flows), segment_start, segment_end
             return
 
@@ -770,7 +774,7 @@ class DCSensitivityFactors:
             to_amount = lambda fraction: sign * (fixed_lost_mw + group_mw * fraction)
             amounts = sorted([to_amount(regime_start), to_amount(regime_end)]) \
                 if np.isfinite(regime_end) else [to_amount(regime_start), np.inf]
-            pieces = self._fcr_pieces(model, is_surplus, max(amounts[0], 0.0), amounts[1])
+            pieces = self._fcr_pieces(is_surplus, max(amounts[0], 0.0), amounts[1])
             if sign * group_mw < 0:
                 pieces = reversed(list(pieces))          # amount decreases with fraction (finite range)
             for amount_lo, amount_hi, fixed_delta_flow, normalized_free_ptdf in pieces:
@@ -791,26 +795,26 @@ class DCSensitivityFactors:
             middle = start + (min(end, start + 1.0) - start) / 2
             yield from regime_pieces(fixed_lost_mw + group_mw * middle >= 0, start, end)
 
-    def _group_regimes(self, model, ptdfs, segments, fraction_start=0.0):
+    def _group_regimes(self, ptdfs, segments, fraction_start=0.0):
         """
         (flows at fraction 0, regimes) of a group of elements (ptdfs: (L, K) flow change per MW lost by each
         element, slack compensating) losing an injection of lost0 + lost1 * fraction MW each ((K,) arrays) on each
         of the `segments`: (segment_start, segment_end, lost0, lost1), in increasing fraction. Regimes are the
         (intercept, slope, fraction_start, fraction_end) of _segment_regimes, from `fraction_start` on.
         """
-        flows_at_zero = self.base_flows_mw + self._fcr_flow_response(model, 0.0, 0.0, np.empty(0, int))
+        flows_at_zero = self.base_flows_mw + self._fcr_flow_response(0.0, 0.0, np.empty(0, int))
 
         def regimes():
             for segment_start, segment_end, fixed_lost, group_mw in segments:
                 if segment_end < fraction_start:
                     continue
-                for regime in self._segment_regimes(model, fixed_lost.sum(), group_mw.sum(), ptdfs @ fixed_lost, ptdfs @ group_mw,
+                for regime in self._segment_regimes(fixed_lost.sum(), group_mw.sum(), ptdfs @ fixed_lost, ptdfs @ group_mw,
                                                     segment_start, segment_end):
                     if regime[3] >= fraction_start:
                         yield regime
         return flows_at_zero, regimes()
 
-    def _load_group_regimes(self, model, groups, direction, fraction_start=0.0):
+    def _load_group_regimes(self, groups, direction, fraction_start=0.0):
         """
         Yields (name, group load MW, flows at fraction 0, regimes) for each group: the flows (post FCR) as a function
         of fraction >= 0, the fraction of the group's load added (direction = +1) or removed (-1). Regimes are
@@ -818,7 +822,7 @@ class DCSensitivityFactors:
         _segment_regimes. A load change is a lost injection of -direction * fraction * P_group, located at the load
         buses.
         """
-        net = self.net
+        net, model = self.net, self.fcr_model
         loads = net.load
         load_bus_position = self.bus_position[net._pd2ppc_lookups["bus"][loads["bus"].to_numpy()]]
         load_mw = (loads["p_mw"].to_numpy(float) * loads["scaling"].to_numpy(float)
@@ -830,10 +834,10 @@ class DCSensitivityFactors:
             group_mw = load_mw[positions]
             segments = [(0.0, np.inf, np.zeros_like(group_mw), direction * group_mw)]
             flows_at_zero, regimes = self._group_regimes(
-                model, model.ptdf[:, load_bus_position[positions]], segments, fraction_start)
+                model.ptdf[:, load_bus_position[positions]], segments, fraction_start)
             yield name, group_mw.sum(), flows_at_zero, regimes
 
-    def _gen_group_regimes(self, model, groups, direction, fraction_start=0.0):
+    def _gen_group_regimes(self, groups, direction, fraction_start=0.0):
         """
         Same as _load_group_regimes for generators: the p_mw of the gens of each group is multiplied by
         1 + direction * fraction (an increase is capped at max_p_mw, as in contingency_finder.gen_contingency),
@@ -842,6 +846,7 @@ class DCSensitivityFactors:
         their headroom would then change with the fraction, only groups of gens that do not take part in the FCR
         (no governor_kgover, as for wind and solar) are supported.
         """
+        model = self.fcr_model
         gens = model.gen
         max_p = gens["max_p_mw"].to_numpy(float)
         for name, gen_index in groups.items():
@@ -869,7 +874,7 @@ class DCSensitivityFactors:
                         is_capped = middle * dispatch >= headroom
                         yield (start, end, np.where(is_capped, -headroom, 0.0), np.where(is_capped, 0.0, -dispatch))
                 segments = capped_segments()
-            flows_at_zero, regimes = self._group_regimes(model, model.gen_ptdf[:, positions], segments, fraction_start)
+            flows_at_zero, regimes = self._group_regimes(model.gen_ptdf[:, positions], segments, fraction_start)
             yield name, dispatch.sum(), flows_at_zero, regimes
 
     @staticmethod
@@ -953,7 +958,7 @@ class DCSensitivityFactors:
         a decrease, +-inf when no branch overloads before max_fraction), limiting_branch (None when
         none), n_base_overloads.
         """
-        return self._group_margins(self._load_group_regimes(self._fcr_model(), groups, direction), direction,
+        return self._group_margins(self._load_group_regimes(groups, direction), direction,
                                    max_fraction, threshold, ignore_base_overloads, "load_mw")
 
     def load_group_overloads(self, groups, fraction, threshold=1.0, ignore_base_overloads=True) -> dict:
@@ -963,7 +968,7 @@ class DCSensitivityFactors:
         acceptable duration (s, -1 = permanent) of the highest limit exceeded}}, only for the groups
         that overload something.
         """
-        regimes = self._load_group_regimes(self._fcr_model(), groups, 1 if fraction >= 0 else -1, abs(fraction))
+        regimes = self._load_group_regimes(groups, 1 if fraction >= 0 else -1, abs(fraction))
         return self._group_overloads(regimes, fraction, threshold, ignore_base_overloads)
 
     def gen_group_margins(self, groups, direction=-1, max_fraction=None, threshold=1.0,
@@ -974,7 +979,7 @@ class DCSensitivityFactors:
         max_p_mw) or decrease (-1, default: that is what wind / solar clusters do). The gens must not take part
         in the FCR (see _gen_group_regimes). Returns the same DataFrame, with gen_mw (dispatch of the group).
         """
-        return self._group_margins(self._gen_group_regimes(self._fcr_model(), groups, direction), direction,
+        return self._group_margins(self._gen_group_regimes(groups, direction), direction,
                                    max_fraction, threshold, ignore_base_overloads, "gen_mw")
 
     def gen_group_overloads(self, groups, fraction, threshold=1.0, ignore_base_overloads=True) -> dict:
@@ -982,7 +987,7 @@ class DCSensitivityFactors:
         Same as load_group_overloads for groups of generators: the p_mw of the gens of each group are
         multiplied by 1 + fraction (e.g. -0.5), as in contingency_finder.gen_contingency.
         """
-        regimes = self._gen_group_regimes(self._fcr_model(), groups, 1 if fraction >= 0 else -1, abs(fraction))
+        regimes = self._gen_group_regimes(groups, 1 if fraction >= 0 else -1, abs(fraction))
         return self._group_overloads(regimes, fraction, threshold, ignore_base_overloads)
 
     def iter_trip_flows(self, include_bridges=True, island_pairs=None, bridge_candidates=None):
@@ -997,7 +1002,7 @@ class DCSensitivityFactors:
         voltage_candidates; default: all bridges).
         See get_problematic_gen_and_bridges_trips for the model.
         """
-        model = self._fcr_model()
+        model = self.fcr_model
         base_flows_mw, gen, ptdf, gen_ptdf = self.base_flows_mw, model.gen, model.ptdf, model.gen_ptdf
         dispatch_mw, is_slack = model.dispatch_mw, model.is_slack
         gen_bus_position, can_share = model.gen_bus_position, model.can_share
@@ -1022,7 +1027,7 @@ class DCSensitivityFactors:
 
         for (is_bridge, name, key, lost_mw, lost_flow_mw, gens_stop_sharing,
              ignored_branches, outaged_pair) in events:
-            flows_mw = base_flows_mw + self._fcr_flow_response(model, lost_mw, lost_flow_mw, gens_stop_sharing)
+            flows_mw = base_flows_mw + self._fcr_flow_response(lost_mw, lost_flow_mw, gens_stop_sharing)
             if outaged_pair is not None:
                 # Outaged pair removes a topological path between two busses. An additional term is thus necessary to take it into account (based on compound LODF)
                 # remove the two branches: singular system (islanding), consistent right-hand side
