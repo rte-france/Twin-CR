@@ -17,6 +17,8 @@
       tags: docker
     - role: cni
       tags: cni
+    - role: session_simulators
+      tags: simulators
 
 - name: Deploy HashiCorp Cluster
   hosts: nomad_servers:nomad_workers
