@@ -180,9 +180,11 @@ class NomadSessionClient:
 
     def stop(self, job_id: str, purge: bool = False) -> None:
         """Stops the job (kept in Nomad with its logs until garbage collected), or removes it with purge."""
+        # Nomad answers a DELETE of an unknown job as a success
+        if self._request("GET", f"/v1/job/{job_id}").status_code == 404:
+            return
         response = self._request("DELETE", f"/v1/job/{job_id}", params={"purge": "true"} if purge else None)
         if response.status_code == 404:
-            logger.info(f"Session job {job_id} not found, nothing to stop")
             return
         self._check(response, f"stop the job {job_id}")
         logger.info(f"Session job {job_id} {'purged' if purge else 'stopped'}")
