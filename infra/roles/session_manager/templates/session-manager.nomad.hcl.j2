@@ -87,6 +87,8 @@ EOT
         BUCKET                = "context-library"
         # Traefik routes of the session jobs, given to Argus when joining a session
         SESSION_PUBLIC_URL    = "{{ public_url }}/sessions"
+        # Registry and Garage of this cluster for the session jobs (their defaults are those of the Docker backend)
+        SESSION_JOB_VARIABLES = "registry = \"{{ ansible_facts['default_ipv4']['address'] }}:5000\"\ngarage_endpoint = \"http://{{ ansible_facts['default_ipv4']['address'] }}:3900\""
         # Traefik on this node (host network), to wait at launch until the routes of the session are live
         SESSION_ROUTER_URL    = "https://127.0.0.1"
       }
