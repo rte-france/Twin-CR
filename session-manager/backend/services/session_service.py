@@ -17,7 +17,7 @@ from urllib.parse import urlsplit
 import requests
 from urllib3.exceptions import InsecureRequestWarning
 from fastapi import HTTPException
-from sqlmodel import select, Session
+from sqlmodel import func, select, Session
 
 from backend.config import CONFIGURATOR_CLIENT_ENDPOINT, UPDATE_SESSION_STATE_TIMEOUT, NOMAD_ADDR, NOMAD_TOKEN, \
     SESSION_JOB_HCL, SESSION_JOB_VARIABLES, SESSION_INIT_TIMEOUT, SESSION_PUBLIC_URL, SESSION_ROUTER_URL
@@ -118,6 +118,19 @@ class SessionService:
         return game_session
 
     def create_session(self, user_name:str, game_session_create: GameSessionCreate):
+        name = game_session_create.name.strip()
+        duplicate = self.session.exec(
+            select(GameSession).where(
+                func.lower(func.trim(GameSession.name)) == name.lower(),
+                GameSession.state != SessionState.ENDED,
+            )
+        ).first()
+        if duplicate is not None:
+            raise HTTPException(
+                status_code=409,
+                detail=f"A session named \"{duplicate.name}\" already exists (#{duplicate.id}, {duplicate.state.value}): "
+                       f"choose another name, or end that session first",
+            )
         gm_key_id = self.generate_access_key("GM")
         op_key_id = self.generate_access_key("OP")
         gk_key_id = self.generate_access_key("GK")
