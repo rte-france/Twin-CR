@@ -32,7 +32,7 @@ variable "context_id" {
 variable "config_path" {
   type        = string
   default     = "config.toml"
-  description = "Path to the configuration file inside context"
+  description = "Path to the configuration file inside context (URL-encoded: put in the /init URL)"
 }
 
 variable "resources" {
@@ -48,7 +48,7 @@ EOT
 variable "scenario_id" {
   type        = string
   default     = ""
-  description = "DSL scenario of the context (empty: the configurator generates a minimal script)"
+  description = "DSL scenario of the context, URL-encoded (empty: the configurator generates a minimal script)"
 }
 
 variable "public_host" {

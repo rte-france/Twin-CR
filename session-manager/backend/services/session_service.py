@@ -12,7 +12,7 @@ import tomllib
 import time
 import warnings
 from datetime import datetime, timedelta, UTC
-from urllib.parse import urlsplit
+from urllib.parse import quote, urlsplit
 
 import requests
 from urllib3.exceptions import InsecureRequestWarning
@@ -259,10 +259,10 @@ class SessionService:
         """Submits the Nomad job of the session (initialized by the job itself)."""
         job_id = session_job_id(session_id)
         variables = {
-            "context_id": context_id,
-            "config_path": config_path,
+            "context_id": quote(context_id, safe=""),
+            "config_path": quote(config_path, safe=""),
             # Empty when the template has no DSL, so the configurator generates its minimal script
-            "scenario_id": scenario_id or "",
+            "scenario_id": quote(scenario_id or "", safe=""),
         }
         if SESSION_PUBLIC_URL:
             # Host of the Traefik routes of the session, matching the URLs given to Argus
