@@ -29,8 +29,30 @@ co-simulation of power systems.
 const int64_t TIMEOUT = 60 * 60 * 1000 * 24;  // 24 hour
 
 Launcher::Launcher() {
-    if (natsConnection_ConnectTo(&nats_connection_, Credentials::get().getNatsURL()) != NATS_OK)
-        throw std::runtime_error("Failed to connect to NATS");
+    // The NATS server may not accept connections yet when the orchestrator starts (e.g. started alongside it):
+    // the first connection is retried with the reconnect settings, for about 60 s, then the orchestrator stops.
+    // These settings also apply to reconnections once connected (nats.c defaults: 60 attempts, 2 s apart).
+    constexpr int NATS_CONNECT_ATTEMPTS = 60;
+    constexpr int64_t NATS_CONNECT_WAIT_MS = 1000;
+    natsOptions* opts = nullptr;
+    natsStatus s = natsOptions_Create(&opts);
+    if (s == NATS_OK)
+        s = natsOptions_SetURL(opts, Credentials::get().getNatsURL());
+    if (s == NATS_OK)
+        s = natsOptions_SetMaxReconnect(opts, NATS_CONNECT_ATTEMPTS);
+    if (s == NATS_OK)
+        s = natsOptions_SetReconnectWait(opts, NATS_CONNECT_WAIT_MS);
+    if (s == NATS_OK)
+        s = natsOptions_SetRetryOnFailedConnect(opts, true, nullptr, nullptr);
+    if (s == NATS_OK) {
+        spdlog::info("Connecting to NATS at {} (retried for up to {} s)", Credentials::get().getNatsURL(),
+                     NATS_CONNECT_ATTEMPTS * NATS_CONNECT_WAIT_MS / 1000);
+        s = natsConnection_Connect(&nats_connection_, opts);
+    }
+    natsOptions_Destroy(opts);
+    if (s != NATS_OK)
+        throw std::runtime_error(std::string("Failed to connect to NATS at ") + Credentials::get().getNatsURL() +
+                                 ": " + natsStatus_GetText(s) + " (is the NATS server started?)");
 
     if (natsConnection_SubscribeSync(&nats_subscription_, nats_connection_, "Start") != NATS_OK)
         throw std::runtime_error("Failed to subscribe to 'Start'");
