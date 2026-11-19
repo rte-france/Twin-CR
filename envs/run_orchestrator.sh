@@ -16,8 +16,53 @@ cd /home/orchestrator/
 # Extracts the simulators if there is no simulators folder yet; before unsetting the proxies since it may download them
 bash "$(dirname "$0")/fetch_simulators.sh"
 unset http_proxy https_proxy ftp_proxy no_proxy HTTP_PROXY HTTPS_PROXY FTP_PROXY NO_PROXY
+
+# The orchestrator runs in the background so that this script can act once it has exited: the stop signals of the
+# container (compose down, Nomad job stop) are forwarded to it, and such a stop ends the script right away.
+STOPPING=false
+ORCHESTRATOR_PID=""
+on_stop() {
+    STOPPING=true
+    if [ -n "$ORCHESTRATOR_PID" ]; then
+        kill -TERM "$ORCHESTRATOR_PID" 2>/dev/null || true
+    fi
+}
+trap on_stop TERM INT
+
 if [ "$MODE" = "CLICKHOUSE" ]; then
-    exec orchestrator_exec --from-clickhouse
+    orchestrator_exec --from-clickhouse &
 else
-    exec orchestrator_exec --from-nats
+    orchestrator_exec --from-nats &
 fi
+ORCHESTRATOR_PID=$!
+# wait returns early when a trapped signal arrives: wait again until the orchestrator has exited
+EXIT_CODE=0
+while kill -0 "$ORCHESTRATOR_PID" 2>/dev/null; do
+    wait "$ORCHESTRATOR_PID" && EXIT_CODE=0 || EXIT_CODE=$?
+done
+echo "Orchestrator exited with code $EXIT_CODE"
+rm -f /tmp/orchestrator_healthcheck  # No longer healthy: the end (or crash) of the simulation shows in the healthcheck
+# After a crash, kill Dynawo if it is still alive
+pkill -TERM -x dynawo && echo "Stopped the remaining Dynawo process" || true
+if [ "$STOPPING" = true ]; then
+    exit "$EXIT_CODE"
+fi
+
+# Archive the simulation in any case (end or crash): the configurator skips it if it was already archived
+if [ "$MODE" = "CLICKHOUSE" ]; then
+    echo "Requesting the archive of the simulation"
+    curl -sS --noproxy '*' --max-time 3600 \
+        "http://${CONFIGURATOR_HOST:-localhost}:${CONFIGURATOR_PORT:-8080}/archive" \
+        || echo "Archive request failed"
+    echo
+fi
+
+# For Nomad session: the container stays up after the simulation (the session, its services and logs remain available
+# until it is stopped explicitly), otherwise the exit would fail the session and stop all its tasks
+if [ "${KEEP_ALIVE_AFTER_EXIT:-false}" = true ] && [ "$STOPPING" = false ]; then
+    echo "Simulation over, waiting for the session to be stopped"
+    tail -f /dev/null &
+    ORCHESTRATOR_PID=$!  # A stop signal ends the wait
+    wait "$ORCHESTRATOR_PID" || true
+fi
+exit "$EXIT_CODE"
