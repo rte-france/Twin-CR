@@ -51,12 +51,14 @@ vault {
   address               = "http://{{ hostvars[groups['nomad_servers'][0]]['ansible_facts']['default_ipv4']['address'] }}:8200"
   jwt_auth_backend_path = "jwt-nomad"
 
+  # The workload identity is only used by Nomad to render the Vault templates of the jobs, not exposed to the tasks
+  # (env): exposing it requires change_mode = "restart", which restarts the tasks each time it is renewed (ttl), e.g.
+  # the orchestrator in the middle of a simulation.
   default_identity {
-    aud         = ["vault.io"]
-    ttl         = "1h"
-    file        = true
-    env         = true
-    change_mode = "restart"
+    aud  = ["vault.io"]
+    ttl  = "1h"
+    file = true
+    env  = false
   }
 }
 
