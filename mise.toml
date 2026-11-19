@@ -32,7 +32,7 @@ run = "./setup.sh"
 # - TWINCR_REGISTRY_PORT: host port of the infra registry. Default: 5000, 5001 on macOS (AirPlay uses 5000).
 # - TWINCR_REGISTRY: registry address used by infra:push. Default: 127.0.0.1:<TWINCR_REGISTRY_PORT>.
 # - TWINCR_COMPOSE_DIR: directory of the compose project whose images infra:push pushes. Default: the
-#   superproject including Twin-CR as a submodule if it has a docker-compose.yaml (e.g. Twin-CR-RTE), else Twin-CR.
+#   superproject including Twin-CR as a submodule if it has a docker-compose.yaml, else Twin-CR.
 
 [tasks.infra]
 description = "Deploy local infrastructure"

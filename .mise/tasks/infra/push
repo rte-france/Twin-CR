@@ -52,7 +52,7 @@ done
 echo "==> Registry is ready! Pushing Twin-CR images to ${REGISTRY_HOST}..."
 
 # Local images are those built by the compose project that includes Twin-CR: the superproject if Twin-CR is a
-# submodule of one with a docker-compose.yaml (e.g. Twin-CR-RTE), else Twin-CR. TWINCR_COMPOSE_DIR overrides it.
+# submodule of one with a docker-compose.yaml, else Twin-CR. TWINCR_COMPOSE_DIR overrides it.
 # Their names come from the compose config: "image:" if set (argus-backends, with the variant of the .env),
 # else "<project>-<service>" where the project name defaults to the directory name.
 TWINCR_ROOT="$(cd "$(dirname "$0")/../../.." && pwd)"

@@ -11,6 +11,12 @@ advertise {
 server {
   enabled          = {{ 'true' if inventory_hostname in groups['nomad_servers'] else 'false' }}
   bootstrap_expect = 1
+
+  # Tasks reserve their typical memory (memory) and may use up to memory_max, so that a session fits on small nodes.
+  # Only applied when the cluster is bootstrapped: the hashicorp role also sets it on existing ones.
+  default_scheduler_config {
+    memory_oversubscription_enabled = true
+  }
 }
 
 client {
