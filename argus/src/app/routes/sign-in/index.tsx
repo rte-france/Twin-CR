@@ -6,7 +6,7 @@ This file is part of Twin-CR, a platform for real-time cyber-physical
 co-simulation of power systems.
 */
 
-import { createEffect, createSignal, Show } from "solid-js";
+import { createEffect, createSignal, onMount, Show } from "solid-js";
 import { useNavigate } from "@solidjs/router";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import { FiX, FiServer, FiLogIn, FiAlertCircle } from "solid-icons/fi";
@@ -15,16 +15,21 @@ import {
   accessToken,
   authError,
   loginWithKeycloak,
+  loadKeycloakConfig,
   getKeycloakConfig,
   setCustomKeycloakUrl,
 } from "@/features/auth";
 
 export const SignIn = () => {
   const appWindow = getCurrentWindow();
-  const config = getKeycloakConfig();
   const navigate = useNavigate();
 
-  const [authUrl, setAuthUrl] = createSignal<string>(config.keycloakUrl);
+  const [authUrl, setAuthUrl] = createSignal<string>(getKeycloakConfig().keycloakUrl);
+
+  onMount(async () => {
+    const config = await loadKeycloakConfig();
+    setAuthUrl(config.keycloakUrl);
+  });
   // Token held when the browser login was started; undefined when not waiting.
   // Only leave this page once a new token arrives, so a wrong URL leaves the
   // user here to correct it instead of in a lobby with no way back.
@@ -137,7 +142,7 @@ export const SignIn = () => {
                     value={authUrl()}
                     onInput={(e) => setAuthUrl(e.currentTarget.value)}
                     class="w-full bg-[var(--sidebar-bg)] border border-[var(--border-light)] rounded-xl py-4 pl-12 pr-4 text-sm focus:outline-none focus:border-[var(--links)] transition-all placeholder-opacity-30"
-                    placeholder={config.keycloakUrl}
+                    placeholder={getKeycloakConfig().keycloakUrl}
                   />
                 </div>
               </div>

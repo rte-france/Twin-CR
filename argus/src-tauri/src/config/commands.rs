@@ -1,4 +1,12 @@
-use tauri::{AppHandle, Manager};
+/*
+Copyright (c) 2025-2026, RTE (https://www.rte-france.com)
+See AUTHORS.md
+SPDX-License-Identifier: MPL-2.0
+This file is part of Twin-CR, a platform for real-time cyber-physical
+co-simulation of power systems.
+*/
+
+use tauri::{AppHandle, Emitter, Manager};
 
 use super::error::Result;
 use super::manager::ConfigManager;
@@ -39,6 +47,8 @@ pub fn patch_settings(app_handle: AppHandle, patch: serde_json::Value) -> Result
 
     let updated: Settings = serde_json::from_value(current_json)?;
     settings_manager.save(&updated)?;
+
+    let _ = app_handle.emit("settings-changed", &updated);
 
     Ok(updated)
 }

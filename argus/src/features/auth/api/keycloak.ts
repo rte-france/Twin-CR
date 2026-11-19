@@ -36,6 +36,8 @@ let cachedSettings: Record<string, any> = {};
 // Keep cachedSettings up-to-date from the Settings service
 listen<Record<string, any>>("settings-changed", (event) => {
   cachedSettings = event.payload;
+  // Clear any temporary session override when settings change
+  sessionStorage.removeItem("oauth_keycloak_url");
 });
 
 export const loadKeycloakConfig = async (): Promise<KeycloakConfig> => {
