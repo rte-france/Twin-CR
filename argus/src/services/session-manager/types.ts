@@ -87,6 +87,8 @@ export type GameSession = {
   gm_backend_url: string | null;
   dsl_backend_url: string | null;
   lobby_backend_url?: string | null;  // Configurator of the session
+  // Progress or failure reason of the state (Nomad infrastructure: e.g. waiting for cluster resources, launch failed)
+  status_detail?: string | null;
   template_name: string | null;
 };
 

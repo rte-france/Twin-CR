@@ -22,7 +22,7 @@ from backend.config import CONFIGURATOR_CLIENT_ENDPOINT, UPDATE_SESSION_STATE_TI
     SESSION_JOB_HCL, SESSION_JOB_VARIABLES, SESSION_INIT_TIMEOUT, SESSION_PUBLIC_URL, SESSION_ROUTER_URL
 from backend.db.models import AccessKey, GameSession, GameSessionCreate, AccessKeyTyped, SessionState, Template, \
     GameSessionPrivate
-from backend.services.nomad_service import NomadSessionClient, session_job_id
+from backend.services.nomad_service import NomadSessionClient, session_job_id, WAITING, INITIALIZED, FAILED, GONE
 
 # Sessions as Nomad jobs in the Nomad infrastructure, else the session services of compose
 nomad = NomadSessionClient(NOMAD_ADDR, NOMAD_TOKEN, SESSION_JOB_HCL, SESSION_JOB_VARIABLES) if NOMAD_ADDR else None
@@ -44,35 +44,31 @@ SESSION_SERVICE_READY_PATHS = {
     "dsl_backend_url": "/status",
     "lobby_backend_url": "/status",
 }
-SESSION_ROUTES_TIMEOUT = 60
 
 logger = logging.getLogger("uvicorn.error")
 
 
-def wait_session_routes(session_id: int) -> None:
-    """Waits until the public URLs of the services of a session answer through Traefik (it routes a service once its
-    health check passes, then picks it up from Consul): the URLs given to Argus then work when it joins. Best effort:
-    on timeout, a warning only (Argus connects to its backends once they answer)."""
+def session_routes_live(session_id: int) -> bool:
+    """Whether the public URLs of the services of a session answer through Traefik (it routes a service once its health
+    check passes, then picks it up from Consul): the URLs given to Argus then work when it joins."""
     public = urlsplit(SESSION_PUBLIC_URL)
     base_path = f"{public.path.rstrip('/')}/{session_job_id(session_id)}"
-    deadline = time.monotonic() + SESSION_ROUTES_TIMEOUT
     for field, service_path in SESSION_SERVICE_PATHS.items():
         url = f"{SESSION_ROUTER_URL.rstrip('/')}{base_path}/{service_path}{SESSION_SERVICE_READY_PATHS[field]}"
-        while True:
-            try:
-                # Reached by address: the Host header selects the route, the certificate is that of the public name
-                with warnings.catch_warnings():
-                    warnings.simplefilter("ignore", InsecureRequestWarning)
-                    if requests.get(url, headers={"Host": public.netloc}, verify=False, timeout=5).ok:
-                        break
-            except requests.RequestException:
-                pass
-            if time.monotonic() > deadline:
-                logger.warning(f"Route of {service_path} of session {session_id} not live after "
-                               f"{SESSION_ROUTES_TIMEOUT} s ({url}, Host: {public.netloc})")
-                return
-            time.sleep(1)
-    logger.info(f"Routes of session {session_id} live")
+        try:
+            # Reached by address: the Host header selects the route, the certificate is that of the public name
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore", InsecureRequestWarning)
+                if not requests.get(url, headers={"Host": public.netloc}, verify=False, timeout=5).ok:
+                    return False
+        except requests.RequestException:
+            return False
+    return True
+
+
+# Placement time of the jobs of the sessions in warmup: their start timeout (SESSION_INIT_TIMEOUT) counts from there, a
+# session waiting for cluster resources waits as long as needed
+_placed_since: dict[str, float] = {}
 
 
 def session_private_view(game_session: GameSession) -> GameSessionPrivate:
@@ -180,7 +176,11 @@ class SessionService:
         config_path = game_session.session_config_toml_name
 
         if nomad is not None:
+            # Not waited: the session stays in warmup, followed by the session monitor (monitor_nomad_sessions), until
+            # ready (ongoing) or failed (back to ready, with the reason in status_detail)
             self.launch_session_job(session_id, context_id, scenario_id, config_path)
+            game_session.state = SessionState.WARMUP
+            game_session.status_detail = "Submitting the session job"
             self.session.add(game_session)
             self.session.commit()
             self.session.refresh(game_session)
@@ -215,7 +215,7 @@ class SessionService:
         return game_session
 
     def launch_session_job(self, session_id: int, context_id: str, scenario_id: str | None, config_path: str):
-        """Submits the Nomad job of the session and waits for its initialization (done by the job itself)."""
+        """Submits the Nomad job of the session (initialized by the job itself)."""
         job_id = session_job_id(session_id)
         variables = {
             "context_id": context_id,
@@ -227,14 +227,56 @@ class SessionService:
             # Host of the Traefik routes of the session, matching the URLs given to Argus
             variables["public_host"] = urlsplit(SESSION_PUBLIC_URL).hostname or ""
         nomad.submit(job_id, variables)
-        try:
-            nomad.wait_initialized(job_id, SESSION_INIT_TIMEOUT)
-        except HTTPException:
+
+    def monitor_nomad_sessions(self):
+        """Follows the jobs of the sessions in warmup and ongoing (called periodically in the Nomad infrastructure):
+        warmup → ongoing once ready, or back to ready if the launch fails; ongoing → ended if the job failed or
+        disappeared (e.g. lost with its node). The progress is shown in status_detail."""
+        sessions = self.session.exec(
+            select(GameSession).where(GameSession.state.in_([SessionState.WARMUP, SessionState.ONGOING]))
+        ).all()
+        for game_session in sessions:
+            job_id = session_job_id(game_session.id)
+            try:
+                progress = nomad.progress(job_id)
+                if game_session.state == SessionState.WARMUP:
+                    self._follow_launch(game_session, job_id, progress)
+                elif progress.phase in (FAILED, GONE):
+                    logger.warning(f"Session {game_session.id} ended unexpectedly: {progress.detail}")
+                    game_session.state = SessionState.ENDED
+                    game_session.ended_at = datetime.now(UTC)
+                    game_session.status_detail = f"Ended unexpectedly: {progress.detail}"
+            except HTTPException as exc:
+                logger.warning(f"Could not follow session {game_session.id}: {exc.detail}")
+        self.session.commit()
+
+    def _follow_launch(self, game_session: GameSession, job_id: str, progress):
+        if progress.phase in (FAILED, GONE):
+            self._fail_launch(game_session, job_id, progress.detail, stop=progress.phase == FAILED)
+            return
+        if progress.phase != WAITING:
+            _placed_since.setdefault(job_id, time.monotonic())
+        if job_id in _placed_since and time.monotonic() - _placed_since[job_id] > SESSION_INIT_TIMEOUT:
+            self._fail_launch(game_session, job_id, f"Not ready after {SESSION_INIT_TIMEOUT:.0f} s", stop=True)
+            return
+        if (progress.phase == INITIALIZED and nomad.backends_ready(job_id)
+                and (not (SESSION_PUBLIC_URL and SESSION_ROUTER_URL) or session_routes_live(game_session.id))):
+            logger.info(f"Session {game_session.id} ready")
+            _placed_since.pop(job_id, None)
+            game_session.state = SessionState.ONGOING
+            game_session.status_detail = None
+            return
+        game_session.status_detail = progress.detail
+
+    def _fail_launch(self, game_session: GameSession, job_id: str, reason: str, stop: bool):
+        logger.warning(f"Launch of session {game_session.id} failed: {reason}")
+        if stop:
             # Stopped but not purged: its logs stay available in Nomad to understand the failure
             nomad.stop(job_id)
-            raise
-        if SESSION_PUBLIC_URL and SESSION_ROUTER_URL:
-            wait_session_routes(session_id)
+        _placed_since.pop(job_id, None)
+        game_session.state = SessionState.READY
+        game_session.started_at = None
+        game_session.status_detail = f"Launch failed: {reason}"
 
     def update_sessions_state(self, session_ids: list[int], session_state: SessionState):
         for session_id in session_ids:
@@ -250,6 +292,8 @@ class SessionService:
             job_id = session_job_id(session_id)
             nomad.archive(job_id)
             nomad.stop(job_id)
+            _placed_since.pop(job_id, None)
+        game_session.status_detail = None
         game_session.ended_at = datetime.now(UTC)
         game_session.state = SessionState.ENDED
         self.session.commit()

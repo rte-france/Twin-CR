@@ -168,6 +168,12 @@ export function SessionsView(props: SessionsViewProps) {
                   <Icon class="mr-1" icon="lucide:file-text" />
                   template : {session.template_name}
                 </span>
+                <Show when={session.status_detail}>
+                  <span class="text-xs text-amber-700 truncate" title={session.status_detail ?? ""}>
+                    <Icon class="mr-1" icon="lucide:info" />
+                    {session.status_detail}
+                  </span>
+                </Show>
               </div>
 
               <div class="flex items-center gap-2 w-24 shrink-0">
@@ -175,7 +181,9 @@ export function SessionsView(props: SessionsViewProps) {
                   class={`w-2 h-2 rounded-full ${
                     session.state === SessionState.Ended
                       ? "bg-red-500"
-                      : "bg-green-500"
+                      : session.state === SessionState.Warmup
+                        ? "bg-amber-500 animate-pulse"
+                        : "bg-green-500"
                   }`}
                 />
                 <span class="text-xs text-slate-600 font-medium">
@@ -224,7 +232,7 @@ export function SessionsView(props: SessionsViewProps) {
               {/* Boutons */}
               <div class="flex flex-col gap-1.5 shrink-0 w-24">
                 <button
-                  disabled={session.state === SessionState.Ended}
+                  disabled={session.state === SessionState.Ended || session.state === SessionState.Warmup}
                   onClick={() => openAccessModal(Mode.GameMaster, session)}
                   class="w-full flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-medium border border-slate-300 bg-white text-slate-700 hover:bg-slate-800 hover:text-white hover:border-slate-800 transition-colors disabled:opacity-40 disabled"
                 >
@@ -233,7 +241,7 @@ export function SessionsView(props: SessionsViewProps) {
                 </button>
 
                 <button
-                  disabled={session.state === SessionState.Ended}
+                  disabled={session.state === SessionState.Ended || session.state === SessionState.Warmup}
                   onClick={() => openAccessModal(Mode.Scada, session)}
                   class="w-full flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-medium border border-slate-300 bg-white text-slate-700 hover:bg-slate-800 hover:text-white hover:border-slate-800 transition-colors disabled:opacity-40 disabled"
                 >

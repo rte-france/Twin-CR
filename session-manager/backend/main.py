@@ -74,17 +74,16 @@ async def lifespan(app: FastAPI):
     create_db_and_tables()
     app.state.storage_service = StorageService()
     # With compose, the state of the sessions follows the single configurator. In the Nomad infrastructure, each
-    # session has its own configurator, and its state is set when it is launched and stopped.
-    task = asyncio.create_task(update_session_state_job()) if nomad is None else None
+    # session has its own job, followed by the session monitor.
+    task = asyncio.create_task(update_session_state_job() if nomad is None else nomad_session_monitor())
     try:
         yield
     finally:
-        if task is not None:
-            task.cancel()
-            try:
-                await task
-            except asyncio.CancelledError:
-                pass
+        task.cancel()
+        try:
+            await task
+        except asyncio.CancelledError:
+            pass
 
 app = FastAPI(lifespan=lifespan)
 
@@ -104,15 +103,36 @@ async def unhandled_errors_as_json(request: Request, call_next):
 
 # TODO : For now, the workflow is mono-session, because we launch only one session locally.
 #       Change this method when multi session will be available.
+NOMAD_SESSION_MONITOR_PERIOD = 3
+
+
+def monitor_nomad_sessions_once() -> None:
+    with Session(engine) as session:
+        SessionService(session).monitor_nomad_sessions()
+
+
+async def nomad_session_monitor() -> None:
+    """Follows the session jobs (launch progress, ready, failure, job lost) in the Nomad infrastructure."""
+    while True:
+        try:
+            await asyncio.to_thread(monitor_nomad_sessions_once)
+        except Exception as e:
+            logger.error("Could not follow the session jobs: %s", e)
+        await asyncio.sleep(NOMAD_SESSION_MONITOR_PERIOD)
+
+
 async def update_session_state_job() -> None:
     while True:
         try:
             configurator_status = await asyncio.to_thread(get_configurator_status)
-            session_state = None
             if configurator_status == "NOT READY":
                 session_state = SessionState.READY # session is ready to be initialized.
-            elif configurator_status == "READY":
-                session_state = SessionState.ONGOING  # session has been initialized. Configurator is ready to start simulation.
+            elif configurator_status in ("READY", "STARTED"):
+                # Session initialized (READY: ready to start the simulation; STARTED: simulation running)
+                session_state = SessionState.ONGOING
+            else:
+                # Transient status (e.g. STOPPED while archiving): the states are kept
+                continue
 
             with Session(engine) as session:
                 session_ids = session.exec(select(GameSession.id).where(GameSession.state != SessionState.ENDED)).all()

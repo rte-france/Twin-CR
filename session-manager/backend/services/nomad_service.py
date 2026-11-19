@@ -10,12 +10,13 @@ Sessions as Nomad jobs, when the session manager runs in the Nomad infrastructur
 Each session is a job of the session job (docs/infra/twincr-session.nomad.hcl, shipped in the image), submitted through
 the Nomad HTTP API: the HCL is parsed by Nomad with the variables of the session (/v1/jobs/parse), then registered
 (/v1/jobs). The job initializes the session itself (its session-init task calls /init of its configurator), and stays
-up after the simulation (end or crash) until it is stopped here (archive, then stop).
+up after the simulation (end or crash) until it is stopped here (archive, then stop). The launch does not wait: the
+session monitor (session_service) follows the jobs of the sessions with progress().
 """
 
 import json
 import logging
-import time
+from dataclasses import dataclass
 from pathlib import Path
 
 import requests
@@ -30,6 +31,20 @@ CONFIGURATOR_PORT_LABEL = "configurator"
 # Port labels of the Argus backends in the session job: they load the grid after the initialization before answering
 # their /health, and Traefik only routes to them once healthy, so a session is ready for Argus once they answer
 ARGUS_BACKEND_PORT_LABELS = ("scada_http", "gm_http")
+
+
+# Progress of a session job (NomadSessionClient.progress)
+WAITING = "waiting"  # Not placed yet (e.g. not enough resources in the cluster)
+STARTING = "starting"  # Placed, the session is not initialized yet
+INITIALIZED = "initialized"  # Initialized (session-init done), the Argus backends may still be starting
+FAILED = "failed"
+GONE = "gone"  # Stopped, or not found
+
+
+@dataclass
+class SessionProgress:
+    phase: str
+    detail: str
 
 
 def session_job_id(session_id: int) -> str:
@@ -84,50 +99,59 @@ class NomadSessionClient:
             return None
         return max(allocations, key=lambda allocation: allocation["CreateIndex"])
 
-    def wait_initialized(self, job_id: str, timeout: float) -> None:
-        """Waits for the session to be initialized (session-init task succeeded) and its Argus backends to answer,
-        raising if the session fails or times out."""
-        deadline = time.monotonic() + timeout
-        self._wait_init_task(job_id, deadline, timeout)
+    def progress(self, job_id: str) -> "SessionProgress":
+        """Where the job of a session stands, without waiting (followed by the session monitor of session_service)."""
+        response = self._request("GET", f"/v1/job/{job_id}")
+        if response.status_code == 404:
+            return SessionProgress(GONE, "Session job not found")
+        job = self._check(response, f"read the job {job_id}").json()
+        if job.get("Stop"):
+            return SessionProgress(GONE, "Session job stopped")
+
+        allocation = self._latest_allocation(job_id)
+        if allocation is None:
+            if job.get("Status") == "dead":
+                return SessionProgress(FAILED, "Session job ended before starting")
+            return SessionProgress(WAITING, self._placement_detail(job_id))
+
+        task_states = allocation.get("TaskStates") or {}
+        failed = [name for name, state in task_states.items() if state["Failed"]]
+        if failed or allocation["ClientStatus"] in ("failed", "lost"):
+            reasons = "; ".join(
+                f"{name}: {(task_states[name].get('Events') or [{}])[-1].get('DisplayMessage', '')}" for name in failed
+            )
+            return SessionProgress(FAILED, f"Session job {allocation['ClientStatus']}: {reasons}"
+                                           f" (nomad alloc status {allocation['ID'][:8]})")
+        if allocation["ClientStatus"] == "complete" or job.get("Status") == "dead":
+            return SessionProgress(FAILED, "Session job ended")
+
+        init_state = task_states.get(INIT_TASK)
+        if init_state and init_state["State"] == "dead":
+            return SessionProgress(INITIALIZED, "Starting the Argus backends")
+        return SessionProgress(STARTING, "Starting the services of the session")
+
+    def _placement_detail(self, job_id: str) -> str:
+        """Why the job has no allocation yet: the resources Nomad lacks to place it, if that is the reason."""
+        evaluations: list[dict] = self._check(self._request("GET", f"/v1/job/{job_id}/evaluations"),
+                                              f"list the evaluations of {job_id}").json()
+        exhausted: set[str] = set()
+        for evaluation in evaluations:
+            for metrics in (evaluation.get("FailedTGAllocs") or {}).values():
+                exhausted.update((metrics.get("DimensionExhausted") or {}).keys())
+        if exhausted:
+            return f"Waiting for cluster resources ({', '.join(sorted(exhausted))} exhausted: stop another session)"
+        return "Waiting for the session to be scheduled"
+
+    def backends_ready(self, job_id: str) -> bool:
+        """Whether the Argus backends of the session answer (they load the grid after the initialization)."""
         for label in ARGUS_BACKEND_PORT_LABELS:
-            self._wait_health(job_id, label, deadline, timeout)
-
-    def _wait_init_task(self, job_id: str, deadline: float, timeout: float) -> None:
-        while time.monotonic() < deadline:
-            allocation = self._latest_allocation(job_id)
-            if allocation is not None:
-                task_states = allocation.get("TaskStates") or {}
-                init_state = task_states.get(INIT_TASK)
-                if init_state and init_state["State"] == "dead" and not init_state["Failed"]:
-                    logger.info(f"Session job {job_id} initialized")
-                    return
-                failed = [name for name, state in task_states.items() if state["Failed"]]
-                if failed or allocation["ClientStatus"] in ("failed", "lost"):
-                    reasons = "; ".join(
-                        f"{name}: {(task_states[name].get('Events') or [{}])[-1].get('DisplayMessage', '')}"
-                        for name in failed
-                    )
-                    raise HTTPException(
-                        status_code=502,
-                        detail=f"Session job {job_id} failed ({allocation['ClientStatus']}): {reasons}"
-                               f" (see: nomad alloc status {allocation['ID'][:8]})",
-                    )
-            time.sleep(2)
-        raise HTTPException(status_code=504, detail=f"Session job {job_id} not initialized after {timeout:.0f} s")
-
-    def _wait_health(self, job_id: str, port_label: str, deadline: float, timeout: float) -> None:
-        url = self._port_url(job_id, port_label)
-        if url is None:
-            raise HTTPException(status_code=502, detail=f"Session job {job_id} has no {port_label} port")
-        while time.monotonic() < deadline:
+            url = self._port_url(job_id, label)
             try:
-                if requests.get(f"{url}/health", timeout=5).ok:
-                    logger.info(f"Session job {job_id}: {port_label} ready")
-                    return
+                if url is None or not requests.get(f"{url}/health", timeout=5).ok:
+                    return False
             except requests.RequestException:
-                pass
-            time.sleep(2)
-        raise HTTPException(status_code=504, detail=f"Session job {job_id}: {port_label} not ready after {timeout:.0f} s")
+                return False
+        return True
 
     def _port_url(self, job_id: str, label: str) -> str | None:
         allocation = self._latest_allocation(job_id)
