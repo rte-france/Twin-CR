@@ -56,7 +56,7 @@
     dest: /tmp/keycloak.nomad.hcl
 
 - name: Deploy Keycloak via Nomad CLI
-  ansible.builtin.command: nomad job run -detach /tmp/keycloak.nomad.hcl
+  ansible.builtin.command: nomad job run /tmp/keycloak.nomad.hcl
   register: nomad_run_keycloak
   changed_when: "'Job registration successful' in nomad_run_keycloak.stdout"
 
