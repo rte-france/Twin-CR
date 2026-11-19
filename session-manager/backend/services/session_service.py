@@ -8,6 +8,7 @@ co-simulation of power systems.
 
 import logging
 import secrets
+import tomllib
 import time
 import warnings
 from datetime import datetime, timedelta, UTC
@@ -22,6 +23,7 @@ from backend.config import CONFIGURATOR_CLIENT_ENDPOINT, UPDATE_SESSION_STATE_TI
     SESSION_JOB_HCL, SESSION_JOB_VARIABLES, SESSION_INIT_TIMEOUT, SESSION_PUBLIC_URL, SESSION_ROUTER_URL
 from backend.db.models import AccessKey, GameSession, GameSessionCreate, AccessKeyTyped, SessionState, Template, \
     GameSessionPrivate
+from backend.services.storage_service import template_data_prefix
 from backend.services.nomad_service import NomadSessionClient, session_job_id, WAITING, INITIALIZED, FAILED, GONE
 
 # Sessions as Nomad jobs in the Nomad infrastructure, else the session services of compose
@@ -35,6 +37,31 @@ SESSION_SERVICE_PATHS = {
     "dsl_backend_url": "twincr-core",
     "lobby_backend_url": "configurator-client",
 }
+
+
+# Resources of the session services a context can set in its config.toml ([resources.<task>] tables), passed to the
+# session job (variable resources): tasks of the job, and their settings
+SESSION_RESOURCE_TASKS = ("nats", "clickhouse", "twincr-core", "configurator-client", "argus-scada", "argus-gm", "automata")
+SESSION_RESOURCE_SETTINGS = ("cpu", "memory", "memory_max")
+SESSION_JAVA_TASKS = ("argus-scada", "argus-gm")  # Also java_opts
+
+
+def session_resources(config_toml: bytes) -> dict[str, dict[str, str]]:
+    """The [resources.<task>] tables of the config.toml of a context, for the session job. Unknown tasks or settings
+    are ignored with a warning."""
+    tables = tomllib.loads(config_toml.decode()).get("resources", {})
+    resources: dict[str, dict[str, str]] = {}
+    for task, settings in tables.items():
+        if task not in SESSION_RESOURCE_TASKS or not isinstance(settings, dict):
+            logger.warning(f"Ignored [resources.{task}] of the context: not a service of the session job")
+            continue
+        allowed = SESSION_RESOURCE_SETTINGS + (("java_opts",) if task in SESSION_JAVA_TASKS else ())
+        for name, value in settings.items():
+            if name not in allowed:
+                logger.warning(f"Ignored resources.{task}.{name} of the context (allowed: {', '.join(allowed)})")
+                continue
+            resources.setdefault(task, {})[name] = str(value)
+    return resources
 
 
 # Endpoint answering once each service is ready
@@ -166,7 +193,7 @@ class SessionService:
 
         return f"{prefix}-{part()}-{part()}"
 
-    def launch_session(self, session_id: int):
+    def launch_session(self, session_id: int, storage=None):
         game_session = self.get_or_404(session_id)
         game_session.started_at = datetime.now(UTC)
         game_session.state = SessionState.ONGOING
@@ -178,7 +205,7 @@ class SessionService:
         if nomad is not None:
             # Not waited: the session stays in warmup, followed by the session monitor (monitor_nomad_sessions), until
             # ready (ongoing) or failed (back to ready, with the reason in status_detail)
-            self.launch_session_job(session_id, context_id, scenario_id, config_path)
+            self.launch_session_job(session_id, context_id, scenario_id, config_path, storage)
             game_session.state = SessionState.WARMUP
             game_session.status_detail = "Submitting the session job"
             self.session.add(game_session)
@@ -214,7 +241,8 @@ class SessionService:
         self.session.refresh(game_session)
         return game_session
 
-    def launch_session_job(self, session_id: int, context_id: str, scenario_id: str | None, config_path: str):
+    def launch_session_job(self, session_id: int, context_id: str, scenario_id: str | None, config_path: str,
+                           storage=None):
         """Submits the Nomad job of the session (initialized by the job itself)."""
         job_id = session_job_id(session_id)
         variables = {
@@ -226,6 +254,15 @@ class SessionService:
         if SESSION_PUBLIC_URL:
             # Host of the Traefik routes of the session, matching the URLs given to Argus
             variables["public_host"] = urlsplit(SESSION_PUBLIC_URL).hostname or ""
+        if storage is not None:
+            # Resources of the services set by the context (else the defaults of the job)
+            config_key = f"{template_data_prefix(context_id)}/{config_path}"
+            try:
+                resources = session_resources(storage.download_file(config_key))
+            except Exception as exc:
+                raise HTTPException(status_code=400, detail=f"Could not read the resources of {config_key}: {exc}")
+            if resources:
+                variables["resources"] = resources
         nomad.submit(job_id, variables)
 
     def monitor_nomad_sessions(self):

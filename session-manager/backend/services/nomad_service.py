@@ -78,7 +78,7 @@ class NomadSessionClient:
     def submit(self, job_id: str, variables: dict[str, str]) -> None:
         """Parses the session job with the given variables (plus session_id = job_id) and registers it."""
         assignments = {"session_id": job_id, **variables}
-        # A JSON string is a valid HCL string literal
+        # A JSON string is a valid HCL string literal, a JSON object a valid HCL object (e.g. resources)
         hcl_variables = "\n".join(f"{name} = {json.dumps(value)}" for name, value in assignments.items())
         if self.extra_variables:
             hcl_variables += "\n" + self.extra_variables
