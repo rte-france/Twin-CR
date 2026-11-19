@@ -47,6 +47,12 @@ SESSION_JOB_HCL = os.getenv("SESSION_JOB_HCL", "/home/session-manager/twincr-ses
 SESSION_JOB_VARIABLES = os.getenv("SESSION_JOB_VARIABLES", "").replace("\\n", "\n")
 # Startup of the session services (image pulls included) and initialization of the session
 SESSION_INIT_TIMEOUT = float(os.getenv("SESSION_INIT_TIMEOUT", "600"))
+# Public base URL of the session services in the Nomad infrastructure (Traefik routes of the session job), given to
+# Argus when joining a session: <SESSION_PUBLIC_URL>/session-<id>/<service>, e.g. https://localhost/sessions
+SESSION_PUBLIC_URL = os.getenv("SESSION_PUBLIC_URL", "")
+# Traefik as reached by the session manager (e.g. https://127.0.0.1 on its node), to wait at launch until the routes of
+# the session are live: the URLs given to Argus then answer when it joins. Not waited if empty.
+SESSION_ROUTER_URL = os.getenv("SESSION_ROUTER_URL", "")
 
 KEYCLOAK_VERIFY_TLS = os.getenv("KEYCLOAK_VERIFY_TLS","TRUE").casefold() == "true"
 SIMULATORS_PATH = os.getenv("SIMULATORS_PATH", "/home/session-manager/simulators")

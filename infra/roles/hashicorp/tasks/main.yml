@@ -403,7 +403,7 @@
 - name: Configure PKI Role for Workloads
   ansible.builtin.command: >
     vault write pki/roles/twincr-workloads
-    allowed_domains="service.consul,{{ base_domain | default('localhost') }},localhost,127.0.0.1"
+    allowed_domains="service.consul,{{ base_domain | default('localhost') }},{{ public_host }},localhost,127.0.0.1"
     allow_subdomains=true
     allow_bare_domains=true
     allow_ip_sans=true

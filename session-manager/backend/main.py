@@ -37,7 +37,7 @@ from backend.db.models import GameSession, GameSessionCreate, GameSessionPrivate
     NodeType, NewFolder, SessionState, Template, TemplateFileRole, TemplateFilePublic, TemplateDetails, \
     TemplateFolder, AccessKey, AccessKeyTyped, GameSessionOwn, SessionConnect, TemplateRenamedResponse, TreeNodeResponse
 from backend.services import storage_service
-from backend.services.session_service import SessionService, nomad
+from backend.services.session_service import SessionService, nomad, session_private_view
 from backend.services.storage_service import StorageService
 
 TEMPLATE_NAME_RE = re.compile(r"[A-Za-z0-9 ._-]{1,100}")
@@ -474,7 +474,7 @@ def create_session(game_session: GameSessionCreate, session_service: SessionServ
     :return:
     """
     db_session = session_service.create_session(current_user["preferred_username"], game_session)
-    return db_session
+    return session_private_view(db_session)
 
 @session_router.get("/keys/{session_id}", response_model=list[AccessKeyTyped])
 def get_access_keys(session_id: int, session_service: SessionServiceDep, session: SessionDep,
@@ -597,7 +597,7 @@ def connect_session(connect: SessionConnect, session: SessionDep,
 
     session.commit()
 
-    return game_session
+    return session_private_view(game_session)
 
 
 ### TEMPLATES MANAGEMENT ###

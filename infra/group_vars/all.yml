@@ -9,6 +9,12 @@
 ---
 # Default configuration for dev environment
 base_domain: "localhost"
+# Public URL of the services used by Argus, routed by Traefik by path: Keycloak at <public_url>/auth, the session
+# manager at <public_url>/lobby, the sessions at <public_url>/sessions/<session>/<service>. https://localhost for a local
+# cluster (no DNS or hosts entry needed), else the DNS name of the entry point of the cluster (one name, one
+# certificate). The admin interfaces (nomad., consul., vault., registry., s3.) stay on <name>.<base_domain>.
+public_url: "https://localhost"
+public_host: "{{ public_url | urlsplit('hostname') }}"
 proxy_env:
   no_proxy: "localhost,127.0.0.1,::1,172.17.0.0/16,10.0.0.0/8"
   NO_PROXY: "localhost,127.0.0.1,::1,172.17.0.0/16,10.0.0.0/8"

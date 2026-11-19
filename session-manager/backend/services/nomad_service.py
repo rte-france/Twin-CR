@@ -27,6 +27,9 @@ logger = logging.getLogger("uvicorn.error")
 INIT_TASK = "session-init"
 # Port label of the configurator in the session job
 CONFIGURATOR_PORT_LABEL = "configurator"
+# Port labels of the Argus backends in the session job: they load the grid after the initialization before answering
+# their /health, and Traefik only routes to them once healthy, so a session is ready for Argus once they answer
+ARGUS_BACKEND_PORT_LABELS = ("scada_http", "gm_http")
 
 
 def session_job_id(session_id: int) -> str:
@@ -82,8 +85,14 @@ class NomadSessionClient:
         return max(allocations, key=lambda allocation: allocation["CreateIndex"])
 
     def wait_initialized(self, job_id: str, timeout: float) -> None:
-        """Waits for the session-init task of the job to succeed, raising if the session fails or times out."""
+        """Waits for the session to be initialized (session-init task succeeded) and its Argus backends to answer,
+        raising if the session fails or times out."""
         deadline = time.monotonic() + timeout
+        self._wait_init_task(job_id, deadline, timeout)
+        for label in ARGUS_BACKEND_PORT_LABELS:
+            self._wait_health(job_id, label, deadline, timeout)
+
+    def _wait_init_task(self, job_id: str, deadline: float, timeout: float) -> None:
         while time.monotonic() < deadline:
             allocation = self._latest_allocation(job_id)
             if allocation is not None:
@@ -105,6 +114,20 @@ class NomadSessionClient:
                     )
             time.sleep(2)
         raise HTTPException(status_code=504, detail=f"Session job {job_id} not initialized after {timeout:.0f} s")
+
+    def _wait_health(self, job_id: str, port_label: str, deadline: float, timeout: float) -> None:
+        url = self._port_url(job_id, port_label)
+        if url is None:
+            raise HTTPException(status_code=502, detail=f"Session job {job_id} has no {port_label} port")
+        while time.monotonic() < deadline:
+            try:
+                if requests.get(f"{url}/health", timeout=5).ok:
+                    logger.info(f"Session job {job_id}: {port_label} ready")
+                    return
+            except requests.RequestException:
+                pass
+            time.sleep(2)
+        raise HTTPException(status_code=504, detail=f"Session job {job_id}: {port_label} not ready after {timeout:.0f} s")
 
     def _port_url(self, job_id: str, label: str) -> str | None:
         allocation = self._latest_allocation(job_id)

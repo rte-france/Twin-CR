@@ -62,7 +62,7 @@
 
 - name: Wait for Keycloak HTTP endpoint to be ready
   ansible.builtin.uri:
-    url: "http://{{ ansible_facts['default_ipv4']['address'] }}:8081/realms/twincr/protocol/openid-connect/certs"
+    url: "http://{{ ansible_facts['default_ipv4']['address'] }}:8081/auth/realms/twincr/protocol/openid-connect/certs"
     status_code: 200
   environment: "{{ no_proxy_env }}"
   register: keycloak_ready
@@ -97,8 +97,8 @@
 - name: Configure Vault OIDC method pointing to Keycloak
   ansible.builtin.command: >
     vault write auth/oidc/config
-    jwks_url="http://{{ ansible_facts['default_ipv4']['address'] }}:8081/realms/twincr/protocol/openid-connect/certs"
-    bound_issuer="https://keycloak.{{ base_domain | default('localhost') }}/realms/twincr"
+    jwks_url="http://{{ ansible_facts['default_ipv4']['address'] }}:8081/auth/realms/twincr/protocol/openid-connect/certs"
+    bound_issuer="{{ public_url }}/auth/realms/twincr"
     default_role="admin"
   environment: *vault_env
   changed_when: false
@@ -137,7 +137,7 @@
     dest: /tmp/nomad-oidc-config.json
     content: |
       {
-        "OIDCDiscoveryURL": "https://keycloak.{{ base_domain | default('localhost') }}/realms/twincr",
+        "OIDCDiscoveryURL": "{{ public_url }}/auth/realms/twincr",
         "OIDCClientID": "nomad-oidc",
         "OIDCClientSecret": "{{ nomad_oidc_secret | default('nomad-oidc-secret') }}",
         "OIDCScopes": ["roles"],

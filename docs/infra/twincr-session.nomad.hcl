@@ -41,10 +41,10 @@ variable "scenario_id" {
   description = "DSL scenario of the context (empty: the configurator generates a minimal script)"
 }
 
-variable "base_domain" {
+variable "public_host" {
   type        = string
-  default     = "twin.local"
-  description = "Base domain for Traefik ingress"
+  default     = "localhost"
+  description = "Host of the public URL of the infrastructure: the services are at https://<public_host>/sessions/<session_id>/<service> (passed by the session manager from its SESSION_PUBLIC_URL)"
 }
 
 variable "registry" {
@@ -70,27 +70,27 @@ job "twincr-session" {
 
     link {
       label = "argus-scada"
-      url   = "https://sessions.${var.base_domain}/sessions/${var.session_id}/argus-scada"
+      url   = "https://${var.public_host}/sessions/${var.session_id}/argus-scada"
     }
 
     link {
       label = "argus-gm"
-      url   = "https://sessions.${var.base_domain}/sessions/${var.session_id}/argus-gm"
+      url   = "https://${var.public_host}/sessions/${var.session_id}/argus-gm"
     }
 
     link {
       label = "configurator-client"
-      url   = "https://sessions.${var.base_domain}/sessions/${var.session_id}/configurator-client"
+      url   = "https://${var.public_host}/sessions/${var.session_id}/configurator-client"
     }
 
     link {
       label = "twincr-core"
-      url   = "https://sessions.${var.base_domain}/sessions/${var.session_id}/twincr-core"
+      url   = "https://${var.public_host}/sessions/${var.session_id}/twincr-core"
     }
 
     link {
       label = "clickhouse"
-      url   = "https://sessions.${var.base_domain}/sessions/${var.session_id}/clickhouse"
+      url   = "https://${var.public_host}/sessions/${var.session_id}/clickhouse"
     }
   }
 
@@ -155,7 +155,7 @@ job "twincr-session" {
 
       tags = [
         "traefik.enable=true",
-        "traefik.http.routers.argus-scada-${var.session_id}.rule=Host(`sessions.${var.base_domain}`) && PathPrefix(`/sessions/${var.session_id}/argus-scada`)",
+        "traefik.http.routers.argus-scada-${var.session_id}.rule=Host(`${var.public_host}`) && PathPrefix(`/sessions/${var.session_id}/argus-scada`)",
         "traefik.http.routers.argus-scada-${var.session_id}.entrypoints=web,websecure",
         "traefik.http.routers.argus-scada-${var.session_id}.tls=true",
         "traefik.http.routers.argus-scada-${var.session_id}.middlewares=strip-argus-scada-${var.session_id}",
@@ -180,7 +180,7 @@ job "twincr-session" {
 
       tags = [
         "traefik.enable=true",
-        "traefik.http.routers.argus-gm-${var.session_id}.rule=Host(`sessions.${var.base_domain}`) && PathPrefix(`/sessions/${var.session_id}/argus-gm`)",
+        "traefik.http.routers.argus-gm-${var.session_id}.rule=Host(`${var.public_host}`) && PathPrefix(`/sessions/${var.session_id}/argus-gm`)",
         "traefik.http.routers.argus-gm-${var.session_id}.entrypoints=web,websecure",
         "traefik.http.routers.argus-gm-${var.session_id}.tls=true",
         "traefik.http.routers.argus-gm-${var.session_id}.middlewares=strip-argus-gm-${var.session_id}",
@@ -205,7 +205,7 @@ job "twincr-session" {
 
       tags = [
         "traefik.enable=true",
-        "traefik.http.routers.configurator-client-${var.session_id}.rule=Host(`sessions.${var.base_domain}`) && PathPrefix(`/sessions/${var.session_id}/configurator-client`)",
+        "traefik.http.routers.configurator-client-${var.session_id}.rule=Host(`${var.public_host}`) && PathPrefix(`/sessions/${var.session_id}/configurator-client`)",
         "traefik.http.routers.configurator-client-${var.session_id}.entrypoints=web,websecure",
         "traefik.http.routers.configurator-client-${var.session_id}.tls=true",
         "traefik.http.routers.configurator-client-${var.session_id}.middlewares=strip-configurator-client-${var.session_id}",
@@ -231,7 +231,7 @@ job "twincr-session" {
 
       tags = [
         "traefik.enable=true",
-        "traefik.http.routers.twincr-core-${var.session_id}.rule=Host(`sessions.${var.base_domain}`) && PathPrefix(`/sessions/${var.session_id}/twincr-core`)",
+        "traefik.http.routers.twincr-core-${var.session_id}.rule=Host(`${var.public_host}`) && PathPrefix(`/sessions/${var.session_id}/twincr-core`)",
         "traefik.http.routers.twincr-core-${var.session_id}.entrypoints=web,websecure",
         "traefik.http.routers.twincr-core-${var.session_id}.tls=true",
         "traefik.http.routers.twincr-core-${var.session_id}.middlewares=strip-twincr-core-${var.session_id}",
@@ -255,7 +255,7 @@ job "twincr-session" {
 
       tags = [
         "traefik.enable=true",
-        "traefik.http.routers.clickhouse-${var.session_id}.rule=Host(`sessions.${var.base_domain}`) && PathPrefix(`/sessions/${var.session_id}/clickhouse`)",
+        "traefik.http.routers.clickhouse-${var.session_id}.rule=Host(`${var.public_host}`) && PathPrefix(`/sessions/${var.session_id}/clickhouse`)",
         "traefik.http.routers.clickhouse-${var.session_id}.entrypoints=web,websecure",
         "traefik.http.routers.clickhouse-${var.session_id}.tls=true",
         "traefik.http.routers.clickhouse-${var.session_id}.middlewares=strip-clickhouse-${var.session_id}",
