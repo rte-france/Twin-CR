@@ -6,7 +6,6 @@ This file is part of Twin-CR, a platform for real-time cyber-physical
 co-simulation of power systems.
 */
 
-use crate::config::app_config::load_config;
 use tauri::Manager;
 
 mod auth;
@@ -28,8 +27,6 @@ const SIDECARS: [&str; 0] = [];
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-    let config = load_config();
-
     let mut builder = tauri::Builder::default();
 
     #[cfg(desktop)]
@@ -118,7 +115,6 @@ pub fn run() {
 
             Ok(())
         })
-        .manage(config)
         .invoke_handler(tauri::generate_handler![
             // auth
             auth::commands::exchange_code,
@@ -128,7 +124,8 @@ pub fn run() {
             sidecars::commands::start_sidecar,
             sidecars::commands::shutdown_sidecar,
             // config
-            config::commands::get_config,
+            config::commands::get_settings,
+            config::commands::patch_settings,
             // herge
             herge::commands::set_herge_url,
             herge::commands::fetch_request,

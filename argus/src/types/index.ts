@@ -7,3 +7,7 @@ co-simulation of power systems.
 */
 
 export * from "./panel.type";
+export type {
+  SettingFieldDefinition,
+  SettingSectionDefinition,
+} from "./settings.type";

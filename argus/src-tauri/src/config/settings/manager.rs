@@ -1,14 +1,6 @@
-/*
-Copyright (c) 2025-2026, RTE (https://www.rte-france.com)
-See AUTHORS.md
-SPDX-License-Identifier: MPL-2.0
-This file is part of Twin-CR, a platform for real-time cyber-physical
-co-simulation of power systems.
-*/
-
 use notify::{Event, EventKind, RecursiveMode, Watcher};
 use std::path::{Path, PathBuf};
-use tauri::{AppHandle, Manager};
+use tauri::{AppHandle, Emitter, Manager};
 use tokio::sync::watch;
 
 use super::error::Result;
@@ -33,11 +25,13 @@ impl SettingsManager {
         let (tx, rx) = watch::channel(initial_settings);
 
         let watch_path = filepath.clone();
+        let handle = app_handle.clone();
         let mut watcher = notify::recommended_watcher(move |res: notify::Result<Event>| {
             if let Ok(event) = res {
                 if matches!(event.kind, EventKind::Modify(_) | EventKind::Create(_)) {
                     log::info!(target: "Settings", "settings.json modified, reloading...");
                     let new_settings = Self::load_file(&watch_path);
+                    let _ = handle.emit("settings-changed", &new_settings);
                     let _ = tx.send(new_settings);
                 }
             }
