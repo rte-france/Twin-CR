@@ -4,7 +4,12 @@
 
 set -euo pipefail
 
-REGISTRY_HOST="${TWINCR_REGISTRY:-127.0.0.1:5000}"
+# Default host port of the registry: see the linux task (5000 is taken by AirPlay on macOS)
+if [ "$(uname -s)" = "Darwin" ]; then
+    REGISTRY_HOST="${TWINCR_REGISTRY:-127.0.0.1:${TWINCR_REGISTRY_PORT:-5001}}"
+else
+    REGISTRY_HOST="${TWINCR_REGISTRY:-127.0.0.1:${TWINCR_REGISTRY_PORT:-5000}}"
+fi
 
 # If running Linux target container and port 5000 is not forwarded on localhost, bridge it temporarily
 SOCAT_PID=""

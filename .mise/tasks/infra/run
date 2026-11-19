@@ -46,10 +46,22 @@ while [ $# -gt 0 ]; do
 done
 
 if [ "$TARGET_ENV" = "dev" ]; then
-    if [ "$(uname -s)" = "Darwin" ]; then
+    # Local backend: OrbStack VMs (mac task) or Docker containers (linux task, also used with Docker Desktop on macOS).
+    BACKEND="${TWINCR_INFRA_BACKEND:-}"
+    if [ -z "$BACKEND" ]; then
+        if [ "$(uname -s)" = "Darwin" ] && command -v orb >/dev/null 2>&1; then
+            BACKEND="orbstack"
+        else
+            BACKEND="docker"
+        fi
+    fi
+    if [ "$BACKEND" = "orbstack" ]; then
         ../.mise/tasks/infra/mac --nodes="${NODES_COUNT}" ${FORWARD_ARGS[@]+"${FORWARD_ARGS[@]}"}
-    else
+    elif [ "$BACKEND" = "docker" ]; then
         ../.mise/tasks/infra/linux --nodes="${NODES_COUNT}" ${FORWARD_ARGS[@]+"${FORWARD_ARGS[@]}"}
+    else
+        echo "ERROR: unknown TWINCR_INFRA_BACKEND='${BACKEND}' (expected orbstack or docker)" >&2
+        exit 1
     fi
     exec ../.mise/tasks/infra/push
 fi

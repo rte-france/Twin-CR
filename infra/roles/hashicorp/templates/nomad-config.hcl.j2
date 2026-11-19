@@ -16,6 +16,10 @@ server {
 client {
   enabled    = true
   node_class = "{{ 'control-plane' if inventory_hostname in groups['nomad_servers'] else 'compute' }}"
+{% if nomad_cpu_total_compute is defined or nomad_cpu_freq_check.rc != 0 %}
+  # CPU frequency not readable on this node (see the hashicorp role): capacity = cores x nomad_cpu_mhz_per_core
+  cpu_total_compute = {{ nomad_cpu_total_compute | default(ansible_facts['processor_vcpus'] * (nomad_cpu_mhz_per_core | default(2000))) }}
+{% endif %}
 {% if inventory_hostname not in groups['nomad_servers'] %}
   servers    = ["{{ nomad_server_ip | default(hostvars[groups['nomad_servers'][0]]['ansible_facts']['default_ipv4']['address']) }}:4647"]
 {% endif %}

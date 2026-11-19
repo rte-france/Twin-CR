@@ -258,6 +258,13 @@
 # 3. NOMAD START (needed before Vault JWT config)
 # ==========================================
 
+# Nomad derives its CPU capacity (MHz) from the CPU frequency. Some VMs do not expose it (e.g. the arm64 VM of Docker Desktop on macOS)
+- name: Check whether the CPU frequency is readable by Nomad
+  ansible.builtin.shell: test -e /sys/devices/system/cpu/cpu0/cpufreq/cpuinfo_max_freq || grep -qi 'cpu MHz' /proc/cpuinfo
+  register: nomad_cpu_freq_check
+  changed_when: false
+  failed_when: false
+
 - name: Configure Nomad (Workload Identity based Vault integration)
   ansible.builtin.template:
     src: nomad-config.hcl.j2
