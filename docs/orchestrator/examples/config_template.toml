@@ -36,6 +36,9 @@ scada_outputs_file = "scada_outputs.json"
 cyber_config_file = "cyber_config.json"
 # extra_io_file = "extra_io.json"  # Optional, entries added to the generated game master/SCADA io files
 
+# [input_files.argus]
+# synoptics_dir = "synoptics"  # Optional, synoptic diagrams of the argus "Synoptic" window (index.json + definitions, see tools/synoptic/README.md)
+
 [hmi]
 location = "CC"
 line_button_ids = []

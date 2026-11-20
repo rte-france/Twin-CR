@@ -89,6 +89,10 @@ export function NewTemplateModal(props: NewTemplateModalProps) {
   const [assetSimulatorConfigFile, setAssetSimulatorConfigFile] = createSignal<File>();
   const [extraIoFile, setExtraIoFile] = createSignal<File>();
   const [otherFiles, setOtherFiles] = createSignal<File[]>([]);
+  const [synopticFolder, setSynopticFolder] = createSignal<{
+    name: string;
+    files: { relativePath: string; file: File }[];
+  }>();
   const [automataCommands, setAutomataCommands] = createSignal("");
   const [geoDataFile, setGeoDataFile] = createSignal<File>();
   const [scenarioFile, setScenarioFile] = createSignal<File>();
@@ -189,6 +193,24 @@ export function NewTemplateModal(props: NewTemplateModalProps) {
     }
   }
 
+  /** Folder picker for the synoptics: every file under it, paths relative to it; index.json required */
+  async function pickSynopticFolder() {
+    try {
+      const handle = await window.showDirectoryPicker();
+      const files: { relativePath: string; file: File }[] = [];
+      for await (const item of listFilesRecursive(handle)) files.push(item);
+      if (!files.some((f) => f.relativePath === "index.json")) {
+        setError(`${handle.name} has no index.json (list of the synoptic definitions, see tools/synoptic/README.md)`);
+        return;
+      }
+      setError(null);
+      setSynopticFolder({ name: handle.name, files });
+    } catch (err: any) {
+      if (err?.name === "AbortError") return;
+      throw err;
+    }
+  }
+
   /**
    * Guided uploads are driven by the jobs file: everything it references is
    * resolved through the server so the Dynawo convention is not duplicated
@@ -237,7 +259,7 @@ export function NewTemplateModal(props: NewTemplateModalProps) {
 
   /**
    * Collect an existing context the way upload_context.py does: everything the
-   * config.toml names, its other_files, and the transitive closure of the jobs
+   * config.toml names (*_dir keys and other_dirs being directories), its other_files, and the transitive closure of the jobs
    * file. The jobs/dyd convention is resolved server-side so it is not
    * duplicated here.
    */
@@ -262,7 +284,8 @@ export function NewTemplateModal(props: NewTemplateModalProps) {
     const collectSection = (section: Record<string, any>) => {
       for (const [key, value] of Object.entries(section)) {
         if (key === "other_files" || key === "other_dirs") continue;
-        if (typeof value === "string") wanted.add(fromConfig(value));
+        // Keys ending in _dir are directories, not files
+        if (typeof value === "string") (key.endsWith("_dir") ? wantedDirs : wanted).add(fromConfig(value));
       }
       for (const other of section.other_files ?? []) wanted.add(fromConfig(other));
       for (const dir of section.other_dirs ?? []) wantedDirs.add(fromConfig(dir));
@@ -408,6 +431,7 @@ export function NewTemplateModal(props: NewTemplateModalProps) {
         templateName(), parent, job, dynawoFiles, optional, period(),
         dynawoVariant(), otherFiles(),
         automataCommands().split("\n").map((c) => c.trim()).filter((c) => c.length > 0),
+        synopticFolder()?.files ?? [],
       );
     } catch (err) {
       throw err;
@@ -747,6 +771,33 @@ export function NewTemplateModal(props: NewTemplateModalProps) {
                   </For>
                   <span class="mt-0.5 text-[11px] leading-snug text-gray-400">
                     Files used at runtime but not generated, e.g. a python automaton (config.toml other_files).
+                  </span>
+                </div>
+
+                <div class="flex flex-col">
+                  <div class="flex gap-1">
+                    <button
+                      type="button"
+                      class="flex-1 border border-gray-300 rounded px-2 py-1 text-left text-xs"
+                      onClick={() => pickSynopticFolder()}
+                    >
+                      {synopticFolder()
+                        ? `${synopticFolder()!.name}/ (${synopticFolder()!.files.length} files)`
+                        : "Select synoptics folder"}
+                    </button>
+                    <Show when={synopticFolder()}>
+                      <button
+                        type="button"
+                        class="border border-gray-300 rounded px-2 py-1 text-xs text-gray-500 hover:text-red-600"
+                        onClick={() => setSynopticFolder(undefined)}
+                        title="Clear selection"
+                      >
+                        ✕
+                      </button>
+                    </Show>
+                  </div>
+                  <span class="mt-0.5 text-[11px] leading-snug text-gray-400">
+                    Synoptic diagrams of the argus Synoptic window
                   </span>
                 </div>
 

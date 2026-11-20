@@ -223,6 +223,7 @@ export async function createTemplate(
   dynawoVariant: "public" | "rte",
   otherFiles: File[] = [],
   automataCommands: string[] = [],
+  synopticFiles: { relativePath: string; file: File }[] = [],
 ) {
   const formData = new FormData();
   formData.append("template_name", templateName);
@@ -245,6 +246,11 @@ export async function createTemplate(
   }
   for (const command of automataCommands) {
     formData.append("automata_commands", command);
+  }
+  // Synoptic folder, paths relative to it (stored as the template synoptics/ folder)
+  for (const { relativePath, file } of synopticFiles) {
+    formData.append("synoptic_files", file);
+    formData.append("synoptic_relative_paths", relativePath);
   }
 
   return apiFetch(

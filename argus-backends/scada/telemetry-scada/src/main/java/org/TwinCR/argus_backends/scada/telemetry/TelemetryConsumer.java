@@ -23,6 +23,7 @@ import org.TwinCR.argus_backends.scada.util.JsonUtil;
 import org.TwinCR.argus_backends.common.core.bridge.SseNatsBridge;
 import org.TwinCR.argus_backends.common.datamodel.Value;
 import org.TwinCR.argus_backends.common.gridmodel.GridModel;
+import org.TwinCR.argus_backends.common.gridmodel.LatestValues;
 import org.TwinCR.argus_backends.common.telemetry.TelemetryConsumerCommon;
 import org.TwinCR.argus_backends.scada.alarms.AlarmEngine;
 import io.nats.client.*;
@@ -91,6 +92,10 @@ public class TelemetryConsumer extends TelemetryConsumerCommon {
         DiscreteMeasurement discreteMeasurement = null;
 
         final Tase2Extension tase2Extension = t.tase2;
+
+        recordLatestValue(tase2Extension != null ? tase2Extension.tase2_id : t.id,
+            tase2Extension != null ? TiMapping.mapTase2_2_TI.get(tase2Extension.tase2_id) : null, t.value);
+
         if (tase2Extension != null) {
             id = tase2Extension.tase2_id;
             validity = tase2Extension.validity == 0 ? true : false;  // Valid if 0
@@ -202,6 +207,15 @@ public class TelemetryConsumer extends TelemetryConsumerCommon {
                 LOGGER.warn("HandleTelemetry - no measurement/discrete measurement found for {}: value={}", id, t.value);
                 mappingNotFound.add(id);
             }
+        }
+    }
+
+    private static void recordLatestValue(String id, Ti ti, Value value) {
+        double v = value.toDouble();
+        LatestValues.put(id, v);
+        if (ti != null) {
+            LatestValues.put(ti.libelle(), v);
+            LatestValues.put(ti.oldLib(), v);
         }
     }
 

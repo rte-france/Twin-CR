@@ -47,7 +47,7 @@ public class GmMapping {
                         // but we only have one transformer with 3 sides)
                         continue;
                     }
-                    output = new GmOutput(output.id(), leg.get().transformerId(), output.kind(), leg.get().side(), output.voltageLevel());
+                    output = new GmOutput(output.id(), leg.get().transformerId(), output.kind(), leg.get().side(), output.voltageLevel(), output.topic());
                 }
                 id_2_gmOutput.put(output.id(), output);
             }

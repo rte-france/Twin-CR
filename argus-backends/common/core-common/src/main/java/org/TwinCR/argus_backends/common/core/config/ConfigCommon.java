@@ -122,6 +122,18 @@ public class ConfigCommon implements Runnable {
         }
     }
 
+    public Optional<String> synopticsDir() {
+        return Optional.ofNullable(config().getString("input_files.argus.synoptics_dir"));
+    }
+
+    // Resolve a path relative to the config.toml (FILESYSTEM) or materialize it from ClickHouse (CLICKHOUSE)
+    public Path resolveInputFile(String relPath) {
+        if (inputSource == InputSource.FILESYSTEM) {
+            return resolveLocalPath(relPath);
+        }
+        return materializeFromClickHouse(relPath);
+    }
+
     public Optional<Path> cycosimConfigPath() {
         try {
             return Optional.of(getPathFromConfig("cycosim_integration_file"));
@@ -143,12 +155,7 @@ public class ConfigCommon implements Runnable {
         if (relPath == null) {
             throw new IllegalStateException("Missing 'input_files." + file + "' in config");
         }
-
-        if (inputSource == InputSource.FILESYSTEM) {
-            return resolveLocalPath(relPath);
-        } else {
-            return materializeFromClickHouse(relPath);
-        }
+        return resolveInputFile(relPath);
     }
 
     // Resolve path given from the config.toml file
