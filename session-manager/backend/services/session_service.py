@@ -7,13 +7,15 @@ co-simulation of power systems.
 """
 
 import secrets
+import subprocess
 from datetime import datetime, timedelta, UTC
+from threading import Thread
 
 import requests
 from fastapi import HTTPException
 from sqlmodel import select, Session
 
-from backend.config import CONFIGURATOR_CLIENT_ENDPOINT, UPDATE_SESSION_STATE_TIMEOUT
+from backend.config import CONFIGURATOR_CLIENT_ENDPOINT, DOCKER_MODE
 from backend.db.models import AccessKey, GameSession, GameSessionCreate, AccessKeyTyped, SessionState, Template
 
 
@@ -140,10 +142,38 @@ class SessionService:
         self.session.refresh(game_session)
         return game_session
 
+    def reset_session(self, session_id: int):
+        game_session = self.get_or_404(session_id)
+        game_session.state = SessionState.CLEANUP
+        self.session.commit()
+        self.session.refresh(game_session)
+
+        if DOCKER_MODE:
+            def restart_container_and_update_session(session_id: int):
+                subprocess.run(
+                    [
+                        "docker", "restart",
+                        "twincr-core",
+                        "configurator-client",
+                        "argus-backend-scada",
+                        "argus-backend-gm",
+                        "automata",
+                    ],
+                    check=True,
+                )
+                game_session_reset = self.get_or_404(session_id)
+                game_session.started_at = None
+                game_session.ended_at = None
+                game_session_reset.state = SessionState.READY
+                self.session.commit()
+                self.session.refresh(game_session_reset)
+            Thread(target=restart_container_and_update_session, args=(session_id,), daemon=True).start()
+        return game_session
+
     def update_sessions_state(self, session_ids: list[int], session_state: SessionState):
         for session_id in session_ids:
             game_session = self.session.get(GameSession, session_id)
-            if game_session is not None:
+            if game_session is not None and game_session.state not in (SessionState.ENDED, SessionState.CLEANUP):
                 game_session.state = session_state
         self.session.commit()
 

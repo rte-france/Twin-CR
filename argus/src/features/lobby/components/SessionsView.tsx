@@ -12,7 +12,7 @@ import { GameSession, SessionState } from "@/services/session-manager/types";
 import { FiLogIn } from "solid-icons/fi";
 import { For } from "solid-js";
 import { AccessModal } from "./AccessModal";
-import { connectSession, launchSession, parseUtcDate } from "@/services/session-manager";
+import { connectSession, launchSession, parseUtcDate, resetSession } from "@/services/session-manager";
 import { useNavigate } from "@solidjs/router";
 import { useAppMode } from "@/hooks/useAppMode";
 import { useAuth } from "@/features/auth/hooks/useAuth";
@@ -29,12 +29,14 @@ export function SessionsView(props: SessionsViewProps) {
   const [accessKeyMode, setAccessKeyMode] = createSignal<Mode | null>(null);
   const [currentSession, setCurrentSession] = createSignal<GameSession | null>(null);
   const [launchingSessions, setLaunchingSessions] = createSignal<Set<number>>(new Set());
-  const [launchError, setLaunchError] = createSignal<string | null>(null);
+  const [sessionError, setSessionError] = createSignal<string | null>(null);
   const [joinError, setJoinError] = createSignal<string | null>(null);
 
   const navigate = useNavigate();
   const [, setMode] = useAppMode();
   const auth = useAuth();
+
+  const REFRESH_RATE = 1000;
 
   const isLaunching = (sessionId: number) => launchingSessions().has(sessionId);
 
@@ -73,7 +75,7 @@ export function SessionsView(props: SessionsViewProps) {
 
   const interval = setInterval(() => {
     setNow(Date.now());
-  }, 5000);
+  }, REFRESH_RATE);
 
   onCleanup(() => clearInterval(interval));
 
@@ -140,7 +142,7 @@ export function SessionsView(props: SessionsViewProps) {
           }
         }}
       />
-      <Show when={launchError()}>
+      <Show when={sessionError()}>
         {(message) => (
           <p class="mx-6 mt-4 border-l-2 border-red-600 bg-red-50 px-3 py-2 text-xs text-red-800">
             {message()}
@@ -170,9 +172,13 @@ export function SessionsView(props: SessionsViewProps) {
               <div class="flex items-center gap-2 w-24 shrink-0">
                 <span
                   class={`w-2 h-2 rounded-full ${
-                    session.state === SessionState.Ended
-                      ? "bg-red-500"
-                      : "bg-green-500"
+                    {
+                      [SessionState.Warmup]: "bg-yellow-500",
+                      [SessionState.Ready]: "bg-green-500",
+                      [SessionState.Ongoing]: "bg-blue-500",
+                      [SessionState.Cleanup]: "bg-orange-500",
+                      [SessionState.Ended]: "bg-red-500",
+                    }[session.state] ?? "bg-gray-500"
                   }`}
                 />
                 <span class="text-xs text-slate-600 font-medium">
@@ -185,26 +191,56 @@ export function SessionsView(props: SessionsViewProps) {
                 </span>
               </div>
 
+              <div class="flex items-center gap-1.5 shrink-0">
+                <Show when={auth.isSessionLauncher()}>
+                  <span>
+                    <button
+                      disabled={session.state === SessionState.Cleanup || session.state === SessionState.Ready}
+                      onClick={async () => {
+                        setSessionError(null);
+                        try {
+                          await resetSession(session.id);
+                        } catch (err) {
+                          console.error(err);
+                          setSessionError(
+                            err instanceof Error ? err.message : String(err),
+                          );
+                        }
+                      }}
+                      class="px-3 py-1.5 text-xs font-medium border border-slate-300 bg-white text-slate-700 enabled:hover:bg-slate-800 enabled:hover:text-white enabled:hover:border-slate-800 transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1"
+                    >
+                      <Show
+                        when={session.state === SessionState.Cleanup}
+                        fallback={<Icon class="mr-1" icon="lucide:rotate-ccw" />}
+                      >
+                        <Icon class="mr-1 animate-spin" icon="lucide:loader" />
+                      </Show>
+                      Reset
+                    </button>
+                  </span>
+                </Show>
+              </div>
+
               <div class="flex items-center gap-1.5 w-24 shrink-0">
                 <Show when={auth.isSessionLauncher()}>
                   <span>
                     <button
                       disabled={session.state !== SessionState.Ready || isLaunching(session.id)}
                       onClick={async () => {
-                        setLaunchError(null);
+                        setSessionError(null);
                         try {
                           setLaunching(session.id, true);
                           await launchSession(session.id);
                         } catch (err) {
                           console.error(err);
-                          setLaunchError(
+                          setSessionError(
                             err instanceof Error ? err.message : String(err),
                           );
                         } finally {
                           setLaunching(session.id, false);
                         }
                       }}
-                      class="px-3 py-1.5 text-xs font-medium border border-slate-300 bg-white text-slate-700 enabled:hover:bg-slate-800 enabled:hover:text-white enabled:hover:border-slate-800 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                      class="px-3 py-1.5 text-xs font-medium border border-slate-300 bg-white text-slate-700 enabled:hover:bg-slate-800 enabled:hover:text-white enabled:hover:border-slate-800 transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1"
                     >
                       <Show
                         when={!isLaunching(session.id)}
@@ -212,7 +248,7 @@ export function SessionsView(props: SessionsViewProps) {
                       >
                         <Icon class="mr-1" icon="lucide:play" />
                       </Show>
-                      {isLaunching(session.id) ? "Launching..." : "Launch"}
+                      Launch
                     </button>
                   </span>
                 </Show>
