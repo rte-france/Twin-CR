@@ -97,7 +97,7 @@ export function NewTemplateModal(props: NewTemplateModalProps) {
   const [scadaIidmFile, setScadaIidmFile] = createSignal<File>();
   const [gmIidmFile, setGmIidmFile] = createSignal<File>();
   const [period, setPeriod] = createSignal(1);
-  const [dynawoVariant, setDynawoVariant] = createSignal<"public" | "RTE">("public");
+  const [dynawoVersion, setdynawoVersion] = createSignal<"public" | "RTE">("public");
 
   const [metadata, setMetadata] = createSignal<DynawoMetadata[]>([]);
   const [selectedVersion, setSelectedVersion] = createSignal<string>();
@@ -105,7 +105,7 @@ export function NewTemplateModal(props: NewTemplateModalProps) {
   createEffect(async () => {
       try {
           const result = await listDynawoMetadata({
-              scope: dynawoVariant(),
+              scope: dynawoVersion(),
           });
 
           setMetadata(result.items);
@@ -425,7 +425,7 @@ export function NewTemplateModal(props: NewTemplateModalProps) {
       );
       await createTemplate(
         templateName(), parent, job, dynawoFiles, optional, period(),
-        dynawoVariant(), otherFiles(),
+        dynawoVersion(), otherFiles(),
         automataCommands().split("\n").map((c) => c.trim()).filter((c) => c.length > 0),
       );
     } catch (err) {
@@ -565,8 +565,8 @@ export function NewTemplateModal(props: NewTemplateModalProps) {
                                   type="radio"
                                   name="dynawo-build"
                                   value="public"
-                                  checked={dynawoVariant() === "public"}
-                                  onChange={() => setDynawoVariant("public")}
+                                  checked={dynawoVersion() === "public"}
+                                  onChange={() => setdynawoVersion("public")}
                               />
                               <span>Public</span>
                           </label>
@@ -576,8 +576,8 @@ export function NewTemplateModal(props: NewTemplateModalProps) {
                                   type="radio"
                                   name="dynawo-build"
                                   value="RTE"
-                                  checked={dynawoVariant() === "RTE"}
-                                  onChange={() => setDynawoVariant("RTE")}
+                                  checked={dynawoVersion() === "RTE"}
+                                  onChange={() => setdynawoVersion("RTE")}
                               />
                               <span>RTE</span>
                           </label>

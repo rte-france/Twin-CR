@@ -781,7 +781,7 @@ def create_template(
     if dynawo_version not in available_versions_string:
         raise HTTPException(
             status_code=400,
-            detail=f"Unknown dynawo_variant {dynawo_version!r}; expected one of {', '.join(available_versions_string)}",
+            detail=f"Unknown dynawo_version {dynawo_version!r}; expected one of {', '.join(available_versions_string)}",
         )
     if len(dynawo_files) != len(dynawo_relative_paths):
         raise HTTPException(

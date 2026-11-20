@@ -222,7 +222,7 @@ export async function createTemplate(
   dynawoFiles: { relativePath: string; file: File }[],
   optionalFiles: Record<string, File>,
   period: number,
-  dynawoVariant: "public" | "RTE",
+  dynawoVersion: "public" | "RTE",
   otherFiles: File[] = [],
   automataCommands: string[] = [],
 ) {
@@ -231,7 +231,7 @@ export async function createTemplate(
   formData.append("folder_id", folderId.toString());
   formData.append("job_file", jobFile);
   formData.append("period", String(period));
-  formData.append("dynawo_variant", dynawoVariant);
+  formData.append("dynawo_version", dynawoVersion);
 
   for (const { relativePath, file } of dynawoFiles) {
     formData.append("dynawo_files", file);
