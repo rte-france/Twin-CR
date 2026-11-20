@@ -97,7 +97,7 @@ export function NewTemplateModal(props: NewTemplateModalProps) {
   const [scadaIidmFile, setScadaIidmFile] = createSignal<File>();
   const [gmIidmFile, setGmIidmFile] = createSignal<File>();
   const [period, setPeriod] = createSignal(1);
-  const [dynawoVariant, setDynawoVariant] = createSignal<"public" | "rte">("public");
+  const [dynawoVariant, setDynawoVariant] = createSignal<"public" | "RTE">("public");
 
   const [metadata, setMetadata] = createSignal<DynawoMetadata[]>([]);
   const [selectedVersion, setSelectedVersion] = createSignal<string>();
@@ -576,8 +576,8 @@ export function NewTemplateModal(props: NewTemplateModalProps) {
                                   type="radio"
                                   name="dynawo-build"
                                   value="rte"
-                                  checked={dynawoVariant() === "rte"}
-                                  onChange={() => setDynawoVariant("rte")}
+                                  checked={dynawoVariant() === "RTE"}
+                                  onChange={() => setDynawoVariant("RTE")}
                               />
                               <span>RTE</span>
                           </label>
