@@ -32,7 +32,6 @@ pub fn run() {
     #[cfg(desktop)]
     {
         builder = builder.plugin(tauri_plugin_single_instance::init(|app, argv, _cwd| {
-            #[cfg(not(debug_assertions))]
             if let Some(window) = app.get_webview_window("main") {
                 let _ = window.unminimize();
                 let _ = window.show();
@@ -60,6 +59,7 @@ pub fn run() {
                 .level_for("async_nats", log::LevelFilter::Info)
                 .level_for("reqwest", log::LevelFilter::Info)
                 .level_for("hyper_util", log::LevelFilter::Info)
+                .level_for("tao", log::LevelFilter::Warn)
                 .filter(|metadata| {
                     !metadata.target().starts_with("sqlx") && metadata.level() != log::Level::Trace
                 })
@@ -71,6 +71,13 @@ pub fn run() {
             {
                 use tauri_plugin_deep_link::DeepLinkExt;
                 let _ = app.deep_link().register_all();
+            }
+
+            #[cfg(target_os = "macos")]
+            if let Some(window) = app.get_webview_window("main") {
+                use tauri::TitleBarStyle;
+                let _ = window.set_title_bar_style(TitleBarStyle::Overlay);
+                let _ = window.set_decorations(true);
             }
 
             let handle = app.handle().clone();
@@ -108,6 +115,11 @@ pub fn run() {
                 handle.manage(lobby::manager::LobbyManager::new(handle.clone()).await);
 
                 handle.manage(channel::manager::ChannelTaskManager::new().await);
+
+                if let Some(window) = handle.get_webview_window("main") {
+                    let _ = window.show();
+                    let _ = window.set_focus();
+                }
             });
 
             Ok(())

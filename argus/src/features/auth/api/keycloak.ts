@@ -50,7 +50,10 @@ export const loadKeycloakConfig = async (): Promise<KeycloakConfig> => {
     );
     cachedSettings = settings;
   } catch (e) {
-    console.warn("[Auth] Failed to load settings from service, using cache/defaults", e);
+    console.warn(
+      "[Auth] Failed to load settings from service, using cache/defaults",
+      e,
+    );
   }
   return getKeycloakConfig();
 };
@@ -140,7 +143,9 @@ const generateCodeChallenge = async (verifier: string): Promise<string> => {
     .replace(/=+$/, "");
 };
 
-export const loginWithKeycloak = async (config?: Partial<KeycloakConfig>): Promise<void> => {
+export const loginWithKeycloak = async (
+  config?: Partial<KeycloakConfig>,
+): Promise<void> => {
   const resolvedConfig = { ...getKeycloakConfig(), ...config };
   setAuthError(null);
   const state = generateRandomString();
@@ -154,23 +159,21 @@ export const loginWithKeycloak = async (config?: Partial<KeycloakConfig>): Promi
 
   const challenge = await generateCodeChallenge(verifier);
 
-  const isMac = navigator.userAgent.includes("Mac");
-  const isDev = import.meta.env.DEV;
-  const useOAuthServer = isMac && isDev;
-
   let redirectUri = "twincr://login";
-  if (useOAuthServer) {
-    const devPort = resolvedConfig.oauthDevPort;
-    try {
-      await invoke<number>("start_oauth_server", { port: devPort });
-      redirectUri = `http://localhost:${devPort}`;
+  const devPort = resolvedConfig.oauthDevPort;
+  try {
+    const activePort = await invoke<number>("start_oauth_server", {
+      port: devPort,
+    });
+    if (activePort > 0) {
+      redirectUri = `http://localhost:${activePort}`;
       sessionStorage.setItem("oauth_redirect_uri", redirectUri);
-    } catch (e) {
-      console.warn(
-        "Failed to start local oauth server, falling back to twincr://login",
-        e,
-      );
     }
+  } catch (e) {
+    console.warn(
+      "Failed to start local oauth server, falling back to twincr://login",
+      e,
+    );
   }
 
   const params = new URLSearchParams({
@@ -206,7 +209,6 @@ export const initAuth = (): void => {
 
       const savedState = sessionStorage.getItem("oauth_state");
       const verifier = sessionStorage.getItem("oauth_verifier");
-
 
       // No saved state means no login was started from this window (or it already
       // completed): reject rather than exchange a code we did not ask for.

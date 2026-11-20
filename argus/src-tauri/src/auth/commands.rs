@@ -12,11 +12,11 @@ use crate::config::manager::ConfigManager;
 use crate::http_client::utils::http_client::Client;
 
 use super::error::{Error, Result};
-#[cfg(all(target_os = "macos", debug_assertions))]
+#[cfg(debug_assertions)]
 use super::response::HTML_RESPONSE;
 
 const DEFAULT_DEV_OAUTH_PORT: u16 = 8005;
-#[cfg(not(all(target_os = "macos", debug_assertions)))]
+#[cfg(not(debug_assertions))]
 const PROD_REDIRECT_URI: &str = "twincr://login";
 
 fn resolve_dev_oauth_port() -> u16 {
@@ -29,18 +29,18 @@ fn resolve_dev_oauth_port() -> u16 {
 }
 
 fn default_redirect_uri() -> String {
-    #[cfg(all(target_os = "macos", debug_assertions))]
+    #[cfg(debug_assertions)]
     {
         format!("http://localhost:{}", resolve_dev_oauth_port())
     }
 
-    #[cfg(not(all(target_os = "macos", debug_assertions)))]
+    #[cfg(not(debug_assertions))]
     {
         PROD_REDIRECT_URI.to_string()
     }
 }
 
-#[cfg(all(target_os = "macos", debug_assertions))]
+#[cfg(debug_assertions)]
 #[tauri::command]
 pub async fn start_oauth_server(
     app_handle: AppHandle,
@@ -85,7 +85,7 @@ pub async fn start_oauth_server(
     }
 }
 
-#[cfg(not(all(target_os = "macos", debug_assertions)))]
+#[cfg(not(debug_assertions))]
 #[tauri::command]
 pub async fn start_oauth_server(_port: Option<u16>) -> std::result::Result<u16, String> {
     Ok(0)

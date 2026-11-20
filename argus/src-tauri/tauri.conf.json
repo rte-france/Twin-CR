@@ -14,8 +14,8 @@
       {
         "label": "main",
         "title": "Twin-CR",
-        "decorations": false,
-        "titleBarStyle": "Overlay",
+        "decorations": true,
+        "visible": false,
         "resizable": true,
         "dragDropEnabled": false,
         "width": 800,

@@ -15,6 +15,28 @@
       ]
     },
     {
+      "identifier": "opener:allow-open-url",
+      "allow": [{ "url": "http://*" }, { "url": "https://*" }]
+    },
+    {
+      "identifier": "shell:allow-spawn",
+      "allow": [
+        { "name": "powershell", "cmd": "powershell.exe", "args": true },
+        { "name": "cmd", "cmd": "cmd.exe", "args": true },
+        { "name": "zsh", "cmd": "zsh", "args": true },
+        { "name": "bash", "cmd": "bash", "args": true }
+      ]
+    },
+    {
+      "identifier": "shell:allow-execute",
+      "allow": [
+        { "name": "powershell", "cmd": "powershell.exe", "args": true },
+        { "name": "cmd", "cmd": "cmd.exe", "args": true },
+        { "name": "zsh", "cmd": "zsh", "args": true },
+        { "name": "bash", "cmd": "bash", "args": true }
+      ]
+    },
+    {
       "identifier": "fs:scope",
       "allow": [
         { "path": "$HOME/**" },
@@ -45,10 +67,8 @@
     "core:event:allow-listen",
     "core:event:allow-emit-to",
     "core:window:allow-get-all-windows",
-    "shell:allow-execute",
     "shell:allow-open",
     "shell:allow-kill",
-    "shell:allow-spawn",
     "dialog:default",
     "deep-link:default",
     "fs:default",

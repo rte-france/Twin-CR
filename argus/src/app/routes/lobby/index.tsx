@@ -13,7 +13,7 @@ import { Effect } from "effect";
 
 import { systemRuntime } from "@/config/runtime";
 import { GameSession } from "@/services/session-manager/types";
-import {getSessions, initUserTree} from "@/services/session-manager/service";
+import { getSessions, initUserTree } from "@/services/session-manager/service";
 
 import { SessionsView } from "@/features/lobby/components/SessionsView";
 import { Match } from "solid-js";
@@ -32,6 +32,11 @@ import { LobbyStatus } from "@/features/lobby-settings";
 import { UserBadge } from "@/features/auth";
 
 type View = "SESSIONS" | "TEMPLATES" | "MY_SESSIONS";
+
+const noDragStyle = {
+  "-webkit-app-region": "no-drag",
+  "app-region": "no-drag",
+} as const;
 
 export const Lobby = () => {
   const appWindow = getCurrentWindow();
@@ -89,18 +94,23 @@ export const Lobby = () => {
         {/* HEADER */}
         <div
           data-tauri-drag-region
-          class="flex justify-between items-center px-8 py-4 bg-slate-900 border-b border-slate-700 shadow-lg"
+          class="flex justify-between items-center px-8 py-4 bg-slate-900 border-b border-slate-700 shadow-lg select-none"
         >
-          <span class="text-2xl font-bold tracking-tight text-white">
+          <span
+            data-tauri-drag-region
+            class="text-2xl font-bold tracking-tight text-white"
+          >
             Twin-CR.
           </span>
 
           {/* Buttons */}
           <Show when={auth.isAuthenticated()}>
-            <div class="flex items-center">
+            <div style={noDragStyle} class="flex items-center">
               <Show when={auth.isTemplateManager() || auth.isSessionLauncher()}>
                 <button
-                  class={`px-5 py-3 text-sm font-medium transition-colors
+                  type="button"
+                  style={noDragStyle}
+                  class={`px-5 py-3 text-sm font-medium transition-colors cursor-pointer
                     ${
                       view() === "SESSIONS"
                         ? "text-white border-b-2 border-sky-500"
@@ -113,7 +123,9 @@ export const Lobby = () => {
               </Show>
               <Show when={auth.isTemplateManager()}>
                 <button
-                  class={`px-5 py-3 text-sm font-medium transition-colors
+                  type="button"
+                  style={noDragStyle}
+                  class={`px-5 py-3 text-sm font-medium transition-colors cursor-pointer
                     ${
                       view() === "TEMPLATES"
                         ? "text-white border-b-2 border-sky-500"
@@ -126,7 +138,9 @@ export const Lobby = () => {
               </Show>
               <Show when={auth.isSessionLauncher()}>
                 <button
-                  class={`px-5 py-3 text-sm font-medium transition-colors
+                  type="button"
+                  style={noDragStyle}
+                  class={`px-5 py-3 text-sm font-medium transition-colors cursor-pointer
                     ${
                       view() === "MY_SESSIONS"
                         ? "text-white border-b-2 border-sky-500"
@@ -140,14 +154,19 @@ export const Lobby = () => {
             </div>
           </Show>
 
-          <div class="flex items-center gap-4">
-            <div class="flex items-center gap-2 text-slate-300">
+          <div style={noDragStyle} class="flex items-center gap-4">
+            <div
+              style={noDragStyle}
+              class="flex items-center gap-2 text-slate-300"
+            >
               <UserBadge />
             </div>
 
             <button
+              type="button"
+              style={noDragStyle}
               onClick={() => close()}
-              class="w-9 h-9 flex items-center justify-center text-slate-400 hover:bg-red-500 hover:text-white transition-colors"
+              class="w-9 h-9 flex items-center justify-center text-slate-400 hover:bg-red-500 hover:text-white transition-colors cursor-pointer"
             >
               <FiX class="w-4 h-4" />
             </button>
@@ -179,7 +198,9 @@ export const Lobby = () => {
         {/* FOOTER */}
         <div class="mt-auto flex justify-between items-center px-6 py-3 border-t border-slate-200 bg-white">
           <button
-            class="px-1 py-0.5 text-xs bg-gray-500 hover:bg-gray-400 text-white"
+            type="button"
+            style={noDragStyle}
+            class="px-1 py-0.5 text-xs bg-gray-500 hover:bg-gray-400 text-white cursor-pointer"
             onClick={() => {
               setMode(Mode.GameMaster);
               navigate("/home");
@@ -187,7 +208,9 @@ export const Lobby = () => {
           >
             Local dev session
           </button>
-          <span class="text-sm text-slate-400 font-medium">v{import.meta.env.APP_VERSION}</span>
+          <span class="text-sm text-slate-400 font-medium">
+            v{import.meta.env.APP_VERSION}
+          </span>
           <LobbyStatus />
         </div>
       </div>

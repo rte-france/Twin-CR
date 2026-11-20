@@ -24,7 +24,9 @@ export const SignIn = () => {
   const appWindow = getCurrentWindow();
   const navigate = useNavigate();
 
-  const [authUrl, setAuthUrl] = createSignal<string>(getKeycloakConfig().keycloakUrl);
+  const [authUrl, setAuthUrl] = createSignal<string>(
+    getKeycloakConfig().keycloakUrl,
+  );
 
   onMount(async () => {
     const config = await loadKeycloakConfig();
@@ -76,9 +78,13 @@ export const SignIn = () => {
         data-tauri-drag-region
         class="h-10 flex items-center justify-between px-4 bg-[var(--sidebar-bg)] border-b border-[var(--border-light)] z-50"
       >
-        <h1 class="text-sm font-medium">Twin-CR</h1>
+        <h1 data-tauri-drag-region class="text-sm font-medium">
+          Twin-CR
+        </h1>
         <button
+          type="button"
           onClick={close}
+          style={{ "-webkit-app-region": "no-drag" }}
           class="w-7 h-7 flex items-center justify-center rounded-md hover:bg-red-500/20 hover:text-red-500 transition-all group"
         >
           <FiX class="w-4 h-4 group-active:scale-95" />
