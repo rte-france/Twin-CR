@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2026, RTE (https://www.rte-france.com)
+Copyright (c) 2025-2026, RTE (https://www.rte-france.com)
 See AUTHORS.md
 SPDX-License-Identifier: MPL-2.0
 This file is part of Twin-CR, a platform for real-time cyber-physical
@@ -92,7 +92,6 @@ impl SettingsManager {
         self.rx.borrow().clone()
     }
 
-    #[allow(unused)]
     pub fn save(&self, settings: &Settings) -> Result<()> {
         let content = serde_json::to_string_pretty(settings)?;
         std::fs::write(&self.filepath, content)?;
