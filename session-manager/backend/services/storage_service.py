@@ -147,9 +147,9 @@ class StorageService:
         return templates
 
     def list_dynawo_version(self,
-                            scope: Optional[Scope],
-                            version: Optional[str],
-                            tag: Optional[str]
+                            scope: Optional[Scope] = None,
+                            version: Optional[str] = None,
+                            tag: Optional[str] = None
                             ):
         if version and not version.startswith("v"):
             version = f"v{version}"

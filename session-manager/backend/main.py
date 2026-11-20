@@ -776,7 +776,7 @@ def create_template(
     """
     user_name = current_user["preferred_username"]
     validate_template_name(template_name)
-    available_versions = storage_service.list_dynawo_version()
+    available_versions = storage.list_dynawo_version()
     available_versions_string = [item.release for item in available_versions]
     if dynawo_version not in available_versions_string:
         raise HTTPException(
