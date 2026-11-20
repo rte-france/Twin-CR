@@ -222,7 +222,7 @@ export async function createTemplate(
   dynawoFiles: { relativePath: string; file: File }[],
   optionalFiles: Record<string, File>,
   period: number,
-  dynawoVariant: "public" | "rte",
+  dynawoVariant: "public" | "RTE",
   otherFiles: File[] = [],
   automataCommands: string[] = [],
 ) {

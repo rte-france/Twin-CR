@@ -575,7 +575,7 @@ export function NewTemplateModal(props: NewTemplateModalProps) {
                               <input
                                   type="radio"
                                   name="dynawo-build"
-                                  value="rte"
+                                  value="RTE"
                                   checked={dynawoVariant() === "RTE"}
                                   onChange={() => setDynawoVariant("RTE")}
                               />
