@@ -1,0 +1,39 @@
+#
+# Copyright (c) 2026, RTE (https://www.rte-france.com)
+# See AUTHORS.md
+# SPDX-License-Identifier: MPL-2.0
+# This file is part of Twin-CR, a platform for real-time cyber-physical
+# co-simulation of power systems.
+#
+
+---
+- name: Create directories for Garage data
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    mode: "0755"
+  loop:
+    - /opt/garage/data
+    - /opt/garage/meta
+
+- name: Template Garage job file
+  ansible.builtin.template:
+    src: garage.nomad.j2
+    dest: /tmp/garage.nomad
+    mode: "0644"
+
+- name: Deploy Garage via Nomad CLI
+  ansible.builtin.command: nomad job run -detach /tmp/garage.nomad
+  register: nomad_run_garage
+  changed_when: "'Job registration successful' in nomad_run_garage.stdout"
+
+- name: Copy Garage init script
+  ansible.builtin.copy:
+    src: init_garage.sh
+    dest: /opt/garage/init_garage.sh
+    mode: "0755"
+
+- name: Execute Garage initialization (layout, keys, buckets and Vault seeding)
+  ansible.builtin.command: /opt/garage/init_garage.sh
+  register: garage_init
+  changed_when: "'Created' in garage_init.stdout or 'Assigning' in garage_init.stdout"

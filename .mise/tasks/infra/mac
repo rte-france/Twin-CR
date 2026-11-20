@@ -1,0 +1,93 @@
+#!/usr/bin/env bash
+#MISE description="Provision and deploy Twin-CR infrastructure on macOS (OrbStack)"
+
+set -euo pipefail
+
+NODES_COUNT="1"
+PASSTHROUGH_ARGS=()
+while [ $# -gt 0 ]; do
+    case "$1" in
+        --node|--nodes)
+            NODES_COUNT="$2"
+            shift 2
+            ;;
+        --node=*|--nodes=*)
+            NODES_COUNT="${1#*=}"
+            shift
+            ;;
+        NODES=*)
+            NODES_COUNT="${1#NODES=}"
+            shift
+            ;;
+        *)
+            PASSTHROUGH_ARGS+=("$1")
+            shift
+            ;;
+    esac
+done
+
+if ! command -v orb >/dev/null 2>&1; then
+    echo "ERROR: OrbStack CLI 'orb' is required on macOS." >&2
+    exit 1
+fi
+
+# Ensure primary machine exists and is running
+if ! orb list 2>/dev/null | grep -q '^twincr-dev[[:space:]]'; then
+    echo "Creating primary machine twincr-dev..."
+    orb create debian:bookworm twincr-dev -u twincr
+    orb -m twincr-dev sudo usermod -aG sudo twincr
+    orb -m twincr-dev bash -c 'echo "twincr ALL=(ALL) NOPASSWD:ALL" | sudo tee /etc/sudoers.d/twincr'
+    orb -m twincr-dev sudo apt update && orb -m twincr-dev sudo apt install -y python3
+elif orb list 2>/dev/null | grep -E '^twincr-dev[[:space:]]+stopped' >/dev/null 2>&1; then
+    echo "Starting primary machine twincr-dev..."
+    orb start twincr-dev
+fi
+
+# Repair Consul cluster state if VM was paused
+if orb -m twincr-dev journalctl -u consul -n 10 2>/dev/null | grep -q "server_rejoin_age_max" 2>/dev/null; then
+    echo "Repairing stale Consul cluster state on primary..."
+    orb -m twincr-dev sudo systemctl stop consul >/dev/null 2>&1 || true
+    orb -m twincr-dev sudo rm -rf /opt/consul/* >/dev/null 2>&1 || true
+    orb -m twincr-dev sudo systemctl start consul >/dev/null 2>&1 || true
+    sleep 2
+fi
+
+# Provision worker nodes if NODES_COUNT > 1
+WORKERS_INI=""
+if [ "$NODES_COUNT" -gt 1 ]; then
+    NUM_WORKERS=$((NODES_COUNT - 1))
+    echo "==> Multi-node mode: configuring $NUM_WORKERS worker node(s)..."
+    for i in $(seq 1 "$NUM_WORKERS"); do
+        WORKER_NAME="twincr-worker-$i"
+        if ! orb list 2>/dev/null | grep -q "^$WORKER_NAME[[:space:]]"; then
+            echo "Creating worker machine $WORKER_NAME..."
+            orb create debian:bookworm "$WORKER_NAME" -u twincr
+            orb -m "$WORKER_NAME" sudo usermod -aG sudo twincr
+            orb -m "$WORKER_NAME" bash -c 'echo "twincr ALL=(ALL) NOPASSWD:ALL" | sudo tee /etc/sudoers.d/twincr'
+            orb -m "$WORKER_NAME" sudo apt update && orb -m "$WORKER_NAME" sudo apt install -y python3
+        elif orb list 2>/dev/null | grep -E "^$WORKER_NAME[[:space:]]+stopped" >/dev/null 2>&1; then
+            echo "Starting worker machine $WORKER_NAME..."
+            orb start "$WORKER_NAME"
+        fi
+        WORKERS_INI="${WORKERS_INI}twincr_worker$i ansible_host=$WORKER_NAME.orb.local ansible_user=twincr ansible_ssh_common_args='-o StrictHostKeyChecking=no' ansible_remote_tmp=/tmp ansible_python_interpreter=/usr/bin/python3"$'\n'
+    done
+fi
+
+mkdir -p inventories
+cat <<EOF > inventories/dev.ini
+[nomad_servers]
+twincr ansible_host=orb ansible_user=twincr ansible_ssh_common_args='-o StrictHostKeyChecking=no' ansible_remote_tmp=/tmp ansible_python_interpreter=/usr/bin/python3
+
+[nomad_workers]
+${WORKERS_INI}
+
+[twincr_dev:children]
+nomad_servers
+nomad_workers
+
+[all:children]
+twincr_dev
+EOF
+
+echo "Deploying infrastructure ($NODES_COUNT node(s))..."
+make dev-mac ${PASSTHROUGH_ARGS[@]+"${PASSTHROUGH_ARGS[@]}"}
