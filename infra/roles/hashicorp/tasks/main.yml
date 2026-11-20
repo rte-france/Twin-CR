@@ -47,10 +47,10 @@
 
 - name: Install Nomad, Consul and Vault (Debian)
   ansible.builtin.apt:
-    name:
-      - nomad
-      - consul
-      - vault
+    name:  # Pinned versions (defaults/main.yml)
+      - "nomad={{ nomad_version }}-1"
+      - "consul={{ consul_version }}-1"
+      - "vault={{ vault_version }}-1"
     state: present
   when: ansible_facts['os_family'] == 'Debian'
   environment: "{{ proxy_env | default({}) }}"
@@ -68,10 +68,10 @@
 
 - name: Install Nomad, Consul and Vault (RedHat)
   ansible.builtin.dnf:
-    name:
-      - nomad
-      - consul
-      - vault
+    name:  # Pinned versions (defaults/main.yml)
+      - "nomad-{{ nomad_version }}"
+      - "consul-{{ consul_version }}"
+      - "vault-{{ vault_version }}"
       - jq
       - curl
     state: present
@@ -258,6 +258,13 @@
 # 3. NOMAD START (needed before Vault JWT config)
 # ==========================================
 
+# Nomad derives its CPU capacity (MHz) from the CPU frequency. Some VMs do not expose it (e.g. the arm64 VM of Docker Desktop on macOS)
+- name: Check whether the CPU frequency is readable by Nomad
+  ansible.builtin.shell: test -e /sys/devices/system/cpu/cpu0/cpufreq/cpuinfo_max_freq || grep -qi 'cpu MHz' /proc/cpuinfo
+  register: nomad_cpu_freq_check
+  changed_when: false
+  failed_when: false
+
 - name: Configure Nomad (Workload Identity based Vault integration)
   ansible.builtin.template:
     src: nomad-config.hcl.j2
@@ -348,6 +355,12 @@
     mode: "0755"
   when: inventory_hostname in groups['nomad_servers']
 
+# default_scheduler_config of nomad-config.hcl.j2 is only applied when the cluster is bootstrapped (idempotent setting)
+- name: Enable memory oversubscription (memory_max of the session tasks)
+  ansible.builtin.command: nomad operator scheduler set-config -memory-oversubscription=true
+  changed_when: false
+  when: inventory_hostname in groups['nomad_servers']
+
 # ==========================================
 # 4. VAULT ENGINES, POLICIES & JWT AUTH FOR NOMAD (Server only)
 # ==========================================
@@ -390,7 +403,7 @@
 - name: Configure PKI Role for Workloads
   ansible.builtin.command: >
     vault write pki/roles/twincr-workloads
-    allowed_domains="service.consul,{{ base_domain | default('twin.local') }},localhost,127.0.0.1"
+    allowed_domains="service.consul,{{ base_domain | default('twin.local') }},{{ public_host }},localhost,127.0.0.1"
     allow_subdomains=true
     allow_bare_domains=true
     allow_ip_sans=true

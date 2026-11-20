@@ -1,4 +1,6 @@
 PLAYBOOK = site.yml
+# Applications, deployed once their images are pushed to the registry of the cluster (deployed by PLAYBOOK)
+APPS_PLAYBOOK = apps.yml
 ENV ?= dev
 TARGET ?= deb
 TAGS ?=
@@ -10,12 +12,13 @@ VENV = .venv
 PYTHON = $(VENV)/bin/python
 ANSIBLE = $(VENV)/bin/ansible-playbook
 
-.PHONY: help venv deploy dev dev-mac opf vault-edit vault-create
+.PHONY: help venv deploy dev dev-mac opf apps vault-edit vault-create
 
 help:
 	@echo "Twin-CR Infrastructure Automation (DevSecOps)"
 	@echo "  make deploy [ENV=dev|opf] [INVENTORY=path]   - Deploy infrastructure"
 	@echo "  make dev                                     - Shortcut for dev"
+	@echo "  make apps [ENV=dev|opf] [INVENTORY=path]     - Deploy the applications (images pushed first)"
 
 $(ANSIBLE):
 	@python3 -m venv $(VENV)
@@ -39,3 +42,6 @@ dev-mac: $(VENV)
 
 opf: $(VENV)
 	@$(ANSIBLE) -i inventories/opf.ini $(PLAYBOOK) $(TAG_OPT) $(EXTRA)
+
+apps: $(VENV)
+	@$(ANSIBLE) -i $(INVENTORY) $(APPS_PLAYBOOK) $(TAG_OPT) $(EXTRA)

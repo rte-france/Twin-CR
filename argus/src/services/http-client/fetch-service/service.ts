@@ -309,7 +309,14 @@ const handleBridgeError = (error: unknown) => {
       ? (error as any).cause
       : error;
 
-  const message = isInvalidUrl ? "Invalid URL format" : String(realError);
+  // The cause can be an object (e.g. an error serialized by the Rust side): String() would only give [object Object]
+  const message = isInvalidUrl
+    ? "Invalid URL format"
+    : realError instanceof Error
+      ? realError.message
+      : typeof realError === "object" && realError !== null
+        ? JSON.stringify(realError)
+        : String(realError);
 
   return Effect.logWarning(`[HTTP BRIDGE] Network failure: ${message}`).pipe(
     Effect.zipRight(Effect.fail(new TypeError(`Failed to fetch: ${message}`))),

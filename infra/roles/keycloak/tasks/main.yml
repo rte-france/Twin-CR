@@ -56,7 +56,7 @@
     dest: /tmp/keycloak.nomad.hcl
 
 - name: Deploy Keycloak via Nomad CLI
-  ansible.builtin.command: nomad job run -detach /tmp/keycloak.nomad.hcl
+  ansible.builtin.command: nomad job run /tmp/keycloak.nomad.hcl
   register: nomad_run_keycloak
   changed_when: "'Job registration successful' in nomad_run_keycloak.stdout"
 
@@ -93,7 +93,7 @@
   ansible.builtin.command: >
     vault write auth/oidc/config
     jwks_url="http://{{ ansible_facts['default_ipv4']['address'] }}:8081/realms/twincr/protocol/openid-connect/certs"
-    bound_issuer="https://keycloak.{{ base_domain | default('twin.local') }}/realms/twincr"
+    bound_issuer="{{ public_url }}/realms/twincr"
     default_role="admin"
   environment: *vault_env
   changed_when: false
@@ -132,7 +132,7 @@
     dest: /tmp/nomad-oidc-config.json
     content: |
       {
-        "OIDCDiscoveryURL": "https://keycloak.{{ base_domain | default('twin.local') }}/realms/twincr",
+        "OIDCDiscoveryURL": "{{ public_url }}/realms/twincr",
         "OIDCClientID": "nomad-oidc",
         "OIDCClientSecret": "{{ nomad_oidc_secret | default('nomad-oidc-secret') }}",
         "OIDCScopes": ["roles"],

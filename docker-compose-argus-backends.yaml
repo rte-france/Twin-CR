@@ -26,20 +26,6 @@ services:
         condition: service_healthy
       configurator-client:
         condition: service_healthy
-    healthcheck:
-      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://localhost:${SCADA_BACKEND_PORT}/health"]
-      interval: 5s
-      timeout: 10s
-      start_period: 30s
-    entrypoint: ["java", "-Xmx2g", "-XX:+ExitOnOutOfMemoryError", "-jar", "/app/app_scada.jar",
-                 "--http-port", "${SCADA_BACKEND_PORT}",
-                 "--nats-url", "nats://${NATS_HOST}:${NATS_PORT}",
-                 "--config-path", "${CONFIG_PATH}",
-                 "--clickhouse-host", "${CLICKHOUSE_HOST}",
-                 "--clickhouse-port", "${CLICKHOUSE_PORT}",
-                 "--configurator-host", "${CONFIGURATOR_HOST}",
-                 "--configurator-port", "${CONFIGURATOR_PORT}",
-                 "--mode", "${MODE}", "--estim-period", "60"]
     environment:
       - NATS_URL=nats://${NATS_HOST}:${NATS_PORT}
     env_file:
@@ -65,20 +51,6 @@ services:
         condition: service_healthy
       configurator-client:
         condition: service_healthy
-    healthcheck:
-      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://localhost:${GAMEMASTER_BACKEND_PORT}/health"]
-      interval: 5s
-      timeout: 10s
-      start_period: 30s
-    entrypoint: ["java", "-Xmx1536m", "-XX:+ExitOnOutOfMemoryError", "-jar", "/app/app_gm.jar",
-                 "--http-port", "${GAMEMASTER_BACKEND_PORT}",
-                 "--nats-url", "nats://${NATS_HOST}:${NATS_PORT}",
-                 "--config-path", "${CONFIG_PATH}",
-                 "--clickhouse-host", "${CLICKHOUSE_HOST}",
-                 "--clickhouse-port", "${CLICKHOUSE_PORT}",
-                 "--configurator-host", "${CONFIGURATOR_HOST}",
-                 "--configurator-port", "${CONFIGURATOR_PORT}",
-                 "--mode", "${MODE}"]
     environment:
       - NATS_URL=nats://${NATS_HOST}:${NATS_PORT}
     env_file:

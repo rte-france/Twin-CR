@@ -11,11 +11,21 @@ advertise {
 server {
   enabled          = {{ 'true' if inventory_hostname in groups['nomad_servers'] else 'false' }}
   bootstrap_expect = 1
+
+  # Tasks reserve their typical memory (memory) and may use up to memory_max, so that a session fits on small nodes.
+  # Only applied when the cluster is bootstrapped: the hashicorp role also sets it on existing ones.
+  default_scheduler_config {
+    memory_oversubscription_enabled = true
+  }
 }
 
 client {
   enabled    = true
   node_class = "{{ 'control-plane' if inventory_hostname in groups['nomad_servers'] else 'compute' }}"
+{% if nomad_cpu_total_compute is defined or nomad_cpu_freq_check.rc != 0 %}
+  # CPU frequency not readable on this node (see the hashicorp role): capacity = cores x nomad_cpu_mhz_per_core
+  cpu_total_compute = {{ nomad_cpu_total_compute | default(ansible_facts['processor_vcpus'] * (nomad_cpu_mhz_per_core | default(2000))) }}
+{% endif %}
 {% if inventory_hostname not in groups['nomad_servers'] %}
   servers    = ["{{ nomad_server_ip | default(hostvars[groups['nomad_servers'][0]]['ansible_facts']['default_ipv4']['address']) }}:4647"]
 {% endif %}
@@ -27,6 +37,10 @@ plugin "docker" {
     volumes { enabled = true }
     infra_image = "registry.k8s.io/pause:3.3"
     pull_activity_timeout = "2m"
+    # Garbage collect unused images after 24h (default is 3min)
+    gc {
+      image_delay = "24h"
+    }
   }
 }
 
@@ -41,12 +55,14 @@ vault {
   address               = "http://{{ hostvars[groups['nomad_servers'][0]]['ansible_facts']['default_ipv4']['address'] }}:8200"
   jwt_auth_backend_path = "jwt-nomad"
 
+  # The workload identity is only used by Nomad to render the Vault templates of the jobs, not exposed to the tasks
+  # (env): exposing it requires change_mode = "restart", which restarts the tasks each time it is renewed (ttl), e.g.
+  # the orchestrator in the middle of a simulation.
   default_identity {
-    aud         = ["vault.io"]
-    ttl         = "1h"
-    file        = true
-    env         = true
-    change_mode = "restart"
+    aud  = ["vault.io"]
+    ttl  = "1h"
+    file = true
+    env  = false
   }
 }
 

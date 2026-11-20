@@ -28,19 +28,25 @@ if [ -f /etc/nomad.d/nomad.token ]; then
 fi
 
 echo -e "\n=== Garage Setup ==="
-echo "--- Waiting for Garage Nomad allocation to become 'running' ---"
+echo "--- Waiting for a running Garage Nomad allocation with a ready daemon ---"
+# When the job is updated, the previous allocation is still running while being replaced: only an
+# allocation that is meant to keep running (desired run) is used, looked up again at each attempt.
 GARAGE_ALLOC_ID=""
-while [ -z "$GARAGE_ALLOC_ID" ]; do
-    GARAGE_ALLOC_ID=$(nomad job allocs garage | awk '/running/ {print $1}' | head -n 1)
-    if [ -z "$GARAGE_ALLOC_ID" ]; then sleep 2; fi
-done
-echo "Found Garage Allocation ID: $GARAGE_ALLOC_ID"
-
-echo "--- Waiting for Garage daemon to be ready ---"
-while ! nomad alloc exec -task garage-daemon "$GARAGE_ALLOC_ID" /garage status > /dev/null 2>&1; do
+for attempt in $(seq 1 150); do
+    GARAGE_ALLOC_ID=$(nomad job allocs -json garage \
+        | jq -r '[.[] | select(.DesiredStatus == "run" and .ClientStatus == "running")][0].ID // empty')
+    if [ -n "$GARAGE_ALLOC_ID" ] \
+        && nomad alloc exec -task garage-daemon "$GARAGE_ALLOC_ID" /garage status > /dev/null 2>&1; then
+        break
+    fi
+    GARAGE_ALLOC_ID=""
     sleep 2
 done
-echo "Garage daemon is ready!"
+if [ -z "$GARAGE_ALLOC_ID" ]; then
+    echo "ERROR: no running Garage allocation with a ready daemon after 5 min (see: nomad job status garage)" >&2
+    exit 1
+fi
+echo "Garage daemon is ready (allocation $GARAGE_ALLOC_ID)!"
 
 KEY_LIST=$(nomad alloc exec -task garage-daemon "$GARAGE_ALLOC_ID" /garage key list 2>/dev/null || true)
 if ! echo "$KEY_LIST" | grep -q "$S3_USER"; then

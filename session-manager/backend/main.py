@@ -37,7 +37,7 @@ from backend.db.models import GameSession, GameSessionCreate, GameSessionPrivate
     NodeType, NewFolder, SessionState, Template, TemplateFileRole, TemplateFilePublic, TemplateDetails, \
     TemplateFolder, AccessKey, AccessKeyTyped, GameSessionOwn, SessionConnect, TemplateRenamedResponse, TreeNodeResponse
 from backend.services import storage_service
-from backend.services.session_service import SessionService
+from backend.services.session_service import SessionService, nomad, session_private_view
 from backend.services.storage_service import StorageService
 
 TEMPLATE_NAME_RE = re.compile(r"[A-Za-z0-9 ._-]{1,100}")
@@ -73,7 +73,9 @@ tree_router = APIRouter(prefix="/tree", tags=["Tree"])
 async def lifespan(app: FastAPI):
     create_db_and_tables()
     app.state.storage_service = StorageService()
-    task = asyncio.create_task(update_session_state_job())
+    # With compose, the state of the sessions follows the single configurator. In the Nomad infrastructure, each
+    # session has its own job, followed by the session monitor.
+    task = asyncio.create_task(update_session_state_job() if nomad is None else nomad_session_monitor())
     try:
         yield
     finally:
@@ -101,15 +103,36 @@ async def unhandled_errors_as_json(request: Request, call_next):
 
 # TODO : For now, the workflow is mono-session, because we launch only one session locally.
 #       Change this method when multi session will be available.
+NOMAD_SESSION_MONITOR_PERIOD = 3
+
+
+def monitor_nomad_sessions_once() -> None:
+    with Session(engine) as session:
+        SessionService(session).monitor_nomad_sessions()
+
+
+async def nomad_session_monitor() -> None:
+    """Follows the session jobs (launch progress, ready, failure, job lost) in the Nomad infrastructure."""
+    while True:
+        try:
+            await asyncio.to_thread(monitor_nomad_sessions_once)
+        except Exception as e:
+            logger.error("Could not follow the session jobs: %s", e)
+        await asyncio.sleep(NOMAD_SESSION_MONITOR_PERIOD)
+
+
 async def update_session_state_job() -> None:
     while True:
         try:
             configurator_status = await asyncio.to_thread(get_configurator_status)
-            session_state = None
             if configurator_status == "NOT READY":
                 session_state = SessionState.READY # session is ready to be initialized.
-            elif configurator_status == "READY":
-                session_state = SessionState.ONGOING  # session has been initialized. Configurator is ready to start simulation.
+            elif configurator_status in ("READY", "STARTED"):
+                # Session initialized (READY: ready to start the simulation; STARTED: simulation running)
+                session_state = SessionState.ONGOING
+            else:
+                # Transient status (e.g. STOPPED while archiving): the states are kept
+                continue
 
             with Session(engine) as session:
                 session_ids = session.exec(select(GameSession.id).where(GameSession.state != SessionState.ENDED)).all()
@@ -471,7 +494,7 @@ def create_session(game_session: GameSessionCreate, session_service: SessionServ
     :return:
     """
     db_session = session_service.create_session(current_user["preferred_username"], game_session)
-    return db_session
+    return session_private_view(db_session)
 
 @session_router.get("/keys/{session_id}", response_model=list[AccessKeyTyped])
 def get_access_keys(session_id: int, session_service: SessionServiceDep, session: SessionDep,
@@ -508,10 +531,10 @@ def get_session(session_id: int, session: SessionDep):
     return game_session
 
 @session_router.post("/{session_id}/launch", response_model=GameSession)
-def launch_session(session_id: int, session_service: SessionServiceDep, session: SessionDep,
+def launch_session(session_id: int, session_service: SessionServiceDep, session: SessionDep, storage: StorageDep,
                    current_user=Depends(require_role("session_launcher"))):
     own_session(session, session_id, current_user)
-    game_session = session_service.launch_session(session_id)
+    game_session = session_service.launch_session(session_id, storage)
     return game_session
 
 @session_router.post("/{session_id}/stop", response_model=GameSession)
@@ -594,7 +617,7 @@ def connect_session(connect: SessionConnect, session: SessionDep,
 
     session.commit()
 
-    return game_session
+    return session_private_view(game_session)
 
 
 ### TEMPLATES MANAGEMENT ###

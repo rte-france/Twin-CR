@@ -20,3 +20,5 @@ WORKDIR /home/orchestrator/
 
 # Copy the source code
 COPY automata_launcher.py .
+
+CMD ["sh", "-c", "unset http_proxy https_proxy ftp_proxy no_proxy HTTP_PROXY HTTPS_PROXY FTP_PROXY NO_PROXY && exec python -u automata_launcher.py"]

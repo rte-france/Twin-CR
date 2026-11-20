@@ -4,15 +4,22 @@
 
 set -euo pipefail
 
-REGISTRY_HOST="${TWINCR_REGISTRY:-127.0.0.1:5000}"
+# Default host port of the registry: see the linux task (5000 is taken by AirPlay on macOS)
+if [ "$(uname -s)" = "Darwin" ]; then
+    REGISTRY_HOST="${TWINCR_REGISTRY:-127.0.0.1:${TWINCR_REGISTRY_PORT:-5001}}"
+else
+    REGISTRY_HOST="${TWINCR_REGISTRY:-127.0.0.1:${TWINCR_REGISTRY_PORT:-5000}}"
+fi
 
-# If running Linux target container and port 5000 is not forwarded on localhost, bridge it temporarily
+# Linux, local registry (127.0.0.1:<port>) whose port is not forwarded to the target container: bridge it temporarily to the registry of the container
 SOCAT_PID=""
-if [ "$(uname -s)" = "Linux" ] && ! curl -s --noproxy '*' -f "http://127.0.0.1:5000/v2/" >/dev/null 2>&1; then
+REGISTRY_PORT="${REGISTRY_HOST##*:}"
+if [ "$(uname -s)" = "Linux" ] && [ "${REGISTRY_HOST%:*}" = "127.0.0.1" ] \
+    && ! curl -s --noproxy '*' -f "http://${REGISTRY_HOST}/v2/" >/dev/null 2>&1; then
     if docker ps --format '{{.Names}}' | grep -q '^twincr_target$' && command -v socat >/dev/null 2>&1; then
         TARGET_IP=$(docker inspect twincr_target --format '{{.NetworkSettings.Networks.twincr_net.IPAddress}}' 2>/dev/null || docker exec twincr_target hostname -I | awk '{print $1}')
         if [ -n "$TARGET_IP" ]; then
-            socat TCP-LISTEN:5000,bind=127.0.0.1,fork,reuseaddr "TCP:${TARGET_IP}:5000" &
+            socat "TCP-LISTEN:${REGISTRY_PORT},bind=127.0.0.1,fork,reuseaddr" "TCP:${TARGET_IP}:5000" &
             SOCAT_PID=$!
             trap 'kill $SOCAT_PID 2>/dev/null || true' EXIT
             sleep 0.5
@@ -46,42 +53,65 @@ done
 
 echo "==> Registry is ready! Pushing Twin-CR images to ${REGISTRY_HOST}..."
 
-# Mapping: local image name -> target name in internal registry
-IMAGES=(
+# Local images are those built by the compose project that includes Twin-CR: the superproject if Twin-CR is a
+# submodule of one with a docker-compose.yaml, else Twin-CR. TWINCR_COMPOSE_DIR overrides it.
+# Their names come from the compose config: "image:" if set (argus-backends, with the variant of the .env),
+# else "<project>-<service>" where the project name defaults to the directory name.
+TWINCR_ROOT="$(cd "$(dirname "$0")/../../.." && pwd)"
+COMPOSE_DIR="${TWINCR_COMPOSE_DIR:-}"
+if [ -z "$COMPOSE_DIR" ]; then
+    COMPOSE_DIR="$(git -C "$TWINCR_ROOT" rev-parse --show-superproject-working-tree 2>/dev/null || true)"
+    if [ -z "$COMPOSE_DIR" ] || [ ! -f "$COMPOSE_DIR/docker-compose.yaml" ]; then
+        COMPOSE_DIR="$TWINCR_ROOT"
+    fi
+fi
+echo "==> Using the images of the compose project in ${COMPOSE_DIR}"
+COMPOSE_JSON="$(cd "$COMPOSE_DIR" && docker compose config --format json)"
+
+# Compose services whose image is pushed, under the service name
+SERVICES=(
     "configurator-client"
     "session-manager"
     "twincr-core"
     "automata"
+    "argus-backend-scada"
+    "argus-backend-gm"
 )
 
-# Optional variants if built (e.g. argus-backends: latest, private, public)
-for backend in argus-backend-scada argus-backend-gm; do
-    for tag in latest private public; do
-        if docker image inspect "${backend}:${tag}" >/dev/null 2>&1; then
-            echo "  -> Tagging ${backend}:${tag} as ${REGISTRY_HOST}/${backend}:latest"
-            docker tag "${backend}:${tag}" "${REGISTRY_HOST}/${backend}:latest"
-            docker push "${REGISTRY_HOST}/${backend}:latest"
-            break
-        fi
-    done
-done
-
-for name in "${IMAGES[@]}"; do
-    SRC_IMG="twin-cr-${name}:latest"
-    # Fallback to RTE variant if present and standard missing
-    if ! docker image inspect "$SRC_IMG" >/dev/null 2>&1; then
-        SRC_IMG="twin-cr-rte-${name}:latest"
+for name in "${SERVICES[@]}"; do
+    SRC_IMG="$(jq -r --arg s "$name" '.services[$s].image // (.name + "-" + $s)' <<<"$COMPOSE_JSON")"
+    if [[ "${SRC_IMG##*/}" != *:* ]]; then
+        SRC_IMG="${SRC_IMG}:latest"
     fi
 
     if docker image inspect "$SRC_IMG" >/dev/null 2>&1; then
         TARGET_IMG="${REGISTRY_HOST}/${name}:latest"
-        echo "  -> Tagging $SRC_IMG as $TARGET_IMG"
+        echo "  -> Tagging $SRC_IMG (created $(docker image inspect -f '{{.Created}}' "$SRC_IMG" | cut -c1-16)) as $TARGET_IMG"
         docker tag "$SRC_IMG" "$TARGET_IMG"
         echo "  -> Pushing $TARGET_IMG"
         docker push "$TARGET_IMG"
     else
-        echo "  WARN: Image $SRC_IMG not found locally, skipping."
+        echo "  WARN: Image $SRC_IMG not found locally (build it with docker compose build $name), skipping."
     fi
+done
+
+# Third-party images of the sessions
+THIRD_PARTY_IMAGES=(
+    "$(jq -r '.services.nats.image' <<<"$COMPOSE_JSON")"
+    "$(jq -r '.services.clickhouse.image' <<<"$COMPOSE_JSON")"
+    "curlimages/curl:8.22.0"
+)
+for img in "${THIRD_PARTY_IMAGES[@]}"; do
+    if [[ "${img##*/}" != *:* ]] || [[ "$img" == *:latest ]]; then
+        echo "ERROR: $img has no pinned version (set it in docker-compose-dependencies.yaml)" >&2
+        exit 1
+    fi
+    TARGET_IMG="${REGISTRY_HOST}/${img}"
+    echo "  -> Copying $img as $TARGET_IMG"
+    docker pull -q "$img" >/dev/null
+    docker tag "$img" "$TARGET_IMG"
+    # Only the platform of this machine is present locally: docker pushes that one
+    docker push -q "$TARGET_IMG" >/dev/null
 done
 
 echo "==> All Twin-CR images pushed to registry successfully."

@@ -76,3 +76,18 @@ sliders = []
 [game_master.plot_data]
 Voltages = ["NETWORK__BUS____1_TN_U_value"]
 Flow = ["NETWORK__BUS____1-BUS____5-1_AC_P1_value"]
+
+# Resources of the session services in the Nomad infrastructure (ignored by docker compose)
+[resources.twincr-core]
+memory = 1024
+
+[resources.argus-scada]
+memory = 1024
+java_opts = "-Xmx1g"
+
+[resources.argus-gm]
+memory = 512
+java_opts = "-Xmx1g"
+
+[resources.clickhouse]
+memory = 1024

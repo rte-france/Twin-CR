@@ -37,7 +37,7 @@ pub async fn set_dsl_url(
         .await?;
 
     dsl_state.0.configure(url.clone());
-    dsl_state.0.connect(app_handle).await?;
+    dsl_state.connect(app_handle).await?;
 
     Ok(())
 }
@@ -69,7 +69,7 @@ pub async fn connect_dsl(
     dsl_state: State<'_, DslManager>,
     app_handle: tauri::AppHandle,
 ) -> Result<()> {
-    dsl_state.0.connect(app_handle).await?;
+    dsl_state.connect(app_handle).await?;
     Ok(())
 }
 

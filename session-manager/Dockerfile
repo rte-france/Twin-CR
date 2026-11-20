@@ -41,4 +41,9 @@ COPY --from=extractor /extracted/simulators /home/session-manager/simulators
 COPY ./session-manager/backend /home/session-manager/backend
 COPY ./tools/dynawo_toolbox/src /home/tools/dynawo_toolbox/src
 
-CMD ["fastapi", "run", "backend/main.py", "--port", "8090", "--host", "0.0.0.0"]
+COPY ./session-manager/start.sh ./session-manager/healthcheck.sh /home/session-manager/
+# Nomad job of a session, submitted when the session manager runs in the Nomad infrastructure (NOMAD_ADDR set)
+COPY ./docs/infra/twincr-session.nomad.hcl /home/session-manager/twincr-session.nomad.hcl
+
+HEALTHCHECK --interval=1s --timeout=1s CMD ["bash", "/home/session-manager/healthcheck.sh"]
+CMD ["bash", "/home/session-manager/start.sh"]
