@@ -6,7 +6,14 @@ This file is part of Twin-CR, a platform for real-time cyber-physical
 co-simulation of power systems.
 */
 
-export const RESERVED_PROTOCOLS = ["ipc://", "tauri://"] as const;
+export const RESERVED_PROTOCOLS = ["ipc://", "tauri://", "asset://"] as const;
+
+// Keep this list aligned with public/pre-fetch.js so IPC never uses the bridge.
+const NATIVE_HTTP_HOSTS = new Set([
+  "ipc.localhost",
+  "tauri.localhost",
+  "asset.localhost",
+]);
 
 export const DIRECT_CLIENT_ID = "direct";
 
@@ -30,6 +37,16 @@ export const parseBridgeUrl = (url: string): ParsedBridgeUrl | null => {
 
   // Direct standard http/https URLs
   if (url.startsWith("http://") || url.startsWith("https://")) {
+    let parsedUrl: URL;
+    try {
+      parsedUrl = new URL(url);
+    } catch {
+      return null;
+    }
+    if (!parsedUrl.port && NATIVE_HTTP_HOSTS.has(parsedUrl.hostname)) {
+      return null;
+    }
+
     return {
       clientId: DIRECT_CLIENT_ID,
       actualUrl: url,
