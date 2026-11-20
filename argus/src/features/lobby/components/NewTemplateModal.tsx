@@ -423,9 +423,12 @@ export function NewTemplateModal(props: NewTemplateModalProps) {
       setProgress(
         `Uploading ${dynawoFiles.length + 1} files, then generating outputs (this can take a while)...`,
       );
+
+      const dynawoVersionParam = "dynawo" + dynawoVersion() + selectedVersion();
+
       await createTemplate(
         templateName(), parent, job, dynawoFiles, optional, period(),
-        dynawoVersion(), otherFiles(),
+        dynawoVersionParam, otherFiles(),
         automataCommands().split("\n").map((c) => c.trim()).filter((c) => c.length > 0),
       );
     } catch (err) {
@@ -588,18 +591,21 @@ export function NewTemplateModal(props: NewTemplateModalProps) {
                       <label class="text-xs text-gray-500">Version</label>
 
                       <select
-                          class="border border-gray-300 rounded px-2 py-1"
-                          value={selectedVersion()}
-                          onChange={(e) => setSelectedVersion(e.currentTarget.value)}
+                        class="border border-gray-300 rounded px-2 py-1"
+                        value={selectedVersion()}
+                        onChange={(e) => setSelectedVersion(e.currentTarget.value)}
                       >
-                          <For each={metadata()}>
-                              {(item) => (
-                                  <option value={item.version}>
-                                      {item.version}
-                                      {item.tag ? ` (${item.tag})` : ""}
-                                  </option>
-                              )}
-                          </For>
+                        <For each={metadata()}>
+                          {(item) => {
+                            const versionLabel = `${item.version}${item.tag ? `-${item.tag}` : ""}`;
+
+                            return (
+                              <option value={versionLabel}>
+                                {versionLabel}
+                              </option>
+                            );
+                          }}
+                        </For>
                       </select>
                   </div>
 
