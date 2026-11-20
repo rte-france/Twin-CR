@@ -189,7 +189,7 @@ You can build Argus Windows executable by running :
 ```bash
 ./envs/build_argus_Windows.sh
 ```
-Note that this operation takes time. Resulting exe (`argus-debug.exe`, `argus-release.exe`) are placed in a `Windows` directory.
+Note that this operation takes time. Resulting exe (`argus-debug.exe`, `argus-release.exe`) and installers (`argus_x64-debug-setup.exe`, `argus_x64-release-setup.exe`) are placed in the `Windows` directory.
 Argus uses default URLs for some services, stored in a config.json file (by default, localhost is used). See argus/README.md.
 
 ## Multi machine setup
