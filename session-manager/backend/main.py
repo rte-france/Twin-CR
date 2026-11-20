@@ -871,7 +871,7 @@ def create_template(
                 generated_dyd, mock_cyber_config, generated_asset_simulator_config = pool.submit(
                     main_configure.main_from_jobs,
                     job_path,
-                    get_or_retrieve(dynawo_version, storage_service.s3),
+                    get_or_retrieve(dynawo_version, storage.s3),
                     paths.get(TemplateFileRole.cyber_config),
                     paths.get(TemplateFileRole.mapping),
                     None,

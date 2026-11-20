@@ -424,7 +424,7 @@ export function NewTemplateModal(props: NewTemplateModalProps) {
         `Uploading ${dynawoFiles.length + 1} files, then generating outputs (this can take a while)...`,
       );
 
-      const dynawoVersionParam = "dynawo" + dynawoVersion() + selectedVersion();
+      const dynawoVersionParam ="dynawo" + (dynawoVersion() === "public" ? "" : dynawoVersion()) + selectedVersion();
 
       await createTemplate(
         templateName(), parent, job, dynawoFiles, optional, period(),
