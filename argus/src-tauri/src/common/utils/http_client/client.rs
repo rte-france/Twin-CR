@@ -88,6 +88,7 @@ impl Client<Disconnected> {
             .pool_max_idle_per_host(100)
             .pool_idle_timeout(Duration::from_secs(90))
             .timeout(Duration::from_secs(60))
+            .danger_accept_invalid_certs(true)
             .no_proxy()
             .build()
             .map_err(|e| Error::from_reqwest(e, self.url().to_string()))?;

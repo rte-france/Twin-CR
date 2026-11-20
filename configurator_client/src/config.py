@@ -27,5 +27,5 @@ S3_ACCESS_KEY = os.getenv("AWS_ACCESS_KEY_ID", "")
 S3_PRIVATE_KEY = os.getenv("AWS_SECRET_ACCESS_KEY", "")
 S3_ENDPOINT = os.getenv("AWS_ENDPOINT_URL_S3", "http://localhost:3900")
 S3_EXPOSED_PORT = os.getenv("GARAGE_EXPOSED_PORT", "3900")
-S3_EXPOSED_ENDPOINT = f"http://localhost:{S3_EXPOSED_PORT}"
+S3_EXPOSED_ENDPOINT = os.getenv("S3_EXPOSED_ENDPOINT", os.getenv("AWS_ENDPOINT_URL_S3", f"http://localhost:{S3_EXPOSED_PORT}"))
 BUCKET_ARCHIVE = os.getenv("BUCKET_ARCHIVE", "archive")
