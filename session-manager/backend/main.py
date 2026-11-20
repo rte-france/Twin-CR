@@ -776,12 +776,12 @@ def create_template(
     """
     user_name = current_user["preferred_username"]
     validate_template_name(template_name)
-    available_versions = storage_service.list_dynawo_version()
+    available_versions = storage.list_dynawo_version()
     available_versions_string = [item.release for item in available_versions]
     if dynawo_version not in available_versions_string:
         raise HTTPException(
             status_code=400,
-            detail=f"Unknown dynawo_variant {dynawo_version!r}; expected one of {', '.join(available_versions_string)}",
+            detail=f"Unknown dynawo_version {dynawo_version!r}; expected one of {', '.join(available_versions_string)}",
         )
     if len(dynawo_files) != len(dynawo_relative_paths):
         raise HTTPException(
@@ -871,7 +871,7 @@ def create_template(
                 generated_dyd, mock_cyber_config, generated_asset_simulator_config = pool.submit(
                     main_configure.main_from_jobs,
                     job_path,
-                    get_or_retrieve(dynawo_version, storage_service.s3),
+                    get_or_retrieve(dynawo_version, storage.s3),
                     paths.get(TemplateFileRole.cyber_config),
                     paths.get(TemplateFileRole.mapping),
                     None,

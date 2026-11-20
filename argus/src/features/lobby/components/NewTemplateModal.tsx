@@ -6,15 +6,16 @@ This file is part of Twin-CR, a platform for real-time cyber-physical
 co-simulation of power systems.
 */
 
-import { createSignal, For, onMount, Show, onCleanup } from "solid-js";
+import { createSignal, createEffect, For, onMount, Show, onCleanup } from "solid-js";
 import {
   createTemplate,
   createTemplateExpert,
   dynawoDependencies,
   getTemplateFolders,
+  listDynawoMetadata,
 } from "@/services/session-manager/service";
 import { parse } from "smol-toml";
-import { TemplateFolder } from "@/services/session-manager/types";
+import { DynawoMetadata, TemplateFolder } from "@/services/session-manager/types";
 import { Icon } from "@iconify-icon/solid";
 
 type NewTemplateModalProps = {
@@ -96,9 +97,27 @@ export function NewTemplateModal(props: NewTemplateModalProps) {
   const [scadaIidmFile, setScadaIidmFile] = createSignal<File>();
   const [gmIidmFile, setGmIidmFile] = createSignal<File>();
   const [period, setPeriod] = createSignal(1);
-  const [dynawoVariant, setDynawoVariant] = createSignal<"public" | "rte">(
-    "rte",
-  );
+  const [dynawoVersion, setdynawoVersion] = createSignal<"public" | "RTE">("public");
+
+  const [metadata, setMetadata] = createSignal<DynawoMetadata[]>([]);
+  const [selectedVersion, setSelectedVersion] = createSignal<string>();
+
+  createEffect(async () => {
+      try {
+          const result = await listDynawoMetadata({
+              scope: dynawoVersion(),
+          });
+
+          setMetadata(result.items);
+
+          if (result.items.length > 0) {
+              setSelectedVersion(result.items[0].version);
+          }
+      } catch (err) {
+          console.error("Failed to load dynawo metadata", err);
+          setMetadata([]);
+      }
+  });
 
   const isSubmitDisabled = () => loading() || !canCreate();
 
@@ -404,9 +423,12 @@ export function NewTemplateModal(props: NewTemplateModalProps) {
       setProgress(
         `Uploading ${dynawoFiles.length + 1} files, then generating outputs (this can take a while)...`,
       );
+
+      const dynawoVersionParam ="dynawo" + (dynawoVersion() === "public" ? "" : dynawoVersion()) + selectedVersion();
+
       await createTemplate(
         templateName(), parent, job, dynawoFiles, optional, period(),
-        dynawoVariant(), otherFiles(),
+        dynawoVersionParam, otherFiles(),
         automataCommands().split("\n").map((c) => c.trim()).filter((c) => c.length > 0),
       );
     } catch (err) {
@@ -537,20 +559,55 @@ export function NewTemplateModal(props: NewTemplateModalProps) {
                     </Show>
                   </div>
 
-                  <label class="text-xs text-gray-500">
-                    Dynawo build
-                  </label>
-                  <select
-                    class="border border-gray-300 rounded px-2 py-1"
-                    value={dynawoVariant()}
-                    onChange={(e) =>
-                      setDynawoVariant(
-                        e.currentTarget.value as "public" | "rte",
-                      )}
-                  >
-                    <option value="public">Public</option>
-                    <option value="rte">RTE</option>
-                  </select>
+                  <div class="flex flex-col gap-2">
+                      <label class="text-xs text-gray-500">Dynawo build</label>
+
+                      <div class="flex gap-4">
+                          <label class="flex items-center gap-2 cursor-pointer">
+                              <input
+                                  type="radio"
+                                  name="dynawo-build"
+                                  value="public"
+                                  checked={dynawoVersion() === "public"}
+                                  onChange={() => setdynawoVersion("public")}
+                              />
+                              <span>Public</span>
+                          </label>
+
+                          <label class="flex items-center gap-2 cursor-pointer">
+                              <input
+                                  type="radio"
+                                  name="dynawo-build"
+                                  value="RTE"
+                                  checked={dynawoVersion() === "RTE"}
+                                  onChange={() => setdynawoVersion("RTE")}
+                              />
+                              <span>RTE</span>
+                          </label>
+                      </div>
+                  </div>
+
+                  <div class="flex flex-col gap-1">
+                      <label class="text-xs text-gray-500">Version</label>
+
+                      <select
+                        class="border border-gray-300 rounded px-2 py-1"
+                        value={selectedVersion()}
+                        onChange={(e) => setSelectedVersion(e.currentTarget.value)}
+                      >
+                        <For each={metadata()}>
+                          {(item) => {
+                            const versionLabel = `${item.version}${item.tag ? `-${item.tag}` : ""}`;
+
+                            return (
+                              <option value={versionLabel}>
+                                {versionLabel}
+                              </option>
+                            );
+                          }}
+                        </For>
+                      </select>
+                  </div>
 
                   <label class="text-xs text-gray-500">
                     Master period (s)
