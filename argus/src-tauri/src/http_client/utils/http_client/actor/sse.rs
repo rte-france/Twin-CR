@@ -13,7 +13,7 @@ use std::collections::HashMap;
 use tokio::sync::{mpsc, oneshot};
 use tokio::time::{sleep, timeout, Duration};
 
-use crate::http_client::utils::http_client::error::Result;
+use crate::http_client::utils::http_client::error::{Error, Result};
 
 #[derive(Debug)]
 enum ConnectResult<S> {
@@ -92,6 +92,13 @@ pub(crate) async fn execute_cancellable_sse_with_config(
             ConnectResult::Fatal(status) => {
                 // Invariant: Permanent client errors (4xx except 408/429) must abort without retry.
                 log::error!(target: "HTTP", "SSE aborted on fatal client status {} for req_id: {}", status, req_id);
+                // Report it, so the consumer does not see a normal end of stream.
+                let _ = tx
+                    .send(Err(Error::ApiError {
+                        status: status.as_u16(),
+                        body: String::new(),
+                    }))
+                    .await;
                 return;
             }
             ConnectResult::Failed => {
@@ -356,7 +363,11 @@ mod tests {
                 let requests = server.received_requests().await.unwrap();
                 prop_assert_eq!(requests.len(), 1);
 
-                // Invariant: Channel receives no payloads on fatal connection.
+                // Invariant: A fatal connection yields exactly one error carrying the status, then closes.
+                match rx.recv().await {
+                    Some(Err(Error::ApiError { status, .. })) => prop_assert_eq!(status, status_code),
+                    other => prop_assert!(false, "expected ApiError, got {:?}", other.map(|r| r.is_ok())),
+                }
                 prop_assert!(rx.recv().await.is_none());
 
                 Ok::<(), TestCaseError>(())
