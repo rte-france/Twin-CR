@@ -22,6 +22,13 @@ co-simulation of power systems.
     "file:",
   ]);
 
+  // Tauri exposes these native schemes through HTTP(S) on Windows and Android.
+  const NATIVE_HTTP_HOSTS = new Set([
+    "ipc.localhost",
+    "tauri.localhost",
+    "asset.localhost",
+  ]);
+
   // Escaped regex for custom scheme aliases (e.g. clientId://endpoint/path)
   const ALIAS_URL = /^[a-zA-Z0-9_-]+:\/\/[a-zA-Z0-9_-]+/;
 
@@ -43,6 +50,9 @@ co-simulation of power systems.
     }
 
     if (parsedUrl.protocol === "http:" || parsedUrl.protocol === "https:") {
+      if (!parsedUrl.port && NATIVE_HTTP_HOSTS.has(parsedUrl.hostname)) {
+        return false;
+      }
       return parsedUrl.origin !== window.location.origin;
     }
 

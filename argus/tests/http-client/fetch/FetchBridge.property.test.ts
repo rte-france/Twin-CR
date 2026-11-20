@@ -39,7 +39,7 @@ const makeMockRegistry = (
 // Valid clientId generator: alphanum, dashes, underscores
 const clientIdArb = fc
   .stringMatching(/^[a-zA-Z0-9_-]{1,20}$/)
-  .filter((id) => id !== "http" && id !== "https");
+  .filter((id) => !["http", "https", "ipc", "tauri", "asset"].includes(id));
 
 // Arbitrary endpoint scheme and path
 const endpointPathArb = fc
@@ -48,7 +48,7 @@ const endpointPathArb = fc
 
 describe("FetchBridge - Property-Based Testing", () => {
   describe("URL Interception Predicate (shouldInterceptUrl)", () => {
-    it("never intercepts any reserved protocol (ipc, tauri)", () => {
+    it("never intercepts any reserved protocol (ipc, tauri, asset)", () => {
       fc.assert(
         fc.property(
           fc.constantFrom(...RESERVED_PROTOCOLS),
