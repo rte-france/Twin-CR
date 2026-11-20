@@ -75,11 +75,18 @@ pub fn run() {
 
             let handle = app.handle().clone();
 
-            tauri::async_runtime::block_on(async {
-                let config = config::manager::ConfigManager::new(handle.clone())
-                    .expect("Failed to initialize Config Manager");
-                config.load();
-                handle.manage(config);
+            // Sync mounting
+            let config = config::manager::ConfigManager::new(handle.clone())
+                .expect("Failed to initialize Config Manager");
+            config.load();
+            handle.manage(config);
+
+            let http_manager = http::manager::HttpManager::with_resolver(None);
+            handle.manage(http_manager.clone());
+
+            // Async mounting
+            tauri::async_runtime::spawn(async move {
+                http::manager::HttpManager::start_proxy_watcher(http_manager, handle.clone());
 
                 let db_manager = database::manager::DbManager::new(handle.clone())
                     .await
@@ -89,16 +96,6 @@ pub fn run() {
                 let window_manager = windows::manager::WindowManager::new(handle.clone());
                 let _ = window_manager.register_main_window("main").await;
                 handle.manage(window_manager);
-
-                let http_manager = http::manager::HttpManager::with_resolver(None);
-                http::manager::HttpManager::start_proxy_watcher(
-                    http_manager.clone(),
-                    handle.clone(),
-                );
-                handle.manage(http_manager.clone());
-            });
-
-            tauri::async_runtime::spawn(async move {
                 if let Ok(sidecars) = sidecars::state::SidecarsState::new(&handle, &SIDECARS).await
                 {
                     handle.manage(sidecars);

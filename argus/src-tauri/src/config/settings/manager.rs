@@ -28,8 +28,17 @@ impl SettingsManager {
         let handle = app_handle.clone();
         let mut watcher = notify::recommended_watcher(move |res: notify::Result<Event>| {
             if let Ok(event) = res {
+                if !event.paths.iter().any(|p| p == &watch_path) {
+                    return;
+                }
                 if matches!(event.kind, EventKind::Modify(_) | EventKind::Create(_)) {
-                    log::info!(target: "Settings", "settings.json modified, reloading...");
+                    if std::fs::metadata(&watch_path)
+                        .map(|m| m.len() == 0)
+                        .unwrap_or(true)
+                    {
+                        return;
+                    }
+                    log::debug!(target: "Settings", "settings.json modified, reloading...");
                     let new_settings = Self::load_file(&watch_path);
                     let _ = handle.emit("settings-changed", &new_settings);
                     let _ = tx.send(new_settings);
@@ -62,7 +71,9 @@ impl SettingsManager {
                 log::info!(target: "Settings", "settings.json not found. Automatically generating it with default values...");
                 let default_settings = Settings::default();
                 if let Ok(content) = serde_json::to_string_pretty(&default_settings) {
-                    let _ = std::fs::write(filepath, content);
+                    if let Err(e) = std::fs::write(filepath, content) {
+                        log::error!(target: "Settings", "Failed to write default settings to {:?}: {}", filepath, e);
+                    }
                 }
                 default_settings
             }
