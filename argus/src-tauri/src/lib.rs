@@ -6,7 +6,7 @@ This file is part of Twin-CR, a platform for real-time cyber-physical
 co-simulation of power systems.
 */
 
-use tauri::Manager;
+use tauri::{Emitter, Manager};
 
 mod auth;
 mod channel;
@@ -71,6 +71,13 @@ pub fn run() {
             {
                 use tauri_plugin_deep_link::DeepLinkExt;
                 let _ = app.deep_link().register_all();
+            }
+
+            #[cfg(desktop)]
+            {
+                if let Some(deep_link) = std::env::args().find(|arg| arg.starts_with("twincr://")) {
+                    let _ = app.emit("deep-link-received", deep_link);
+                }
             }
 
             #[cfg(target_os = "macos")]
