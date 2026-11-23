@@ -176,7 +176,7 @@ reserved per session. A context can lower (or raise) them in its
 
 ```toml
 [resources.twincr-core]
-memory = 1024          # MB reserved (placement); memory_max: MB limit; cpu: MHz
+memory = 1024          # MB reserved (placement); memory_max: MB limit (default: at least memory); cpu: MHz
 
 [resources.argus-scada]
 memory = 1024

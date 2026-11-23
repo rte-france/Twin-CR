@@ -117,6 +117,7 @@ job "twincr-session" {
     # Resources, sized for a French transmission network case, smaller grids need less
     # memory is the typical use (reserved for scheduling)
     # memory_max the hard limit above the measured peak (needs memory oversubscription, enabled by the hashicorp role).
+    # memory_max defaults to at least memory, so that a context may raise memory alone.
 
     # A session holds its state in memory and in its ClickHouse (no volume): a failed allocation is not rescheduled
     # elsewhere from scratch, it stays failed for the session manager to report.
@@ -315,7 +316,7 @@ EOT
       resources {
         cpu        = lookup(lookup(var.resources, "nats", {}), "cpu", "150")
         memory     = lookup(lookup(var.resources, "nats", {}), "memory", "128")
-        memory_max = lookup(lookup(var.resources, "nats", {}), "memory_max", "256")
+        memory_max = lookup(lookup(var.resources, "nats", {}), "memory_max", max(256, lookup(lookup(var.resources, "nats", {}), "memory", "128")))
       }
     }
 
@@ -355,7 +356,7 @@ EOT
       resources {
         cpu        = lookup(lookup(var.resources, "clickhouse", {}), "cpu", "800")
         memory     = lookup(lookup(var.resources, "clickhouse", {}), "memory", "1536")
-        memory_max = lookup(lookup(var.resources, "clickhouse", {}), "memory_max", "3072")
+        memory_max = lookup(lookup(var.resources, "clickhouse", {}), "memory_max", max(3072, lookup(lookup(var.resources, "clickhouse", {}), "memory", "1536")))
       }
     }
 
@@ -392,7 +393,7 @@ EOT
       resources {
         cpu        = lookup(lookup(var.resources, "twincr-core", {}), "cpu", "2000")
         memory     = lookup(lookup(var.resources, "twincr-core", {}), "memory", "3072")
-        memory_max = lookup(lookup(var.resources, "twincr-core", {}), "memory_max", "4096")
+        memory_max = lookup(lookup(var.resources, "twincr-core", {}), "memory_max", max(4096, lookup(lookup(var.resources, "twincr-core", {}), "memory", "3072")))
       }
     }
 
@@ -428,7 +429,7 @@ EOT
       resources {
         cpu        = lookup(lookup(var.resources, "configurator-client", {}), "cpu", "200")
         memory     = lookup(lookup(var.resources, "configurator-client", {}), "memory", "256")
-        memory_max = lookup(lookup(var.resources, "configurator-client", {}), "memory_max", "512")
+        memory_max = lookup(lookup(var.resources, "configurator-client", {}), "memory_max", max(512, lookup(lookup(var.resources, "configurator-client", {}), "memory", "256")))
       }
     }
 
@@ -452,7 +453,7 @@ EOT
       resources {
         cpu        = lookup(lookup(var.resources, "argus-scada", {}), "cpu", "1500")
         memory     = lookup(lookup(var.resources, "argus-scada", {}), "memory", "2560")
-        memory_max = lookup(lookup(var.resources, "argus-scada", {}), "memory_max", "3584")
+        memory_max = lookup(lookup(var.resources, "argus-scada", {}), "memory_max", max(3584, lookup(lookup(var.resources, "argus-scada", {}), "memory", "2560")))
       }
     }
 
@@ -474,7 +475,7 @@ EOT
       resources {
         cpu        = lookup(lookup(var.resources, "argus-gm", {}), "cpu", "200")
         memory     = lookup(lookup(var.resources, "argus-gm", {}), "memory", "1024")
-        memory_max = lookup(lookup(var.resources, "argus-gm", {}), "memory_max", "2048")
+        memory_max = lookup(lookup(var.resources, "argus-gm", {}), "memory_max", max(2048, lookup(lookup(var.resources, "argus-gm", {}), "memory", "1024")))
       }
     }
 
@@ -546,7 +547,7 @@ EOT
       resources {
         cpu        = lookup(lookup(var.resources, "automata", {}), "cpu", "200")
         memory     = lookup(lookup(var.resources, "automata", {}), "memory", "256")
-        memory_max = lookup(lookup(var.resources, "automata", {}), "memory_max", "512")
+        memory_max = lookup(lookup(var.resources, "automata", {}), "memory_max", max(512, lookup(lookup(var.resources, "automata", {}), "memory", "256")))
       }
     }
   }
