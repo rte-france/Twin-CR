@@ -20,11 +20,11 @@ unset http_proxy https_proxy ftp_proxy no_proxy HTTP_PROXY HTTPS_PROXY FTP_PROXY
 # The orchestrator runs in the background so that this script can act once it has exited: the stop signals of the
 # container (compose down, Nomad job stop) are forwarded to it, and such a stop ends the script right away.
 STOPPING=false
-ORCHESTRATOR_PID=""
+CHILD_PID=""
 on_stop() {
     STOPPING=true
-    if [ -n "$ORCHESTRATOR_PID" ]; then
-        kill -TERM "$ORCHESTRATOR_PID" 2>/dev/null || true
+    if [ -n "$CHILD_PID" ]; then
+        kill -TERM "$CHILD_PID" 2>/dev/null || true
     fi
 }
 trap on_stop TERM INT
@@ -35,6 +35,7 @@ else
     orchestrator_exec --from-nats &
 fi
 ORCHESTRATOR_PID=$!
+CHILD_PID=$ORCHESTRATOR_PID
 # wait gives the exit code of the orchestrator, even if it already exited. It returns early (>128) when a trapped
 # signal arrives: wait again while the orchestrator is still running.
 while true; do
@@ -56,9 +57,13 @@ fi
 if [ "$MODE" = "CLICKHOUSE" ]; then
     echo "Requesting the archive of the simulation"
     curl -sS --noproxy '*' --max-time 3600 \
-        "http://${CONFIGURATOR_HOST:-localhost}:${CONFIGURATOR_PORT:-8080}/archive" \
-        || echo "Archive request failed"
+        "http://${CONFIGURATOR_HOST:-localhost}:${CONFIGURATOR_PORT:-8080}/archive" &
+    CHILD_PID=$!
+    wait "$CHILD_PID" || echo "Archive request failed or interrupted"
     echo
+    if [ "$STOPPING" = true ]; then
+        exit "$EXIT_CODE"
+    fi
 fi
 
 # For Nomad session: the container stays up after the simulation (the session, its services and logs remain available
@@ -66,7 +71,7 @@ fi
 if [ "${KEEP_ALIVE_AFTER_EXIT:-false}" = true ] && [ "$STOPPING" = false ]; then
     echo "Simulation over, waiting for the session to be stopped"
     tail -f /dev/null &
-    ORCHESTRATOR_PID=$!  # A stop signal ends the wait
-    wait "$ORCHESTRATOR_PID" || true
+    CHILD_PID=$!  # A stop signal ends the wait
+    wait "$CHILD_PID" || true
 fi
 exit "$EXIT_CODE"
