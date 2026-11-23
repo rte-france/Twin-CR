@@ -140,3 +140,15 @@ pub async fn cancel_lobby_task(dsl_state: State<'_, LobbyManager>, req_id: Strin
 
     Ok(())
 }
+
+/// Points the client at the URL of a joined session without saving it in the settings (the configured URL comes back at the next start)
+#[tauri::command]
+pub async fn set_lobby_session_url(
+    app_handle: tauri::AppHandle,
+    lobby_state: State<'_, LobbyManager>,
+    url: String,
+) -> Result<()> {
+    lobby_state.0.configure(url);
+    lobby_state.connect(app_handle).await?;
+    Ok(())
+}

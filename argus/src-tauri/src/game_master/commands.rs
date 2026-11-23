@@ -213,3 +213,15 @@ pub async fn post_gm_endpoint(
 
     Ok(response)
 }
+
+/// Points the client at the URL of a joined session without saving it in the settings (the configured URL comes back at the next start)
+#[tauri::command]
+pub async fn set_gm_session_url(
+    app_handle: tauri::AppHandle,
+    gm_state: State<'_, GmManager>,
+    url: String,
+) -> Result<()> {
+    gm_state.0.configure(url);
+    gm_state.0.connect(app_handle).await?;
+    Ok(())
+}

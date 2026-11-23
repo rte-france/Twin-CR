@@ -16,15 +16,15 @@ import { Console, Effect } from "effect";
 
 /**
  * Points the backend clients at the services of a joined session, when the session manager gives their URLs (sessions
- * of the Nomad infrastructure, each with its own services). Without URLs (compose: a single session at fixed
- * addresses), the clients keep their configured URLs.
+ * of the Nomad infrastructure, each with its own services). These URLs are not saved: the configured ones come back at
+ * the next start. Without URLs (compose: a single session at fixed addresses), the clients keep their configured URLs.
  *
  * A client that cannot connect does not prevent joining: its error is logged, and its status shows it disconnected.
  */
 export const applySessionBackends = (session: GameSession): Promise<void> => {
-  const apply = <E>(name: string, url: string | null | undefined, set: (url: string) => Effect.Effect<void, E>) =>
+  const apply = <E>(name: string, url: string | null | undefined, setSessionUrl: (url: string) => Effect.Effect<void, E>) =>
     url
-      ? set(url).pipe(
+      ? setSessionUrl(url).pipe(
           Effect.catchAll((error) => Console.error(`Could not connect the ${name} backend of the session to ${url}`, error)),
         )
       : Effect.void;
@@ -35,13 +35,13 @@ export const applySessionBackends = (session: GameSession): Promise<void> => {
     const dsl = yield* DslClient;
     const lobby = yield* LobbyClient;
 
+    // setSessionUrl also connects the client to the URL
     yield* Effect.all(
       [
-        // setUrl also connects the client to the new URL (set_*_url commands)
-        apply("SCADA", session.scada_backend_url, scada.setUrl),
-        apply("GM", session.gm_backend_url, gm.setUrl),
-        apply("DSL", session.dsl_backend_url, dsl.setUrl),
-        apply("lobby", session.lobby_backend_url, lobby.setUrl),
+        apply("SCADA", session.scada_backend_url, scada.setSessionUrl),
+        apply("GM", session.gm_backend_url, gm.setSessionUrl),
+        apply("DSL", session.dsl_backend_url, dsl.setSessionUrl),
+        apply("lobby", session.lobby_backend_url, lobby.setSessionUrl),
       ],
       { concurrency: "unbounded" },
     );

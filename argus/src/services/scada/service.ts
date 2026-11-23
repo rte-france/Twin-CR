@@ -45,6 +45,8 @@ export class ScadaClient extends Context.Tag("ScadaClient")<
   ScadaClient,
   {
     readonly setUrl: (url: string) => Effect.Effect<void, ScadaError>;
+    /** URL of a joined session, not saved (the configured URL comes back at the next start) */
+    readonly setSessionUrl: (url: string) => Effect.Effect<void, ScadaError>;
     readonly getUrl: Effect.Effect<string, ScadaError>;
     readonly getStatus: Effect.Effect<string, ScadaError>;
     readonly connect: Effect.Effect<void, ScadaError>;
@@ -67,6 +69,12 @@ export const ScadaClientLive = Layer.succeed(
     setUrl: (url) =>
       Effect.tryPromise({
         try: () => invoke<void>("set_scada_url", { url }),
+        catch: parseScadaError,
+      }),
+
+    setSessionUrl: (url) =>
+      Effect.tryPromise({
+        try: () => invoke<void>("set_scada_session_url", { url }),
         catch: parseScadaError,
       }),
 

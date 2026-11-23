@@ -19,6 +19,8 @@ export type ServerStatus =
 
 export interface LobbyClientService {
   readonly setUrl: (url: string) => Effect.Effect<void, LobbyError>;
+  /** URL of a joined session, not saved (the configured URL comes back at the next start) */
+  readonly setSessionUrl: (url: string) => Effect.Effect<void, LobbyError>;
   readonly getUrl: Effect.Effect<string, LobbyError>;
   readonly getStatus: Effect.Effect<string, LobbyError>;
   readonly connect: Effect.Effect<void, LobbyError>;
@@ -39,6 +41,12 @@ export const LobbyClientLive = Layer.succeed(
     setUrl: (url) =>
       Effect.tryPromise({
         try: () => invoke<void>("set_lobby_url", { url }),
+        catch: parseLobbyError,
+      }),
+
+    setSessionUrl: (url) =>
+      Effect.tryPromise({
+        try: () => invoke<void>("set_lobby_session_url", { url }),
         catch: parseLobbyError,
       }),
 

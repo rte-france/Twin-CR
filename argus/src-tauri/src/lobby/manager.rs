@@ -72,4 +72,10 @@ impl LobbyManager {
 
         Self(server)
     }
+
+    /// Connects with the health check of the configurator, which has no /health endpoint
+    pub async fn connect(&self, app_handle: AppHandle) -> crate::common::utils::server_manager::Result<()> {
+        let strategy = Arc::new(StandardHealthCheck::new("/status"));
+        self.0.connect_with_strategy(strategy, app_handle).await
+    }
 }

@@ -135,6 +135,7 @@ pub fn run() {
             herge::commands::cancel_request,
             // game master
             game_master::commands::set_gm_url,
+            game_master::commands::set_gm_session_url,
             game_master::commands::get_gm_url,
             game_master::commands::get_gm_status,
             game_master::commands::get_gm_endpoint,
@@ -146,6 +147,7 @@ pub fn run() {
             game_master::commands::post_gm_endpoint,
             // scada
             scada::commands::set_scada_url,
+            scada::commands::set_scada_session_url,
             scada::commands::get_scada_url,
             scada::commands::get_scada_status,
             scada::commands::get_scada_endpoint,
@@ -156,6 +158,7 @@ pub fn run() {
             scada::commands::post_scada_endpoint,
             // dsl
             dsl::commands::set_dsl_url,
+            dsl::commands::set_dsl_session_url,
             dsl::commands::get_dsl_url,
             dsl::commands::get_dsl_status,
             dsl::commands::get_dsl_endpoint,
@@ -168,6 +171,7 @@ pub fn run() {
             dsl::commands::put_dsl_endpoint,
             // lobby
             lobby::commands::set_lobby_url,
+            lobby::commands::set_lobby_session_url,
             lobby::commands::get_lobby_url,
             lobby::commands::get_lobby_status,
             lobby::commands::connect_lobby,
