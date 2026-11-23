@@ -8,6 +8,7 @@ co-simulation of power systems.
 
 import os
 import glob
+import secrets
 from pathlib import Path
 import nats
 import clickhouse_connect
@@ -32,7 +33,10 @@ def load_gitignore():
 
 async def main():
     # Generate simulation ID
-    simulation_id = "sim_" + datetime.datetime.now(datetime.timezone.utc).strftime("%Y_%m_%d_%H_%M_%S")
+    # Same format as the configurator: timestamp + random suffix
+    simulation_id = (
+        "sim_" + datetime.datetime.now(datetime.timezone.utc).strftime("%Y_%m_%d_%H_%M_%S") + "_" + secrets.token_hex(3)
+    )
     print("Simulation id:", simulation_id)
 
     # Pick an example (here just the first one)

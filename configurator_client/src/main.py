@@ -12,6 +12,7 @@ import json
 import logging
 from contextlib import asynccontextmanager
 import os
+import secrets
 from pathlib import Path
 
 import clickhouse_connect
@@ -104,8 +105,10 @@ async def init(
     if state.status != "NOT READY":
         raise HTTPException(status_code=409, detail="A simulation is already active")
 
-    # Generate simulation ID
-    simulation_id = "sim_" + datetime.datetime.now(datetime.timezone.utc).strftime("%Y_%m_%d_%H_%M_%S")
+    # Generate simulation ID: timestamp (names sort chronologically) + random suffix, so that simulations started in the same second do not collide
+    simulation_id = (
+        "sim_" + datetime.datetime.now(datetime.timezone.utc).strftime("%Y_%m_%d_%H_%M_%S") + "_" + secrets.token_hex(3)
+    )
     print("Simulation id:", simulation_id)
 
     # ClickHouse and the context download are synchronous. On the event loop
