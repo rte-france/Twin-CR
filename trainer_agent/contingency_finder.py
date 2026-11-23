@@ -221,7 +221,7 @@ class ContingencyFinder:
         self.mode = mode
         global params
         
-        params = ps.loadflow.Parameters(transformer_voltage_control_on=True, distributed_slack=True)
+        params = ps.loadflow.Parameters(transformer_voltage_control_on=True, distributed_slack=True, voltage_init_mode=ps.loadflow.VoltageInitMode.DC_VALUES)
 
         self.applied_contingencies = []
 
@@ -231,14 +231,15 @@ class ContingencyFinder:
     def update_network(self, net, governor_kgover=None, loadflow=True):
         global network, pp_net, voltage_levels
         network = net
+        if loadflow:
+            generators = network.get_generators()
+            generators["target_p"] = -generators["p"]
+            network.update_generators(generators[["target_p"]])
+            loads = network.get_loads()
+            loads["p0"] = loads["p"]
+            network.update_loads(loads[["p0"]])
         if self.mode == "opf":
             if loadflow:
-                generators = network.get_generators()
-                generators["target_p"] = -generators["p"]
-                network.update_generators(generators[["target_p"]])
-                loads = network.get_loads()
-                loads["p0"] = loads["p"]
-                network.update_loads(loads[["p0"]])
                 params = ps.loadflow.Parameters(balance_type=ps.loadflow.BalanceType.PROPORTIONAL_TO_LOAD)
                 ps.loadflow.run_dc(network, params)
 
@@ -345,14 +346,13 @@ class ContingencyFinder:
             return "group"
 
     def find_contingency(self, include_failing=True, voltage_thresh=0, mode="opf", include_pairs=False):
-
-        if include_pairs:
-            elements, pairs, overloads = self.sensitivity_factors.get_problematic_n_minus_2(voltage_thresh)
-        else:
-            elements, overloads = self.sensitivity_factors.get_problematic_n_minus_1(voltage_thresh)
-
-        # Groups that do not overload anything need no OPF
         if mode == "opf":
+            if include_pairs:
+                elements, pairs, overloads = self.sensitivity_factors.get_problematic_n_minus_2(voltage_thresh)
+            else:
+                elements, overloads = self.sensitivity_factors.get_problematic_n_minus_1(voltage_thresh)
+
+            # Groups that do not overload anything need no OPF
             load_groups, load_overloads = self.screen_load_groups()
             gen_groups, gen_overloads = self.screen_gen_groups()
             # Must be set before the pool is created so that forked workers see it
@@ -363,7 +363,18 @@ class ContingencyFinder:
                 **{"gen" + group_name: min(times.values()) for group_name, times in gen_overloads.items()},
             }
         else:
-            load_groups, gen_groups = self.load_groups, self.gen_groups
+            transformers = network.get_2_windings_transformers()
+            lines = network.get_lines()
+             # Only check lines above a certain voltage threshold
+            if voltage_thresh > 0:
+                vlevels = network.get_voltage_levels()
+                lines = lines.join(vlevels["nominal_v"], on="voltage_level1_id")
+                elements = list(lines.index[lines["nominal_v"] > voltage_thresh])
+                elements += list(transformers.index[transformers["rated_u1"] > voltage_thresh])
+            else:
+                elements = list(lines.index) 
+                elements += list(transformers.index) # + list(generators.index)
+
         print("Starting contingency analysis")
         if self.n_jobs > 1:
             ctx = mp.get_context('fork')
