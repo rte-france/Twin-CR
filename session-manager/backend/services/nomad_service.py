@@ -78,8 +78,12 @@ class NomadSessionClient:
     def submit(self, job_id: str, variables: dict[str, str]) -> None:
         """Parses the session job with the given variables (plus session_id = job_id) and registers it."""
         assignments = {"session_id": job_id, **variables}
-        # A JSON string is a valid HCL string literal, a JSON object a valid HCL object (e.g. resources)
-        hcl_variables = "\n".join(f"{name} = {json.dumps(value)}" for name, value in assignments.items())
+        # A JSON string is a valid HCL string literal, a JSON object a valid HCL object (e.g. resources). HCL reads ${
+        # and %{ in strings as templates: escaped ($${, %%{) so that values of the context (e.g. java_opts) stay literal.
+        def hcl_value(value) -> str:
+            return json.dumps(value).replace("${", "$${").replace("%{", "%%{")
+
+        hcl_variables = "\n".join(f"{name} = {hcl_value(value)}" for name, value in assignments.items())
         if self.extra_variables:
             hcl_variables += "\n" + self.extra_variables
         job = self._check(self._request("POST", "/v1/jobs/parse", json={
