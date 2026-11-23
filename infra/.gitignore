@@ -2,9 +2,13 @@
 .generated_secrets/
 .venv/
 
-# Ignore dynamic and private inventories, keep only examples
+# Ignore private inventories, keep only examples
 inventories/*.ini
 environments/
+
+# Ignore private group_vars, keep only all.yml
+group_vars/*
+!group_vars/all.yml
 
 **/secrets.yml
 

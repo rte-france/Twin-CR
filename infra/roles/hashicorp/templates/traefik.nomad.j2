@@ -3,22 +3,22 @@ job "traefik" {
   type        = "system"
   group "traefik" {
     network {
-      port "http"     { static = 80 }
-      port "https"    { static = 443 }
-      port "admin"    { static = 8080 }
+      port "http"      { static = 80 }
+      port "https"     { static = 443 }
+      port "admin"     { static = 8080 }
       port "lobby-api" { static = 8000 }
     }
     service {
-          name = "traefik-admin"
-          port = "admin"
-          check {
-            name     = "Traefik Ping Check"
-            type     = "http"
-            path     = "/ping"
-            interval = "10s"
-            timeout  = "2s"
-          }
-        }
+      name = "traefik-admin"
+      port = "admin"
+      check {
+        name     = "Traefik Ping Check"
+        type     = "http"
+        path     = "/ping"
+        interval = "10s"
+        timeout  = "2s"
+      }
+    }
     vault {
       role = "nomad-workloads"
     }
@@ -30,86 +30,75 @@ job "traefik" {
         no_proxy = "127.0.0.1,localhost,10.0.0.0/8,.{{ base_domain }}"
       }
       template {
-        destination = "secrets/cert.pem"
+        destination = "secrets/bundle.pem"
         data        = <<EOF
-{% raw %}
-{{ with secret "pki/issue/twincr-workloads" "common_name=traefik.twin.local" "alt_names=keycloak.twin.local,nomad.twin.local,consul.twin.local,vault.twin.local,registry.twin.local,s3.twin.local" "ip_sans=127.0.0.1,172.28.0.2" "ttl=8760h" }}
-{{ .Data.certificate }}
-{{ .Data.issuing_ca }}
-{{ end }}
-{% endraw %}
+{{ '{{' }} with secret "pki/issue/twincr-workloads" "common_name=traefik.{{ base_domain }}" "alt_names=keycloak.{{ base_domain }},nomad.{{ base_domain }},consul.{{ base_domain }},vault.{{ base_domain }},registry.{{ base_domain }},s3.{{ base_domain }},auth.{{ base_domain }}" "ip_sans=127.0.0.1,{{ ansible_facts['default_ipv4']['address'] }}" "ttl=8760h" {{ '}}' }}
+{{ '{{' }} .Data.certificate {{ '}}' }}
+{{ '{{' }} .Data.issuing_ca {{ '}}' }}
+{{ '{{' }} .Data.private_key {{ '}}' }}
+{{ '{{' }} end {{ '}}' }}
 EOF
       }
       template {
-        destination = "secrets/key.pem"
+        destination = "local/traefik-routes.yml"
         data        = <<EOF
-{% raw %}
-{{ with secret "pki/issue/twincr-workloads" "common_name=traefik.twin.local" "alt_names=keycloak.twin.local,nomad.twin.local,consul.twin.local,vault.twin.local,registry.twin.local,s3.twin.local" "ip_sans=127.0.0.1,172.28.0.2" "ttl=8760h" }}
-{{ .Data.private_key }}
-{{ end }}
-{% endraw %}
+tls:
+  certificates:
+    - certFile: "/secrets/bundle.pem"
+      keyFile: "/secrets/bundle.pem"
+http:
+  routers:
+    auth-redirect:
+      rule: "Host(`auth.{{ base_domain }}`)"
+      entryPoints:
+        - web
+        - websecure
+      middlewares:
+        - auth-redirect-middleware
+      service: "noop@internal"
+      tls: {}
+    nomad-ui:
+      rule: "Host(`nomad.{{ base_domain }}`)"
+      service: nomad-svc
+      entryPoints:
+        - web
+        - websecure
+      tls: {}
+    consul-ui:
+      rule: "Host(`consul.{{ base_domain }}`)"
+      service: consul-svc
+      entryPoints:
+        - web
+        - websecure
+      tls: {}
+    vault-ui:
+      rule: "Host(`vault.{{ base_domain }}`)"
+      service: vault-svc
+      entryPoints:
+        - web
+        - websecure
+      tls: {}
+  middlewares:
+    auth-redirect-middleware:
+      redirectRegex:
+        regex: "^https?://auth\\.[^/]+/(.*)"
+        replacement: "https://keycloak.{{ base_domain }}/$${1}"
+        permanent: false
+  services:
+    nomad-svc:
+      loadBalancer:
+        servers:
+          - url: "http://127.0.0.1:4646"
+    consul-svc:
+      loadBalancer:
+        servers:
+          - url: "http://127.0.0.1:8500"
+    vault-svc:
+      loadBalancer:
+        servers:
+          - url: "http://127.0.0.1:8200"
 EOF
       }
-      template {
-              destination = "local/traefik-routes.yml"
-              data = <<EOF
-      tls:
-        certificates:
-          - certFile: "/secrets/cert.pem"
-            keyFile: "/secrets/key.pem"
-      http:
-        routers:
-          auth-redirect:
-            rule: "Host(`auth.{{ base_domain }}`)"
-            entryPoints:
-              - web
-              - websecure
-            middlewares:
-              - auth-redirect-middleware
-            service: "noop@internal"
-            tls: {}
-          nomad-ui:
-            rule: "Host(`nomad.{{ base_domain }}`)"
-            service: nomad-svc
-            entryPoints:
-              - web
-              - websecure
-            tls: {}
-          consul-ui:
-            rule: "Host(`consul.{{ base_domain }}`)"
-            service: consul-svc
-            entryPoints:
-              - web
-              - websecure
-            tls: {}
-          vault-ui:
-            rule: "Host(`vault.{{ base_domain }}`)"
-            service: vault-svc
-            entryPoints:
-              - web
-              - websecure
-            tls: {}
-        middlewares:
-          auth-redirect-middleware:
-            redirectRegex:
-              regex: "^https?://auth\\.[^/]+/(.*)"
-              replacement: "https://keycloak.{{ base_domain }}/$${1}"
-              permanent: false
-        services:
-          nomad-svc:
-            loadBalancer:
-              servers:
-                - url: "http://127.0.0.1:4646"
-          consul-svc:
-            loadBalancer:
-              servers:
-                - url: "http://127.0.0.1:8500"
-          vault-svc:
-            loadBalancer:
-              servers:
-                - url: "http://127.0.0.1:8200"
-      EOF
-            }
       config {
         image        = "traefik:v3.7"
         network_mode = "host"

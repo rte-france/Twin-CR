@@ -78,7 +78,12 @@
 
 - name: Set Vault root token fact
   ansible.builtin.set_fact:
-    vault_root_token: "{{ (vault_creds_raw.content | b64decode | regex_search('VAULT_ROOT_TOKEN=\"(.*)\"', '\\1'))[0] | default(vault_token | default('root')) }}"
+    vault_root_token: >-
+      {{
+        (vault_creds_raw.content | b64decode | regex_search('VAULT_ROOT_TOKEN="(.*)"', '\1'))[0]
+        if (vault_creds_raw.content is defined)
+        else (vault_root_token | default(vault_token | default('root')))
+      }}
 
 - name: Enable OIDC auth method in Vault
   ansible.builtin.command: vault auth enable oidc
@@ -171,4 +176,3 @@
   register: nomad_bind_create
   failed_when: nomad_bind_create.rc != 0 and "already exists" not in nomad_bind_create.stderr
   changed_when: nomad_bind_create.rc == 0
-

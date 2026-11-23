@@ -515,4 +515,3 @@
   register: dnsmasq_run
   changed_when: "'Job registration successful' in dnsmasq_run.stdout"
   when: inventory_hostname in groups['nomad_servers']
-
