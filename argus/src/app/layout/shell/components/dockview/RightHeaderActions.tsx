@@ -12,6 +12,7 @@ import type { DockviewGroupPanel, DockviewComponent } from "dockview-core";
 import { Effect } from "effect";
 import { getSystemRuntime } from "@/utils/getSystemRuntime";
 import { WindowBootstrapper } from "@/services/window-bootstrap";
+import { buildPanelRoute } from "../../utils";
 
 interface RightHeaderActionsProps {
   group: DockviewGroupPanel;
@@ -77,11 +78,19 @@ export const RightHeaderActions: Component<RightHeaderActionsProps> = (
       localStorage.setItem(`detached_payload_${id}`, JSON.stringify(params));
     }
 
-    const targetRoute = `/floating/${viewType}/${id}`;
+    const targetRoute = buildPanelRoute({
+      id,
+      title,
+      viewType,
+      entryUrl: params?.entryUrl,
+      isLocalFile: params?.isLocalFile,
+      props: params,
+      groupId: props.group.id,
+    });
 
     const program = Effect.gen(function* () {
       const wm = yield* WindowBootstrapper;
-      yield* wm.createChildFromCurrent(title, encodeURIComponent(targetRoute));
+      yield* wm.createChildFromCurrent(title, targetRoute);
     });
 
     getSystemRuntime()

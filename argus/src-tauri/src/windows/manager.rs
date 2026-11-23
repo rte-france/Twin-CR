@@ -10,6 +10,28 @@ use crate::database::manager::DbManager;
 use tauri::{AppHandle, Manager, WebviewUrl, WebviewWindowBuilder};
 use uuid::Uuid;
 
+pub async fn get_all_descendants(
+    db: &DbManager,
+    root_label: &str,
+) -> Result<Vec<String>, String> {
+    let query = r#"
+        WITH RECURSIVE descendants(label) AS (
+            SELECT label FROM window_hierarchy WHERE parent_label = ?
+            UNION ALL
+            SELECT w.label FROM window_hierarchy w
+            INNER JOIN descendants d ON w.parent_label = d.label
+        )
+        SELECT label FROM descendants;
+    "#;
+
+    let rows: Vec<(String,)> = db
+        .fetch_all_with_args(query, vec![root_label.to_string()])
+        .await
+        .map_err(|e| e.to_string())?;
+
+    Ok(rows.into_iter().map(|(label,)| label).collect())
+}
+
 pub struct WindowManager {
     app_handle: AppHandle,
 }
@@ -42,7 +64,8 @@ impl WindowManager {
         .await
         .map_err(|e| e.to_string())?;
 
-        let url = format!("/?route={}", route);
+        let encoded_route = url::form_urlencoded::byte_serialize(route.as_bytes()).collect::<String>();
+        let url = format!("/?route={}", encoded_route);
         WebviewWindowBuilder::new(&self.app_handle, &label, WebviewUrl::App(url.into()))
             .title(title)
             .decorations(false)
@@ -69,9 +92,11 @@ impl WindowManager {
         .await
         .map_err(|e| e.to_string())?;
 
-        let url = format!("/?parent={}&route={}", parent_label, route);
+        let encoded_route = url::form_urlencoded::byte_serialize(route.as_bytes()).collect::<String>();
+        let url = format!("/?parent={}&route={}", parent_label, encoded_route);
         WebviewWindowBuilder::new(&self.app_handle, &label, WebviewUrl::App(url.into()))
             .title(title)
+            .visible(false)
             .build()
             .map_err(|e| e.to_string())?;
 
@@ -85,36 +110,33 @@ impl WindowManager {
 
         if let Some(window) = self.app_handle.get_webview_window(&label) {
             window.on_window_event(move |event| {
-                if let tauri::WindowEvent::Destroyed = event {
-                    let h = handle.clone();
-                    let l = current_label.clone();
+                match event {
+                    tauri::WindowEvent::CloseRequested { .. } | tauri::WindowEvent::Destroyed => {
+                        let h = handle.clone();
+                        let l = current_label.clone();
 
-                    tauri::async_runtime::spawn(async move {
-                        let db = h.state::<DbManager>();
+                        tauri::async_runtime::spawn(async move {
+                            let db = h.state::<DbManager>();
 
-                        if is_parent {
-                            let children: Vec<(String,)> = db
-                                .fetch_all_with_args(
-                                    "SELECT label FROM window_hierarchy WHERE parent_label = ?",
-                                    vec![l.clone()],
-                                )
-                                .await
-                                .unwrap_or_default();
-
-                            for (child_label,) in children {
-                                if let Some(child_win) = h.get_webview_window(&child_label) {
-                                    let _ = child_win.close();
+                            if is_parent {
+                                if let Ok(descendants) = get_all_descendants(&db, &l).await {
+                                    for child_label in descendants {
+                                        if let Some(child_win) = h.get_webview_window(&child_label) {
+                                            let _ = child_win.close();
+                                        }
+                                    }
                                 }
                             }
-                        }
 
-                        let _ = db
-                            .execute_with_args(
-                                "DELETE FROM window_hierarchy WHERE label = ?",
-                                &[&l],
-                            )
-                            .await;
-                    });
+                            let _ = db
+                                .execute_with_args(
+                                    "DELETE FROM window_hierarchy WHERE label = ?",
+                                    &[&l],
+                                )
+                                .await;
+                        });
+                    }
+                    _ => {}
                 }
             });
         }
