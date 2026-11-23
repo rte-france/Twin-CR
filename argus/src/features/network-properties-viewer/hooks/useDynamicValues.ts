@@ -8,8 +8,8 @@ co-simulation of power systems.
 
 import { onCleanup } from "solid-js";
 import { Effect, Stream, Schedule, Ref } from "effect";
-import { GmClient, GmHistoryItem, GmSseData } from "@/services/game-master/service";
-import { EstimItem, ScadaClient, ScadaHistoryItem, ScadaSseData } from "@/services/scada/service";
+import { GmClient, GmSseData } from "@/services/game-master/service";
+import { EstimItem, ScadaClient, ScadaSseData } from "@/services/scada/service";
 import { TimeClient } from "@/services/time/service";
 import { Mode } from "@/services/app-mode";
 import { MappingItem } from "@/services/mapping/types";
@@ -69,23 +69,7 @@ export function useDynamicValues(
 
       const { current_time: now } = yield* timeClient.getTime;
 
-      // Initial history fetch — mapping
-      yield* Effect.all(
-        topics.map((topic) =>
-          client.get<(GmHistoryItem | ScadaHistoryItem)[]>(`/history/${topic}?min=${now - 10}&max=${now}`).pipe(
-            Effect.flatMap((data) =>
-              // last item per id wins (data sorted by time ascending)
-              Effect.all(
-                [...new Map(data.map((i) => [i.id, i])).values()]
-                  .map((i) => writeMapping(i.id, i.value)),
-                { concurrency: "unbounded" },
-              )
-            ),
-            Effect.catchAll(() => Effect.void),
-          )
-        ),
-        { concurrency: 5 },
-      );
+      // No initial fetch for the mapping: the SSE subscription (/sub) first sends the latest value of each id
 
       // Initial history fetch — estim (only on Scada)
       if (currentMode === Mode.Scada) {

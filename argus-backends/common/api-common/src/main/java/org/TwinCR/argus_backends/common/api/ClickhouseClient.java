@@ -105,10 +105,8 @@ public class ClickhouseClient {
         return "`" + simName + "`.`" + tableName + "`";
     }
 
-    public String queryHistory(Optional<String> topic, double minTime, double maxTime) throws IOException, InterruptedException {
-        if (topic.isPresent()) {
-            sqlProtection(topic.get());
-        }
+    public String queryHistory(String topic, double minTime, double maxTime) throws IOException, InterruptedException {
+        sqlProtection(topic);
 
         String tableName;
         String timeField;
@@ -123,17 +121,17 @@ public class ClickhouseClient {
         }
         String fullTableName = buildFullTableName(tableName);
 
+        String topicFilter = "topic='" + topic + "'";
         String query =
-            "SELECT id, value, " + timeField + " FROM " + fullTableName + " " +
-            "WHERE ";
-        if (topic.isPresent()) {
-            query +=
-                "topic='" + topic.get() + "' AND ";
-        }
-        query +=
-            timeField + " >= " + minTime + " AND " +
-            timeField + " < " + maxTime + " " +
-            "ORDER BY " + timeField + " FORMAT JSON";
+            "SELECT id, v AS value, t AS " + timeField + " FROM (" +
+                // Latest value in [0, minTime) (timestamped at minTime). Avoid losing data that is only published on change
+                "SELECT id, argMax(value, " + timeField + ") AS v, toFloat64(" + minTime + ") AS t FROM " + fullTableName + " " +
+                "WHERE " + topicFilter + " AND " + timeField + " < " + minTime + " GROUP BY id " +
+                "UNION ALL " +
+                // All values in [minTime, maxTime]
+                "SELECT id, value AS v, " + timeField + " AS t FROM " + fullTableName + " " +
+                "WHERE " + topicFilter + " AND " + timeField + " >= " + minTime + " AND " + timeField + " < " + maxTime +
+            ") ORDER BY " + timeField + " FORMAT JSON";
 
         return performClickhouseRequest(query);
     }
@@ -154,6 +152,19 @@ public class ClickhouseClient {
             query += "WHERE topic='" + topic.get() + "' ";
         }
         query += "FORMAT JSON";
+
+        return performClickhouseRequest(query);
+    }
+
+    public String queryLatestMeasurementsReceived(String destination, String topic) throws IOException, InterruptedException {
+        sqlProtection(destination);
+        sqlProtection(topic);
+
+        String fullTableName = buildFullTableName("Latest_MeasurementReceived");
+
+        String query =
+                "SELECT id, value, time_sent, time_received FROM " + fullTableName + " FINAL " +
+                "WHERE destination='" + destination + "' AND topic='" + topic + "' FORMAT JSON";
 
         return performClickhouseRequest(query);
     }

@@ -47,6 +47,12 @@ public class Config extends ConfigCommon {
         return staleMeasurementTimeout;
     }
 
+    /** Cyber location (destination) where measurements are received */
+    public String location() {
+        String location = config().getString("hmi.location");
+        return location != null ? location : "SCADA";
+    }
+
     public Path scadaMappingPath() {
         return getPathFromConfig("scada_outputs_file");
     }

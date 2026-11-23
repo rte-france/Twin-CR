@@ -151,6 +151,28 @@ async def nats_request(nats_connection: NATS, subject: str, message: bytes, time
     except NoRespondersError:
         print("No subscribers to", subject)
 
+def query_latest_values(simulation_id: str, topics: list[str], destination: str | None) -> list[tuple[str, float, float]]:
+    """
+    Latest (id, value, time) of each measurement of the given topics, from ClickHouse: actual measurements (game master)
+    if destination is None, else measurements received at destination (time is then the reception time)
+    """
+    client = clickhouse_connect.get_client(
+        host=CLICKHOUSE_HOST, port=CLICKHOUSE_PORT
+    )
+    if destination is None:
+        query = (
+            "SELECT id, value, time "
+            f"FROM `{simulation_id}`.Latest_ActualMeasurement FINAL "
+            "WHERE has({topics:Array(String)}, topic)"
+        )
+    else:
+        query = (
+            "SELECT id, value, time_received "
+            f"FROM `{simulation_id}`.Latest_MeasurementReceived FINAL "
+            "WHERE destination = {destination:String} AND has({topics:Array(String)}, topic)"
+        )
+    return client.query(query, parameters={"topics": topics, "destination": destination}).result_rows
+
 def sanitize_nats_topic_name(topic: str) -> str:
     chars = list(topic)
 
@@ -326,6 +348,8 @@ class HMI(QWidget):
                     self.graphs.append(TabGraphData(tab_data, tab_name, self.fps, self.speedup, self.history_time))
 
         self.data = defaultdict(lambda: np.nan)
+        self.data_time = {}  # Time of the last measurement of each id (simulation or reception time), to keep the most recent one
+        self.latest_values_fetched = False
 
         self.game_master_client = GameMasterClient(GAME_MASTER_URL) if WITH_LEGACY_DSL else None
         self.game_master_artifact = "Nordic"
@@ -372,7 +396,10 @@ class HMI(QWidget):
         print(f"Connecting to NATS server: {nats_url}")
         AsyncioPySide6.runTask(self.nats_connection.connect(nats_url))  # Same as await self.nats_connection.connect
         subscribed_substations = app_config.get("subscribed_substations", [])
+        self.subscribed_topics = list(subscribed_substations)
+        self.location = None  # Cyber location (destination) of the received measurements (hmi only)
         if application == "hmi":
+            self.location = app_config["location"]
             for substation in subscribed_substations:
                 sanitized_substation_name = sanitize_nats_topic_name(substation)
                 AsyncioPySide6.runTask(self.nats_connection.subscribe("HMI." + app_config["location"] + "." + sanitized_substation_name, cb=self.message_handler))
@@ -846,6 +873,13 @@ class HMI(QWidget):
             if self.data[id] != value:
                 print(f'message_handler -> State changed for {id}: {value} (old value={self.data[id]})', flush=True)
 
+        # Simulation time (ActualMeasurement) or reception time (Information Received) orders the values of an id
+        order_time = message.get("time", message.get("time_received"))
+        if order_time is not None:
+            if self.data_time.get(id, -math.inf) > order_time:
+                return  # Older than the latest value fetched from ClickHouse
+            self.data_time[id] = order_time
+
         time_sent = message.get("time")  # ActualMeasurement
         if time_sent is None:
             time_sent = message.get("time_sent")  # Information Received
@@ -905,8 +939,33 @@ class HMI(QWidget):
             self.alarm.append(txt)
             # print('= alarms =', json.dumps(message))
 
+    async def fetch_latest_values(self):
+        """
+        TS are only published on change: when joining a running simulation, get the latest value of each subscribed
+        measurement from ClickHouse (actual measurements for the game master, received at the location for the hmi)
+        """
+        try:
+            response = await self.nats_connection.request(
+                "GameMasterControl.hmi", json.dumps({"command": "get_simulation_name"}).encode(), timeout=2)
+            reply = json.loads(response.data.decode())
+            if reply.get("status") != "OK":
+                print("Could not get the simulation name:", reply)
+                return
+            rows = await asyncio.to_thread(query_latest_values, reply["reply"], self.subscribed_topics, self.location)
+        except Exception as e:
+            print("Could not fetch the latest values:", e)
+            return
+        for id, value, order_time in rows:
+            if self.data_time.get(id, -math.inf) > order_time:
+                continue  # A more recent value has already been received
+            self.data_time[id] = order_time
+            self.data[id] = value
+
     async def time_message_handler(self, msg: nats.aio.msg.Msg):
         message = json.loads(msg.data.decode())
+        if not self.latest_values_fetched:
+            self.latest_values_fetched = True
+            await self.fetch_latest_values()
         self.time = float(message["current_time"])
         self.clock_text.setText(f"time: {int(self.time)}")
 

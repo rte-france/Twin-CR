@@ -10,6 +10,7 @@
 # Rules for generating variables list for the generation of configuration files (dynawo_output, dynawo curves, ...)
 # -----
 #  Rules can be read as a dictionary (iidm_class, dynawo model) : {mapping: pattern, factor: float}
+#    with an optional 'publish_on_change: true' (TS): the game master output is only published when its value changes
 #  Dynawo models can be defined:
 #    1. in the IIDM, and not redefined in DYD file -> default Component model in Model NETWORK
 #    2. in the IIDM, and be redefined in DYD (through static_id)
@@ -306,6 +307,7 @@ line:
     state:
       mapping: "@ID@_state_value"
       factor: 1
+      publish_on_change: true
 static_var_compensator:
   default:
     P:
@@ -375,3 +377,4 @@ switch:
     state:
       mapping: "@ID@_state_value"
       factor: 1
+      publish_on_change: true

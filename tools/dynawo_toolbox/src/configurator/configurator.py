@@ -272,7 +272,8 @@ class Configurator:
         if self._outputs_variables is None:
             self._generate_variables()
 
-        keep_keys = ["equipmentId", "model_lib", "kind", "side", "id", "dynawo_id", "topic", "factor", "substation", "voltage_level"]
+        keep_keys = ["equipmentId", "model_lib", "kind", "side", "id", "dynawo_id", "topic", "factor", "substation", "voltage_level",
+                     "publish_on_change"]
         filtered_outputs = []
         for item in self._outputs_variables:
             dynawo_output = {k: v for k, v in item.items() if k in keep_keys}
@@ -529,6 +530,8 @@ class Configurator:
                 variable["dynawo_id"] = f"{variable['model']}_{variable['variable']}"
                 variable["id"] = variable["dynawo_id"]
                 variable["factor"] = factor
+                if in_or_out == InOrOut.OUT and rule.get("publish_on_change", False) == True:
+                    variable["publish_on_change"] = True
                 model_variables.append(variable)
         # Check duplication errors
         non_uniques = [k for (k, v) in Counter([v["id"] for v in model_variables]).items() if v > 1]
@@ -607,6 +610,7 @@ class Configurator:
             input["source"] = ROOT_CYBER_NODE_NAME
             input["destination"] = input.get("substation", ROOT_CYBER_NODE_NAME)
         for output in self._scada_outputs:
+            output.pop("publish_on_change", None)  # Game master rule, SCADA outputs are periodic here
             output["source"] = output.get("substation", ROOT_CYBER_NODE_NAME)
             output["destination"] = ROOT_CYBER_NODE_NAME
             output["period"] = 1
@@ -748,6 +752,7 @@ class Configurator:
             dynawo_found[type_] += 1
 
             element = copy.deepcopy(variables_by_iidm_key[iidm_key])
+            element.pop("publish_on_change", None)  # Game master rule, SCADA publication is driven by the TS/TM type
             if type_ in ["TM", "TS"]:  # Output
                 element["source"] = rtu
                 element["destination"] = ROOT_CYBER_NODE_NAME
