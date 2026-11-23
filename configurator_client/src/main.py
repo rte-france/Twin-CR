@@ -235,6 +235,8 @@ def get_archive(
     (e.g. on the orchestrator stop message) is skipped, so it is safe to call after the end of a simulation."""
     state: ServerState = app.state.state
     if simulation_id is None:
+        if context_id is not None:
+            raise HTTPException(status_code=422, detail="simulation_id is required with context_id")
         if state.current_simulation_id is None:
             return {"simulation_id": None, "archived": False, "detail": "No active simulation"}
         context_id, simulation_id = state.context_id, state.current_simulation_id
