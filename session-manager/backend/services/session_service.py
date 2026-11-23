@@ -18,7 +18,7 @@ from urllib.parse import quote, urlsplit
 import requests
 from urllib3.exceptions import InsecureRequestWarning
 from fastapi import HTTPException
-from sqlmodel import func, select, Session
+from sqlmodel import func, select, update, Session
 
 from backend.config import CONFIGURATOR_CLIENT_ENDPOINT, UPDATE_SESSION_STATE_TIMEOUT, NOMAD_ADDR, NOMAD_TOKEN, \
     SESSION_JOB_HCL, SESSION_JOB_VARIABLES, SESSION_INIT_TIMEOUT, SESSION_PUBLIC_URL, SESSION_ROUTER_URL
@@ -97,6 +97,9 @@ def session_routes_live(session_id: int) -> bool:
 # Sessions in cleanup whose stop (archive, then job stop) runs in a worker thread (see _stop_session_job)
 _stopping: set[int] = set()
 _stopping_lock = threading.Lock()
+# Time before which a failed stop is not retried (e.g. archive failing: not every monitor tick)
+_stop_retry_at: dict[int, float] = {}
+STOP_RETRY_DELAY = 30
 
 
 # Placement time of the jobs of the sessions in warmup: their start timeout (SESSION_INIT_TIMEOUT) counts from there, a
@@ -125,11 +128,13 @@ def _stop_session_job(engine, session_id: int) -> None:
         nomad.stop(job_id)
         _placed_since.pop(job_id, None)
         update(state=SessionState.ENDED, ended_at=datetime.now(UTC), status_detail=None)
+        _stop_retry_at.pop(session_id, None)
         logger.info(f"Session {session_id} stopped")
     except Exception as exc:
         detail = getattr(exc, "detail", str(exc))
-        logger.error(f"Stop of session {session_id} failed, retried: {detail}")
+        logger.error(f"Stop of session {session_id} failed, retried in {STOP_RETRY_DELAY} s: {detail}")
         update(status_detail=f"Stop failed, retrying: {detail}")
+        _stop_retry_at[session_id] = time.monotonic() + STOP_RETRY_DELAY
     finally:
         with _stopping_lock:
             _stopping.discard(session_id)
@@ -325,57 +330,67 @@ class SessionService:
         sessions = self.session.exec(select(GameSession).where(
             GameSession.state.in_([SessionState.WARMUP, SessionState.ONGOING, SessionState.CLEANUP])
         )).all()
-        for game_session in sessions:
-            job_id = session_job_id(game_session.id)
-            if game_session.state == SessionState.CLEANUP:
+        # The checks below take time (Nomad, services): a session may change meanwhile (e.g. stopped by its owner).
+        # The loaded objects are not modified, the writes only apply if the state is still the one read.
+        followed = [(game_session.id, game_session.state) for game_session in sessions]
+        for session_id, state in followed:
+            job_id = session_job_id(session_id)
+            if state == SessionState.CLEANUP:
                 # Stop requested: archive and stop in a worker (also resumes a stop interrupted by a restart)
                 with _stopping_lock:
-                    if game_session.id in _stopping:
+                    if session_id in _stopping or time.monotonic() < _stop_retry_at.get(session_id, 0):
                         continue
-                    _stopping.add(game_session.id)
-                threading.Thread(target=_stop_session_job, args=(self.session.get_bind(), game_session.id),
+                    _stopping.add(session_id)
+                threading.Thread(target=_stop_session_job, args=(self.session.get_bind(), session_id),
                                  daemon=True).start()
                 continue
             try:
                 progress = nomad.progress(job_id)
-                if game_session.state == SessionState.WARMUP:
-                    self._follow_launch(game_session, job_id, progress)
+                if state == SessionState.WARMUP:
+                    values = self._follow_launch(session_id, job_id, progress)
                 elif progress.phase in (FAILED, GONE):
-                    logger.warning(f"Session {game_session.id} ended unexpectedly: {progress.detail}")
-                    game_session.state = SessionState.ENDED
-                    game_session.ended_at = datetime.now(UTC)
-                    game_session.status_detail = f"Ended unexpectedly: {progress.detail}"
+                    logger.warning(f"Session {session_id} ended unexpectedly: {progress.detail}")
+                    values = {"state": SessionState.ENDED, "ended_at": datetime.now(UTC),
+                              "status_detail": f"Ended unexpectedly: {progress.detail}"}
+                else:
+                    values = None
             except HTTPException as exc:
-                logger.warning(f"Could not follow session {game_session.id}: {exc.detail}")
+                logger.warning(f"Could not follow session {session_id}: {exc.detail}")
+                continue
+            if values and not self._update_if_state(session_id, state, values):
+                logger.info(f"Session {session_id} changed while followed (no longer {state.value}): not updated")
         self.session.commit()
 
-    def _follow_launch(self, game_session: GameSession, job_id: str, progress):
+    def _update_if_state(self, session_id: int, state: SessionState, values: dict) -> bool:
+        """Writes the values only if the session is still in that state; whether it did."""
+        result = self.session.execute(
+            update(GameSession).where(GameSession.id == session_id, GameSession.state == state).values(**values)
+        )
+        self.session.commit()
+        return result.rowcount == 1
+
+    def _follow_launch(self, session_id: int, job_id: str, progress) -> dict:
+        """The values of a session in warmup, from the progress of its job."""
         if progress.phase in (FAILED, GONE):
-            self._fail_launch(game_session, job_id, progress.detail, stop=progress.phase == FAILED)
-            return
+            return self._fail_launch(session_id, job_id, progress.detail, stop=progress.phase == FAILED)
         if progress.phase != WAITING:
             _placed_since.setdefault(job_id, time.monotonic())
         if job_id in _placed_since and time.monotonic() - _placed_since[job_id] > SESSION_INIT_TIMEOUT:
-            self._fail_launch(game_session, job_id, f"Not ready after {SESSION_INIT_TIMEOUT:.0f} s", stop=True)
-            return
+            return self._fail_launch(session_id, job_id, f"Not ready after {SESSION_INIT_TIMEOUT:.0f} s", stop=True)
         if (progress.phase == INITIALIZED and nomad.backends_ready(job_id)
-                and (not (SESSION_PUBLIC_URL and SESSION_ROUTER_URL) or session_routes_live(game_session.id))):
-            logger.info(f"Session {game_session.id} ready")
+                and (not (SESSION_PUBLIC_URL and SESSION_ROUTER_URL) or session_routes_live(session_id))):
+            logger.info(f"Session {session_id} ready")
             _placed_since.pop(job_id, None)
-            game_session.state = SessionState.ONGOING
-            game_session.status_detail = None
-            return
-        game_session.status_detail = progress.detail
+            return {"state": SessionState.ONGOING, "status_detail": None}
+        return {"status_detail": progress.detail}
 
-    def _fail_launch(self, game_session: GameSession, job_id: str, reason: str, stop: bool):
-        logger.warning(f"Launch of session {game_session.id} failed: {reason}")
+    def _fail_launch(self, session_id: int, job_id: str, reason: str, stop: bool) -> dict:
+        logger.warning(f"Launch of session {session_id} failed: {reason}")
         if stop:
             # Stopped but not purged: its logs stay available in Nomad to understand the failure
             nomad.stop(job_id)
         _placed_since.pop(job_id, None)
-        game_session.state = SessionState.READY
-        game_session.started_at = None
-        game_session.status_detail = f"Launch failed: {reason}"
+        return {"state": SessionState.READY, "started_at": None, "status_detail": f"Launch failed: {reason}"}
 
     def update_sessions_state(self, session_ids: list[int], session_state: SessionState):
         for session_id in session_ids:
