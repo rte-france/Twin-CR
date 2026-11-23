@@ -530,7 +530,7 @@ class Configurator:
                 variable["dynawo_id"] = f"{variable['model']}_{variable['variable']}"
                 variable["id"] = variable["dynawo_id"]
                 variable["factor"] = factor
-                if in_or_out == InOrOut.OUT and rule.get("publish_on_change", False):
+                if in_or_out == InOrOut.OUT and rule.get("publish_on_change", False) == True:
                     variable["publish_on_change"] = True
                 model_variables.append(variable)
         # Check duplication errors
