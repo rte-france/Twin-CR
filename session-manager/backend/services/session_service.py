@@ -97,6 +97,10 @@ def session_routes_live(session_id: int) -> bool:
 # Sessions in cleanup whose stop (archive, then job stop) runs in a worker thread (see _stop_session_job)
 _stopping: set[int] = set()
 _stopping_lock = threading.Lock()
+# Sessions whose launch is submitting their job: not followed by the monitor meanwhile
+_submitting: set[int] = set()
+_submitting_lock = threading.Lock()
+
 # Time before which a failed stop is not retried (e.g. archive failing: not every monitor tick)
 _stop_retry_at: dict[int, float] = {}
 STOP_RETRY_DELAY = 30
@@ -252,23 +256,37 @@ class SessionService:
         game_session = self.get_or_404(session_id)
         if game_session.state != SessionState.READY:
             raise HTTPException(status_code=409, detail=f"Session {session_id} is {game_session.state.value}, not ready")
-        game_session.started_at = datetime.now(UTC)
-        game_session.state = SessionState.ONGOING
 
         context_id = game_session.template_uuid
         scenario_id = game_session.session_dsl_name
         config_path = game_session.session_config_toml_name
 
         if nomad is not None:
+            # Claimed (ready -> warmup) before contacting Nomad: of two simultaneous launches, only one gets the session.
             # Not waited: the session stays in warmup, followed by the session monitor (monitor_nomad_sessions), until
-            # ready (ongoing) or failed (back to ready, with the reason in status_detail)
-            self.launch_session_job(session_id, context_id, scenario_id, config_path, storage)
-            game_session.state = SessionState.WARMUP
-            game_session.status_detail = "Submitting the session job"
-            self.session.add(game_session)
-            self.session.commit()
+            # ready (ongoing) or failed (back to ready, with the reason in status_detail).
+            with _submitting_lock:
+                _submitting.add(session_id)  # Not followed by the monitor until submitted (its job does not exist yet)
+            try:
+                if not self._update_if_state(session_id, SessionState.READY, {
+                    "state": SessionState.WARMUP, "started_at": datetime.now(UTC),
+                    "status_detail": "Submitting the session job",
+                }):
+                    raise HTTPException(status_code=409, detail=f"Session {session_id} is already being launched")
+                try:
+                    self.launch_session_job(session_id, context_id, scenario_id, config_path, storage)
+                except Exception:
+                    self._update_if_state(session_id, SessionState.WARMUP,
+                                          {"state": SessionState.READY, "started_at": None, "status_detail": None})
+                    raise
+            finally:
+                with _submitting_lock:
+                    _submitting.discard(session_id)
             self.session.refresh(game_session)
             return game_session
+
+        game_session.started_at = datetime.now(UTC)
+        game_session.state = SessionState.ONGOING
 
         response = requests.get(
             f"{CONFIGURATOR_CLIENT_ENDPOINT}/init/{context_id}",
@@ -335,6 +353,9 @@ class SessionService:
         followed = [(game_session.id, game_session.state) for game_session in sessions]
         for session_id, state in followed:
             job_id = session_job_id(session_id)
+            with _submitting_lock:
+                if session_id in _submitting:
+                    continue
             if state == SessionState.CLEANUP:
                 # Stop requested: archive and stop in a worker (also resumes a stop interrupted by a restart)
                 with _stopping_lock:
