@@ -166,17 +166,27 @@ class NomadSessionClient:
         return None
 
     def archive(self, job_id: str) -> None:
-        """Requests the archive of the simulation of the session (skipped by the configurator if already done)."""
+        """Requests the archive of the simulation of the session (skipped by the configurator if already done).
+        Raises if it fails while the services run (to be retried: the ClickHouse data is lost with the job since Clickhouse has no volume).
+        Skipped, with a warning, when they no longer run (nothing left to archive)."""
+        allocation = self._latest_allocation(job_id)
+        if allocation is None or allocation["ClientStatus"] != "running":
+            status = allocation["ClientStatus"] if allocation else "no allocation"
+            logger.warning(f"Services of {job_id} not running ({status}): its simulation cannot be archived")
+            return
         configurator_url = self._port_url(job_id, CONFIGURATOR_PORT_LABEL)
         if configurator_url is None:
-            logger.warning(f"No configurator found for {job_id}: its simulation is not archived")
+            logger.warning(f"No configurator found for {job_id}: its simulation cannot be archived")
             return
         try:
             # Archiving a long simulation (several GB) takes time: only the response may take long, not the connection
             response = requests.get(f"{configurator_url}/archive", timeout=(10, 3600))
-            logger.info(f"Archive of {job_id}: HTTP {response.status_code} {response.text.strip()}")
         except requests.RequestException as exc:
-            logger.error(f"Archive of {job_id} failed: {exc}")
+            raise HTTPException(status_code=502, detail=f"Archive request failed: {exc}")
+        if not response.ok:
+            raise HTTPException(status_code=502,
+                                detail=f"Archive failed: HTTP {response.status_code} {response.text.strip()}")
+        logger.info(f"Archive of {job_id}: {response.text.strip()}")
 
     def stop(self, job_id: str, purge: bool = False) -> None:
         """Stops the job (kept in Nomad with its logs until garbage collected), or removes it with purge."""

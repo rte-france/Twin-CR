@@ -240,7 +240,10 @@ def get_archive(
         context_id, simulation_id = state.context_id, state.current_simulation_id
     elif context_id is None:
         raise HTTPException(status_code=422, detail="context_id is required with simulation_id")
-    archived = archive_simulation(state, context_id, simulation_id)
+    try:
+        archived = archive_simulation(state, context_id, simulation_id)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
     return {"simulation_id": simulation_id, "archived": archived}
 
 
@@ -252,6 +255,11 @@ async def stop_message_handler(msg: nats.aio.msg.Msg):
         logger.info("No active simulation to archive")
     else:
         # In a thread: archiving can be long and must not block the event loop (requests, NATS)
-        await asyncio.to_thread(archive_simulation, state, state.context_id, state.current_simulation_id)
+        try:
+            await asyncio.to_thread(archive_simulation, state, state.context_id, state.current_simulation_id)
+        except Exception as e:
+            # The simulation is kept (not reset): GET /archive retries it (end of the orchestrator, session manager)
+            logger.error(f"Archive on stop failed: {e}")
+            return
     # TODO: drop db
     state.reset()
