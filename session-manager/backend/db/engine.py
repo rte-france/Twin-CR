@@ -9,7 +9,6 @@ co-simulation of power systems.
 from typing import Annotated
 
 from fastapi import Depends, Request
-from sqlalchemy import inspect, text
 from sqlmodel import create_engine, SQLModel, Session, select
 
 from backend.config import DB_ECHO, DB_URL
@@ -30,23 +29,9 @@ SEED_NODES = (
 
 engine = create_engine(DB_URL, echo=DB_ECHO)
 
-# Columns added to existing tables after their creation (create_all only creates missing tables): table -> columns
-ADDED_COLUMNS = {
-    "gamesession": {"status_detail": "VARCHAR"},
-}
-
 def create_db_and_tables():
     SQLModel.metadata.create_all(engine)
-    add_missing_columns()
     initialize_tree()
-
-def add_missing_columns():
-    with engine.begin() as connection:
-        for table, columns in ADDED_COLUMNS.items():
-            existing = {column["name"] for column in inspect(connection).get_columns(table)}
-            for column, column_type in columns.items():
-                if column not in existing:
-                    connection.execute(text(f"ALTER TABLE {table} ADD COLUMN {column} {column_type}"))
 
 def initialize_tree():
     with Session(engine) as session:
