@@ -763,6 +763,7 @@ def create_template(
         automata_commands: list[str] = Form(default_factory=list),
         period: float = Form(1),
         dynawo_version: str = Form("dynawov1.8.2"),
+        dynawo_scope: str = Form("public"),
         current_user=Depends(require_role("template_manager")),
 ):
     """
@@ -776,12 +777,12 @@ def create_template(
     """
     user_name = current_user["preferred_username"]
     validate_template_name(template_name)
-    available_versions = storage_service.list_dynawo_version()
+    available_versions = storage.list_dynawo_version()
     available_versions_string = [item.release for item in available_versions]
     if dynawo_version not in available_versions_string:
         raise HTTPException(
             status_code=400,
-            detail=f"Unknown dynawo_variant {dynawo_version!r}; expected one of {', '.join(available_versions_string)}",
+            detail=f"Unknown dynawo_version {dynawo_version!r}; expected one of {', '.join(available_versions_string)}",
         )
     if len(dynawo_files) != len(dynawo_relative_paths):
         raise HTTPException(
@@ -871,7 +872,7 @@ def create_template(
                 generated_dyd, mock_cyber_config, generated_asset_simulator_config = pool.submit(
                     main_configure.main_from_jobs,
                     job_path,
-                    get_or_retrieve(dynawo_version, storage_service.s3),
+                    get_or_retrieve(dynawo_version, storage.s3),
                     paths.get(TemplateFileRole.cyber_config),
                     paths.get(TemplateFileRole.mapping),
                     None,
@@ -880,7 +881,7 @@ def create_template(
                     period,
                     asset_simulator_config_file is None,
                     paths.get(TemplateFileRole.scada_iidm),
-                    DYNAWO_EXTRA_RULES_DIRS[dynawo_version],
+                    DYNAWO_EXTRA_RULES_DIRS[dynawo_scope.lower()],
                     paths.get(TemplateFileRole.extra_io),
                 ).result()
         except ValueError as e:
@@ -922,7 +923,7 @@ def create_template(
                 gm_iidm_file=stored_name(gm_iidm_file),
                 connectors_dyd=generated_dyd,
                 iidm_file=iidm_name,
-                dynawo_path=dynawo_version,
+                dynawo_version=dynawo_version,
                 scada_suffix=scada_suffix,
                 period=period,
             )

@@ -16,6 +16,8 @@ import {
   TemplateDetails,
   TemplateFolder,
   FileInfo,
+  ListDynawoMetadataParams,
+  DynawoMetadataList,
 } from "./types";
 import type { TreeNode } from "@/features/lobby/types";
 
@@ -220,7 +222,8 @@ export async function createTemplate(
   dynawoFiles: { relativePath: string; file: File }[],
   optionalFiles: Record<string, File>,
   period: number,
-  dynawoVariant: "public" | "rte",
+  dynawoVersion: string,
+  dynawoScope: string,
   otherFiles: File[] = [],
   automataCommands: string[] = [],
 ) {
@@ -229,7 +232,8 @@ export async function createTemplate(
   formData.append("folder_id", folderId.toString());
   formData.append("job_file", jobFile);
   formData.append("period", String(period));
-  formData.append("dynawo_variant", dynawoVariant);
+  formData.append("dynawo_version", dynawoVersion);
+  formData.append("dynawo_scope", dynawoScope);
 
   for (const { relativePath, file } of dynawoFiles) {
     formData.append("dynawo_files", file);
@@ -338,6 +342,29 @@ export async function getFileContent(key: string): Promise<Response> {
 export async function getFileInfo(storageKey: string): Promise<FileInfo> {
   return apiFetch(
     `${getArgusConfig().session_manager_url}/file-info/${keyAsPath(storageKey)}`,
+    {
+      method: "GET",
+    },
+  );
+}
+
+export async function listDynawoMetadata(params: ListDynawoMetadataParams = {}): Promise<DynawoMetadataList> {
+  const searchParams = new URLSearchParams();
+
+  if (params.scope) {
+    searchParams.set("scope", params.scope);
+  }
+  if (params.version) {
+    searchParams.set("version", params.version);
+  }
+  if (params.tag) {
+    searchParams.set("tag", params.tag);
+  }
+
+  const query = searchParams.toString();
+
+  return apiFetch(
+    `${getArgusConfig().session_manager_url}/dynawo/metadata/${query ? `?${query}` : ""}`,
     {
       method: "GET",
     },
