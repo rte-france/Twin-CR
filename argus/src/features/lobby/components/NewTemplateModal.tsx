@@ -111,13 +111,17 @@ export function NewTemplateModal(props: NewTemplateModalProps) {
           setMetadata(result.items);
 
           if (result.items.length > 0) {
-              setSelectedVersion(result.items[0].version);
+              setSelectedVersion(dynawoVersionLabel(result.items[0]));
           }
       } catch (err) {
           console.error("Failed to load dynawo metadata", err);
           setMetadata([]);
       }
   });
+
+  function dynawoVersionLabel(item: DynawoMetadata) {
+    return `${item.version}${item.tag ? `-${item.tag}` : ""}`;
+  }
 
   const isSubmitDisabled = () => loading() || !canCreate();
 
@@ -597,7 +601,7 @@ export function NewTemplateModal(props: NewTemplateModalProps) {
                       >
                         <For each={metadata()}>
                           {(item) => {
-                            const versionLabel = `${item.version}${item.tag ? `-${item.tag}` : ""}`;
+                            const versionLabel = dynawoVersionLabel(item);
 
                             return (
                               <option value={versionLabel}>
