@@ -78,7 +78,7 @@ Copy `infra/inventories/remote.ini.example` to `infra/inventories/<env>.ini`, se
 
 In the Argus config (`config.json` in its config folder, e.g. on macOS
 `~/Library/Application Support/com.twincr.com.twincr.argus/config.json`):
-- `keycloak_url`: `https://localhost` (default; the same as with compose)
+- `keycloak_url`: `https://localhost` (default; with compose: `https://localhost:8443`)
 - `session_manager_url`: `http://localhost:8090` (default) or `https://localhost/lobby`
 
 An existing `config.json` keeps its values: edit it after an upgrade. The login opens Keycloak in the browser.

@@ -29,8 +29,11 @@ The config.json file is created automatically at startup. You can modify its con
 
 Argus needs Keycloak served over HTTPS. Follow the setup in
 [keycloak/README.md](../keycloak/README.md) first — generating the certificate,
-trusting it, and mapping the `keycloak` hostname — then the default
-`keycloak_url` works whether Argus runs natively or in docker compose.
+trusting it, and mapping the `keycloak` hostname.
+
+The default `keycloak_url` (`https://localhost`) is the Keycloak of the Nomad infrastructure (see
+[docs/infra/README.md](../docs/infra/README.md)). With docker compose, Keycloak listens on `KEYCLOAK_PORT` (8443): set
+`keycloak_url` to `https://localhost:8443`, or enter it on the sign-in page.
 
 `session_manager_url` does differ by mode: `http://localhost:8090` natively,
 `http://session-manager:8090` inside docker compose (profile `argus`).

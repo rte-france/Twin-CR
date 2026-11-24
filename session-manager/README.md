@@ -17,7 +17,7 @@ We describe here the installation process where the other services run with dock
      # Native runs only (uv, other services in docker): uncomment and adapt.
      # Defaults are the in-container paths used by docker.
      #KEYCLOAK_VERIFY_TLS=false  # [native] Keycloak's host port serves a self-signed cert
-     #KEYCLOAK_INTERNAL_URL=https://localhost  # [native] default http://keycloak:8080
+     #KEYCLOAK_INTERNAL_URL=https://localhost:8443  # [native] default http://keycloak:8080
      #SIMULATORS_PATH=/home/session-manager/simulators  # [native]
      #EXTRA_RULES_PATH=/home/session-manager/dynawo_rules  # [native]
      ```
