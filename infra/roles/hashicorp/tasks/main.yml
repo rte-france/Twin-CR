@@ -130,8 +130,8 @@
   ansible.builtin.copy:
     dest: /etc/vault.d/vault.env
     content: |
-      NO_PROXY="localhost,127.0.0.1,::1,172.17.0.0/16,172.28.0.0/16,10.0.0.0/8,.{{ base_domain | default('twin.local') }}"
-      no_proxy="localhost,127.0.0.1,::1,172.17.0.0/16,172.28.0.0/16,10.0.0.0/8,.{{ base_domain | default('twin.local') }}"
+      NO_PROXY="localhost,127.0.0.1,::1,172.17.0.0/16,172.28.0.0/16,10.0.0.0/8,.{{ base_domain | default('localhost') }}"
+      no_proxy="localhost,127.0.0.1,::1,172.17.0.0/16,172.28.0.0/16,10.0.0.0/8,.{{ base_domain | default('localhost') }}"
     mode: "0644"
   when: inventory_hostname in groups['nomad_servers']
 
@@ -390,7 +390,7 @@
 - name: Configure PKI Role for Workloads
   ansible.builtin.command: >
     vault write pki/roles/twincr-workloads
-    allowed_domains="service.consul,{{ base_domain | default('twin.local') }},localhost,127.0.0.1"
+    allowed_domains="service.consul,{{ base_domain | default('localhost') }},localhost,127.0.0.1"
     allow_subdomains=true
     allow_bare_domains=true
     allow_ip_sans=true

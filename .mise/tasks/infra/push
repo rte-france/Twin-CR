@@ -25,8 +25,8 @@ REGISTRY_PROTO="http"
 REGISTRY_CURL_OPT=(--noproxy "*")
 if curl -s "${REGISTRY_CURL_OPT[@]}" -f "http://${REGISTRY_HOST}/v2/" >/dev/null 2>&1; then
     REGISTRY_PROTO="http"
-elif curl -s "${REGISTRY_CURL_OPT[@]}" -k -f -H "Host: registry.twin.local" "https://127.0.0.1/v2/" >/dev/null 2>&1; then
-    REGISTRY_HOST="registry.twin.local"
+elif curl -s "${REGISTRY_CURL_OPT[@]}" -k -f -H "Host: registry.localhost" "https://127.0.0.1/v2/" >/dev/null 2>&1; then
+    REGISTRY_HOST="registry.localhost"
     REGISTRY_PROTO="https"
     REGISTRY_CURL_OPT=(--noproxy "*" -k)
 fi

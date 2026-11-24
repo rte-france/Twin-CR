@@ -8,10 +8,10 @@
 
 ---
 # Default configuration for dev environment
-base_domain: "twin.local"
+base_domain: "localhost"
 proxy_env:
-  no_proxy: "localhost,127.0.0.1,::1,172.17.0.0/16,10.0.0.0/8,.twin.local"
-  NO_PROXY: "localhost,127.0.0.1,::1,172.17.0.0/16,10.0.0.0/8,.twin.local"
+  no_proxy: "localhost,127.0.0.1,::1,172.17.0.0/16,10.0.0.0/8"
+  NO_PROXY: "localhost,127.0.0.1,::1,172.17.0.0/16,10.0.0.0/8"
 no_proxy_env:
   http_proxy: ""
   https_proxy: ""
