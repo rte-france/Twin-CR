@@ -7,6 +7,7 @@ co-simulation of power systems.
 """
 
 import os
+from pathlib import Path
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -42,7 +43,10 @@ UPDATE_SESSION_STATE_TIMEOUT = 5
 # instead of the single set of session services of compose (CONFIGURATOR_CLIENT_ENDPOINT).
 NOMAD_ADDR = os.getenv("NOMAD_ADDR", "")
 NOMAD_TOKEN = os.getenv("NOMAD_TOKEN", "")  # Workload identity of the session manager job in the infrastructure
-SESSION_JOB_HCL = os.getenv("SESSION_JOB_HCL", "/home/session-manager/twincr-session.nomad.hcl")
+# Nomad job of a session. Default: the file of the repository (native runs); the images copy it and set its path.
+SESSION_JOB_HCL = os.getenv(
+    "SESSION_JOB_HCL", str(Path(__file__).resolve().parents[2] / "docs" / "infra" / "twincr-session.nomad.hcl")
+)
 # HCL variable assignments added to each session job, one per line (e.g. registry = "10.0.0.1:5000")
 SESSION_JOB_VARIABLES = os.getenv("SESSION_JOB_VARIABLES", "").replace("\\n", "\n")
 # Startup of the session services (image pulls included) and initialization of the session
