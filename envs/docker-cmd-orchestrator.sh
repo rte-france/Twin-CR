@@ -8,7 +8,7 @@
 #
 
 
-# Startup command of the twincr-core image (envs/Dockerfile.orchestrator)
+# Docker compose CMD of the twincr-core image (envs/Dockerfile.orchestrator)
 
 set -e
 

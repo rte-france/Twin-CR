@@ -7,7 +7,7 @@
 # co-simulation of power systems.
 #
 
-# Startup command of the configurator-client images
+# Docker compose CMD of the configurator-client images
 
 unset http_proxy https_proxy ftp_proxy no_proxy HTTP_PROXY HTTPS_PROXY FTP_PROXY NO_PROXY
 cd /home/orchestrator/configurator_client

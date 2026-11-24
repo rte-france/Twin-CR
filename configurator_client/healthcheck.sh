@@ -7,7 +7,7 @@
 # co-simulation of power systems.
 #
 
-# Outside CLICKHOUSE mode the configurator is not used (see configurator_client.sh) and always reports healthy.
+# Outside CLICKHOUSE mode the configurator is not used (see docker-cmd.sh) and always reports healthy.
 if [ "${MODE:-CLICKHOUSE}" = "CLICKHOUSE" ]; then
     curl -fsS --noproxy '*' -o /dev/null "http://localhost:${CONFIGURATOR_PORT:-8080}/status"
 fi

@@ -13,7 +13,7 @@
 # a poststart task that initializes the session once (what session-manager does with compose).
 #
 # End of the simulation (normal or crash): the twincr-core container stays up (KEEP_ALIVE_AFTER_EXIT, see
-# envs/run_orchestrator.sh) after requesting the archive of the simulation, so the session, its services and logs remain
+# envs/docker-cmd-orchestrator.sh) after requesting the archive of the simulation, so the session, its services and logs remain
 # available until the session is stopped explicitly (nomad job stop, by the session manager). Its health check turns
 # critical when the orchestrator has exited.
 
@@ -433,14 +433,14 @@ EOT
       }
     }
 
-    # Heap sizes: JAVA_OPTS defaults of argus-backends/start.sh (-Xmx2g scada, -Xmx1536m gm), plus JVM overhead
+    # Heap sizes: JAVA_OPTS defaults of argus-backends/docker-cmd.sh (-Xmx2g scada, -Xmx1536m gm), plus JVM overhead
     task "argus-scada" {
       driver = "docker"
 
       env {
         NATS_URL = "nats://127.0.0.1:4222"
         MODE     = "CLICKHOUSE"
-        # Empty: the default of argus-backends/start.sh
+        # Empty: the default of argus-backends/docker-cmd.sh
         JAVA_OPTS = lookup(lookup(var.resources, "argus-scada", {}), "java_opts", "")
       }
 

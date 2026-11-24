@@ -7,7 +7,7 @@
 # co-simulation of power systems.
 #
 
-# Startup command of the argus-backend images (Dockerfile.argus-backends): start.sh scada|gm
+# ENTRYPOINT of the argus-backend images (Dockerfile.argus-backends): docker-cmd.sh scada|gm
 # Every option comes from the environment (root .env with compose), with defaults for a single-host session.
 set -e
 

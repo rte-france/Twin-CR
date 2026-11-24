@@ -7,7 +7,7 @@
 # co-simulation of power systems.
 #
 
-# Startup command of the session-manager images
+# Docker compose CMD of the session-manager images
 unset http_proxy https_proxy ftp_proxy no_proxy HTTP_PROXY HTTPS_PROXY FTP_PROXY NO_PROXY
 cd /home/session-manager/
 # Keep-alive longer than the idle connections kept by the HTTP clients (Argus: 90 s): otherwise a client may reuse a

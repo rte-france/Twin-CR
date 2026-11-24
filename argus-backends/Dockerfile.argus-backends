@@ -86,11 +86,11 @@ LABEL org.opencontainers.image.licenses="MPL-2.0"
 ARG POWSYBL_RTE_VERSION
 WORKDIR /app
 COPY --from=build /app/gm/bootstrap-gm/target/bootstrap-gm-${POWSYBL_RTE_VERSION}.jar app_gm.jar
-COPY start.sh healthcheck.sh /app/
+COPY docker-cmd.sh healthcheck.sh /app/
 WORKDIR /home/orchestrator/
 EXPOSE 8083
 HEALTHCHECK --interval=5s --timeout=10s --start-period=30s CMD ["sh", "/app/healthcheck.sh", "gm"]
-ENTRYPOINT ["sh", "/app/start.sh", "gm"]
+ENTRYPOINT ["sh", "/app/docker-cmd.sh", "gm"]
 
 # Stage 3: SCADA image (amd64 for the private build only to use estim)
 FROM --platform=linux/amd64 eclipse-temurin:21-jre AS scada-private
@@ -111,8 +111,8 @@ COPY itools_config.yml /root/.itools/config.yml
 # Stage 3b: select the variant
 FROM scada-${BUILD_VARIANT} AS scada
 LABEL org.opencontainers.image.licenses="MPL-2.0"
-COPY start.sh healthcheck.sh /app/
+COPY docker-cmd.sh healthcheck.sh /app/
 WORKDIR /home/orchestrator/
 EXPOSE 8082
 HEALTHCHECK --interval=5s --timeout=10s --start-period=30s CMD ["sh", "/app/healthcheck.sh", "scada"]
-ENTRYPOINT ["sh", "/app/start.sh", "scada"]
+ENTRYPOINT ["sh", "/app/docker-cmd.sh", "scada"]

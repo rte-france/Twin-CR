@@ -28,4 +28,4 @@ COPY . /home/orchestrator/configurator_client
 
 HEALTHCHECK --interval=5s --timeout=5s --start-period=10s CMD ["bash", "/home/orchestrator/configurator_client/healthcheck.sh"]
 # Serves on CONFIGURATOR_PORT (default 8080) if MODE=CLICKHOUSE (default), else idles
-CMD ["bash", "/home/orchestrator/configurator_client/configurator_client.sh"]
+CMD ["bash", "/home/orchestrator/configurator_client/docker-cmd.sh"]
