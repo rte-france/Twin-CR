@@ -26,5 +26,9 @@ class Context_Client(ABC):
         pass
 
     @abstractmethod
+    def init_dynawo_file(self, clickhouse_client, context_id, scenario_id, simulation_id, config_path):
+        pass
+
+    @abstractmethod
     def init_game_master(self, config_path, context_id, scenario_id, simulation_id):
         pass

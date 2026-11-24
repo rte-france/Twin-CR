@@ -29,6 +29,11 @@ services:
         target: /data
         bind:
           create_host_path: true
+      - type: bind
+        source: ./session-manager-cache
+        target: /cache
+        bind:
+          create_host_path: true
     ports:
       - "${SESSION_MANAGER_EXPOSED_PORT}:8090"
     command: ["/bin/bash", "-c", "unset http_proxy https_proxy ftp_proxy no_proxy HTTP_PROXY HTTPS_PROXY FTP_PROXY NO_PROXY && fastapi run backend/main.py --port 8090 --host 0.0.0.0"]
