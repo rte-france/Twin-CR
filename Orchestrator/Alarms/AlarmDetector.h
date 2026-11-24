@@ -46,8 +46,10 @@ struct AlarmType {
     std::vector<bool> level_low;  // Threshold types: true if level i + 1 is crossed below its threshold, else above
     std::vector<AlarmStateDisplay> levels;  // Threshold types: levels[0] is the normal state (no threshold crossed)
     double hysteresis = 0.0;
+    bool monitor = false;  // State types: shown in the OverloadMonitor while not normal (always for threshold types)
 
     bool isThreshold() const { return !level_names.empty(); }
+    bool isMonitored() const { return isThreshold() || monitor; }
     bool isNormal(double state) const { return isThreshold() ? state == 0 : (normal.has_value() && normal.value() == state); }
 };
 
@@ -115,7 +117,7 @@ class AlarmDetector {
         void loadState(const std::string& bin);
 
         /**
-         * Publish again the persistent alarms that are not in their normal state and the thresholds crossed (after a restart from a dump)
+         * Publish again the persistent alarms that are not in their normal state and the monitored conditions still on (thresholds crossed, monitored TS) after a restart from a dump
          */
         void republishActive(double time);
 

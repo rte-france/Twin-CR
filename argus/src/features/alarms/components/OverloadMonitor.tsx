@@ -57,7 +57,8 @@ const columns: ColDef<Row>[] = [
   {
     headerName: "Value",
     headerTooltip: "Live value (value at the last level change until received)",
-    valueGetter: (p) => (p.data ? (p.data.live ?? p.data.value) : null),
+    // Thresholds only (a monitored TS has no limit, its value is its state)
+    valueGetter: (p) => (p.data && p.data.limit != null ? (p.data.live ?? p.data.value) : null),
     valueFormatter: (p) => formatNumber(p.value),
     width: 90,
     type: "rightAligned",
@@ -75,7 +76,7 @@ const columns: ColDef<Row>[] = [
 ];
 
 /**
- * OverloadMonitor: the measurement thresholds currently crossed, whatever the acknowledgement of their alarms, with the live value of the measurement.
+ * OverloadMonitor: the monitored conditions currently on (measurement thresholds crossed, with the live value of the measurement, and monitored TS such as overload counters), whatever the acknowledgement of their alarms.
  */
 export function OverloadMonitor() {
   let gridContainer!: HTMLDivElement;

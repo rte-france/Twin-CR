@@ -78,6 +78,7 @@ AlarmDetector::AlarmDetector(const nlohmann::json& config, const std::unordered_
                 type.normal = j["normal"].get<double>();
             }
             type.hysteresis = j.value("hysteresis", 0.0);
+            type.monitor = j.value("monitor", false);
             if (j.contains("levels")) {
                 type.levels.push_back(parseDisplay(j.value("normal_state", nlohmann::json{{"label", "Normal"}, {"priority", 0}}), type.alarm));
                 for (const auto& level : j["levels"]) {
@@ -89,8 +90,8 @@ AlarmDetector::AlarmDetector(const nlohmann::json& config, const std::unordered_
                     type.level_low.push_back(direction == "low");
                     type.levels.push_back(parseDisplay(level, type.alarm));
                 }
-            } else if (type.persistent && !type.normal.has_value()) {
-                throw std::invalid_argument("a persistent type needs a normal value");
+            } else if ((type.persistent || type.monitor) && !type.normal.has_value()) {
+                throw std::invalid_argument("a persistent or monitored type needs a normal value");
             }
             if (j.contains("states")) {
                 for (const auto& [value, state] : j["states"].items()) {
@@ -359,9 +360,9 @@ void AlarmDetector::processValue(AlarmSide& side, const std::string& id, const V
         // Initial value: at start, or the first value of a threshold type at any time (measurements are published
         // periodically, e.g. every 5 s on the SCADA side, so the first one may come after the start)
         if (time <= initial_time_ || type.isThreshold()) {
-            // Only the conditions still on are published (initial): the persistent alarms, and the thresholds crossed
-            // (OverloadMonitor; a momentary threshold is not an alarm at start)
-            if ((type.persistent || type.isThreshold()) && !type.isNormal(state)) {
+            // Only the conditions still on are published (initial): the persistent alarms, and the monitored ones
+            // (thresholds crossed, monitored TS: OverloadMonitor; a momentary one is not an alarm at start)
+            if ((type.persistent || type.isMonitored()) && !type.isNormal(state)) {
                 publishState(side, entry, state, v, time, true);
             }
             return;
@@ -409,6 +410,7 @@ void AlarmDetector::publishState(const AlarmSide& side, const AlarmEntry& entry,
         {"retain", type.retain},
         {"normal", type.isNormal(state)},
         {"initial", initial},
+        {"monitor", type.isMonitored()},
     };
     if (type.isThreshold() && state > 0) {
         j["limit"] = entry.thresholds.at(static_cast<size_t>(state) - 1);  // Threshold of the level crossed
@@ -452,7 +454,7 @@ void AlarmDetector::republishActive(double time) {
                 continue;
             }
             const AlarmEntry& entry = alarms_.at(id);
-            if ((entry.type->persistent || entry.type->isThreshold()) && !entry.type->isNormal(state)) {
+            if ((entry.type->persistent || entry.type->isMonitored()) && !entry.type->isNormal(state)) {
                 // The measured value is not dumped: the threshold of the level for threshold types
                 double value = state;
                 if (entry.type->isThreshold() && state > 0) {

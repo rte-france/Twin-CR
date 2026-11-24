@@ -69,7 +69,8 @@
             "description": "momentary (default): acknowledging removes the alarm. persistent: the alarm must be acknowledged then cleared, once back to normal; also raised at start when not normal"
           },
           "retain": {"type": "boolean", "description": "True (default): one alarm per occurrence. False (NO RETAIN): only the latest state of each id is kept"},
-          "normal": {"type": "number", "description": "Normal value (state types), required for persistent types"},
+          "normal": {"type": "number", "description": "Normal value (state types), required for persistent and monitored types"},
+          "monitor": {"type": "boolean", "description": "State types: shown in the OverloadMonitor while not in their normal state (e.g. counter signals such as an overload alarm). Threshold types always are monitored."},
           "states": {
             "type": "object",
             "description": "State of each value, keyed by the value (integers without decimals, e.g. '1'). Other values are displayed as is",

@@ -47,8 +47,8 @@ import java.util.concurrent.TimeUnit;
  *  - retain = false (NO RETAIN): a new state of an id replaces its alarms, else each occurrence has its own alarm.
  * Acknowledgements, clearings and comments are shared by all the clients of the backend, and logged in the event journal.
  *
- * OverloadMonitor: the thresholds currently crossed (kind "threshold", not back to normal), by id, whatever the
- * acknowledgements; includes those already crossed at start ("initial", which are not alarms when momentary).
+ * OverloadMonitor: the monitored conditions currently on ("monitor": thresholds crossed, monitored TS not normal), by id,
+ * whatever the acknowledgements; includes those already on at start ("initial", which are not alarms when momentary).
  *
  * Clients follow the state through an SSE stream: a snapshot, then the changes:
  *  {"type": "snapshot", "alarms": [...], "events": [...], "monitor": [...]}, {"type": "alarm", "alarm": {...}} (added or
@@ -105,10 +105,10 @@ public class AlarmService {
     /** Handle an alarm or event published by the AlarmDetector */
     private synchronized void onAlarm(ObjectNode message) {
         boolean persistent = "persistent".equals(message.path("mode").asText());
-        if ("threshold".equals(message.path("kind").asText())) {
+        if (message.path("monitor").asBoolean(false) || "threshold".equals(message.path("kind").asText())) {
             updateMonitor(message);
             if (message.path("initial").asBoolean(false) && !persistent) {
-                return;  // Already crossed at start: in the OverloadMonitor only, neither an alarm nor a change
+                return;  // Already on at start: in the OverloadMonitor only, neither an alarm nor a change
             }
         }
 
@@ -226,7 +226,7 @@ public class AlarmService {
         return snapshot;
     }
 
-    /** OverloadMonitor: a threshold crossed is added or updated (keeping the time it was first crossed), removed when back to normal */
+    /** OverloadMonitor: a monitored condition on is added or updated (keeping the time it started), removed when back to normal */
     private void updateMonitor(ObjectNode message) {
         String id = message.path("id").asText();
         if (message.path("normal").asBoolean(false)) {

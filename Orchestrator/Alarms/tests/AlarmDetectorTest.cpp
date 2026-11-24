@@ -46,6 +46,10 @@ static const nlohmann::json CONFIG = nlohmann::json::parse(R"({
             "mode": "persistent", "normal": 0,
             "states": {"1": {"label": "Start", "priority": 19}, "0": {"label": "End", "priority": 4}}
         },
+        "counter": {
+            "mode": "momentary", "normal": 0, "monitor": true,
+            "states": {"1": {"label": "Start", "priority": 19}, "0": {"label": "End", "priority": 4}}
+        },
         "current": {
             "hysteresis": 0.1,
             "normal_state": {"label": "Overload end", "priority": 0},
@@ -68,6 +72,7 @@ static const nlohmann::json CONFIG = nlohmann::json::parse(R"({
     "alarms": [
         {"id": "breaker", "type": "breaker", "label": "Breaker 1", "substation_id": "S1", "side": "TWO"},
         {"tase2": "S_1", "type": "overload"},
+        {"id": "counter", "type": "counter"},
         {"id": "current", "type": "current", "thresholds": {"LIMIT1": 100, "LIMIT2": 200}},
         {"id": "voltage", "type": "voltage", "thresholds": {"LOW1": 210, "LOW2": 200, "HIGH1": 240}}
     ]
@@ -88,7 +93,7 @@ int main() {
     };
     const double start = 0.0;
     AlarmDetector detector(CONFIG, {{"S_1", "overload"}}, "SCADA", start, publisher);
-    CHECK(detector.size() == 4);
+    CHECK(detector.size() == 5);
 
     // Initial values: no alarm, except a persistent alarm not in its normal state
     detector.onActualMeasurement(gm("breaker", 2, start));
@@ -102,6 +107,18 @@ int main() {
     CHECK(published.back().payload["state"] == "Start");
     CHECK(published.back().payload["color"] == "red");
     CHECK(published.back().payload["label"] == "overload");  // Defaults to the id
+
+    // Monitored TS on at start: published as initial for the OverloadMonitor (momentary: not an alarm), then its end
+    published.clear();
+    detector.onActualMeasurement(gm("counter", 1, start));
+    CHECK(published.size() == 1);
+    CHECK(published.back().payload["initial"] == true);
+    CHECK(published.back().payload["monitor"] == true);
+    CHECK(published.back().payload["normal"] == false);
+    detector.onActualMeasurement(gm("counter", 0, 1.5));
+    CHECK(published.size() == 2);
+    CHECK(published.back().payload["normal"] == true);
+    CHECK(published.back().payload["initial"] == false);
 
     // Breaker change on the GameMaster side
     published.clear();

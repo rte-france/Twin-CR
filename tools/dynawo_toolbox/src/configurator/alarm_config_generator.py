@@ -79,8 +79,8 @@ def default_types() -> dict[str, Any]:
                 "4": {"label": "Closed on side 2 only", "priority": 7},
             },
         },
-        "overload": {
-            "mode": "persistent", "retain": True, "normal": 0,
+        "overload": {  # Also in the OverloadMonitor while on
+            "mode": "persistent", "retain": True, "normal": 0, "monitor": True,
             "states": {"1": {"label": "Start", "priority": 19}, "0": {"label": "End", "priority": 4}},
         },
         "current": {

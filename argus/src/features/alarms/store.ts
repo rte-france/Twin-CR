@@ -57,12 +57,12 @@ export interface AlarmEvent {
   substation_id?: string;
 }
 
-/** OverloadMonitor entry: a threshold currently crossed (whatever the acknowledgements), by id */
+/** OverloadMonitor entry: a monitored condition currently on (threshold crossed, monitored TS), whatever the acknowledgements, by id */
 export interface MonitorEntry {
   id: string;
   label: string;
   state: string;  // Level crossed, e.g. Limit 1 overload
-  value: number;  // At the last level change
+  value: number;  // At the last change (the TS value for a monitored TS)
   limit?: number;  // Threshold of the level
   time: number;  // Last level change
   since: number;  // First crossing

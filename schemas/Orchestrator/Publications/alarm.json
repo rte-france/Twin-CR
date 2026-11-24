@@ -18,6 +18,7 @@
     "retain": {"type": "boolean"},
     "normal": {"type": "boolean", "description": "Back to the normal state: ends the persistent alarms of this id"},
     "initial": {"type": "boolean", "description": "Condition already on at start (t = 0, first value of a measurement, or after a restart from a dump): a persistent alarm not in its normal state, or a threshold crossed (OverloadMonitor only, not an alarm when momentary)"},
+    "monitor": {"type": "boolean", "description": "Shown in the OverloadMonitor while not normal (threshold types, monitored state types)"},
     "limit": {"type": "number", "description": "Threshold types: threshold of the level crossed (absent when back to normal)"},
     "equipment_id": {"type": "string"},
     "side": {"enum": ["ONE", "TWO", "THREE"], "description": "Side of the equipment (branch, 3 windings transformer)"},
