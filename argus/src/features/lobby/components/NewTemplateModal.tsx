@@ -97,7 +97,7 @@ export function NewTemplateModal(props: NewTemplateModalProps) {
   const [scadaIidmFile, setScadaIidmFile] = createSignal<File>();
   const [gmIidmFile, setGmIidmFile] = createSignal<File>();
   const [period, setPeriod] = createSignal(1);
-  const [dynawoVersion, setdynawoVersion] = createSignal<"public" | "RTE">("public");
+  const [dynawoScope, setDynawoScope] = createSignal<"public" | "RTE">("public");
 
   const [metadata, setMetadata] = createSignal<DynawoMetadata[]>([]);
   const [selectedVersion, setSelectedVersion] = createSignal<string>();
@@ -105,7 +105,7 @@ export function NewTemplateModal(props: NewTemplateModalProps) {
   createEffect(async () => {
       try {
           const result = await listDynawoMetadata({
-              scope: dynawoVersion(),
+              scope: dynawoScope(),
           });
 
           setMetadata(result.items);
@@ -424,11 +424,11 @@ export function NewTemplateModal(props: NewTemplateModalProps) {
         `Uploading ${dynawoFiles.length + 1} files, then generating outputs (this can take a while)...`,
       );
 
-      const dynawoVersionParam ="dynawo" + (dynawoVersion() === "public" ? "" : dynawoVersion()) + selectedVersion();
+      const dynawoVersion = "dynawo" + (dynawoScope() === "public" ? "" : dynawoScope()) + selectedVersion();
 
       await createTemplate(
         templateName(), parent, job, dynawoFiles, optional, period(),
-        dynawoVersionParam, otherFiles(),
+        dynawoVersion, dynawoScope(), otherFiles(),
         automataCommands().split("\n").map((c) => c.trim()).filter((c) => c.length > 0),
       );
     } catch (err) {
@@ -568,8 +568,8 @@ export function NewTemplateModal(props: NewTemplateModalProps) {
                                   type="radio"
                                   name="dynawo-build"
                                   value="public"
-                                  checked={dynawoVersion() === "public"}
-                                  onChange={() => setdynawoVersion("public")}
+                                  checked={dynawoScope() === "public"}
+                                  onChange={() => setDynawoScope("public")}
                               />
                               <span>Public</span>
                           </label>
@@ -579,8 +579,8 @@ export function NewTemplateModal(props: NewTemplateModalProps) {
                                   type="radio"
                                   name="dynawo-build"
                                   value="RTE"
-                                  checked={dynawoVersion() === "RTE"}
-                                  onChange={() => setdynawoVersion("RTE")}
+                                  checked={dynawoScope() === "RTE"}
+                                  onChange={() => setDynawoScope("RTE")}
                               />
                               <span>RTE</span>
                           </label>

@@ -763,6 +763,7 @@ def create_template(
         automata_commands: list[str] = Form(default_factory=list),
         period: float = Form(1),
         dynawo_version: str = Form("dynawov1.8.2"),
+        dynawo_scope: str = Form("public"),
         current_user=Depends(require_role("template_manager")),
 ):
     """
@@ -880,7 +881,7 @@ def create_template(
                     period,
                     asset_simulator_config_file is None,
                     paths.get(TemplateFileRole.scada_iidm),
-                    DYNAWO_EXTRA_RULES_DIRS[dynawo_version],
+                    DYNAWO_EXTRA_RULES_DIRS[dynawo_scope.lower()],
                     paths.get(TemplateFileRole.extra_io),
                 ).result()
         except ValueError as e:
@@ -922,7 +923,7 @@ def create_template(
                 gm_iidm_file=stored_name(gm_iidm_file),
                 connectors_dyd=generated_dyd,
                 iidm_file=iidm_name,
-                dynawo_path=dynawo_version,
+                dynawo_version=dynawo_version,
                 scada_suffix=scada_suffix,
                 period=period,
             )

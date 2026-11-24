@@ -223,6 +223,7 @@ export async function createTemplate(
   optionalFiles: Record<string, File>,
   period: number,
   dynawoVersion: string,
+  dynawoScope: string,
   otherFiles: File[] = [],
   automataCommands: string[] = [],
 ) {
@@ -232,6 +233,7 @@ export async function createTemplate(
   formData.append("job_file", jobFile);
   formData.append("period", String(period));
   formData.append("dynawo_version", dynawoVersion);
+  formData.append("dynawo_scope", dynawoScope);
 
   for (const { relativePath, file } of dynawoFiles) {
     formData.append("dynawo_files", file);
