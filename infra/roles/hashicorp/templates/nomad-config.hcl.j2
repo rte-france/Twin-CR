@@ -42,10 +42,11 @@ vault {
   jwt_auth_backend_path = "jwt-nomad"
 
   default_identity {
-    aud  = ["vault.io"]
-    ttl  = "1h"
-    file = true
-    env  = true
+    aud         = ["vault.io"]
+    ttl         = "1h"
+    file        = true
+    env         = true
+    change_mode = "restart"
   }
 }
 
