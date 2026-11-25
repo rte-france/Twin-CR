@@ -21,6 +21,7 @@ from tqdm import tqdm
 from clusters import get_clusters
 from dc_sensitivity_factors import DCSensitivityFactors
 from opf import powsybl2pandapower, pp_opf, _setup_redispatch_cost, fcr
+from voltage_instability import min_singular_value, l_index
 
 network = None
 INCREASE_LOAD_PERCENT = 30
@@ -44,29 +45,35 @@ def change_contingency_state_pp(pp_net, contingency_name, connected):
             pp_net.trafo.loc[trafo_idx, "in_service"] = connected
 
 def control_loss_opf(pp_net, name):
-    _, difficulty, cost, p_redispatch = pp_opf(pp_net, pre_check="load" in name or "gen" in name,
-                                               available_time=time_available_by_contingency.get(name))
+    if global_mode == "vsi":
+        pp.runpp(pp_net)
+        msv = min_singular_value(pp_net)
+        li = l_index(pp_net)[1]
+        return [[name, msv, li]]
+    else:
+        _, difficulty, cost, p_redispatch = pp_opf(pp_net, pre_check="load" in name or "gen" in name,
+                                                available_time=time_available_by_contingency.get(name))
 
-    abs_redispatch = np.abs(p_redispatch)
-    difficulty_10 = np.sum(abs_redispatch > 10) if difficulty >= 0 else -1
-    to_ret = [[name, difficulty, difficulty_10, np.sum(abs_redispatch > 100), cost, np.sum(np.abs(p_redispatch))]]
+        abs_redispatch = np.abs(p_redispatch)
+        difficulty_10 = np.sum(abs_redispatch > 10) if difficulty >= 0 else -1
+        to_ret = [[name, difficulty, difficulty_10, np.sum(abs_redispatch > 100), cost, np.sum(np.abs(p_redispatch))]]
 
-    if False and difficulty_10 > 0:
-        biggest_redispatch_idx = np.argsort(-abs_redispatch) # descending=True only available from newer numpy version, which seem incompatbile with pandapower
-        biggest_redispatch_idx = biggest_redispatch_idx[:difficulty_10]
+        if False and difficulty_10 > 0:
+            biggest_redispatch_idx = np.argsort(-abs_redispatch) # descending=True only available from newer numpy version, which seem incompatbile with pandapower
+            biggest_redispatch_idx = biggest_redispatch_idx[:difficulty_10]
 
-        for i in range(len(biggest_redispatch_idx)):
-            controllable_mask = biggest_redispatch_idx.values[:i+1]
+            for i in range(len(biggest_redispatch_idx)):
+                controllable_mask = biggest_redispatch_idx.values[:i+1]
 
-            previous_controllable = copy.deepcopy(pp_net.gen.loc[controllable_mask, "controllable"])
-            pp_net.gen.loc[controllable_mask, "controllable"] = False
-            _, difficulty_cl, cost_cl, p_redispatch_cl = pp_opf(pp_net)
-            pp_net.gen.loc[controllable_mask, "controllable"] = previous_controllable
+                previous_controllable = copy.deepcopy(pp_net.gen.loc[controllable_mask, "controllable"])
+                pp_net.gen.loc[controllable_mask, "controllable"] = False
+                _, difficulty_cl, cost_cl, p_redispatch_cl = pp_opf(pp_net)
+                pp_net.gen.loc[controllable_mask, "controllable"] = previous_controllable
 
-            to_ret.append([name + f"_control_loss_{i + 1}", difficulty_cl, np.sum(np.abs(p_redispatch_cl) > 10), 
-                                np.sum(np.abs(p_redispatch_cl) > 100), cost_cl, np.sum(np.abs(p_redispatch))])
+                to_ret.append([name + f"_control_loss_{i + 1}", difficulty_cl, np.sum(np.abs(p_redispatch_cl) > 10), 
+                                    np.sum(np.abs(p_redispatch_cl) > 100), cost_cl, np.sum(np.abs(p_redispatch))])
     
-    return to_ret
+        return to_ret
 
 
 def load_contingency(i, el_group):
@@ -119,7 +126,8 @@ def compute_overflow_PI(pp_net):
 
 def branches_contingencies(elements):
     # Necessary to setup cost again as it could have been changed with generators contingencies
-    _setup_redispatch_cost(pp_net)
+    if global_mode == "opf":
+        _setup_redispatch_cost(pp_net)
     to_ret = []
     for contingency in tqdm(elements):
         change_contingency_state_pp(pp_net, contingency, False)
@@ -219,7 +227,8 @@ class ContingencyFinder:
     def __init__(self, net=None, n_jobs=10, mode="opf", governor_kgover=None):
         self.n_jobs = n_jobs
         self.mode = mode
-        global params
+        global params, global_mode
+        global_mode = mode
         
         params = ps.loadflow.Parameters(transformer_voltage_control_on=True, distributed_slack=True, voltage_init_mode=ps.loadflow.VoltageInitMode.DC_VALUES)
 
@@ -231,17 +240,18 @@ class ContingencyFinder:
     def update_network(self, net, governor_kgover=None, loadflow=True):
         global network, pp_net, voltage_levels
         network = net
-        if loadflow:
-            generators = network.get_generators()
-            generators["target_p"] = -generators["p"]
-            network.update_generators(generators[["target_p"]])
-            loads = network.get_loads()
-            loads["p0"] = loads["p"]
-            network.update_loads(loads[["p0"]])
-        if self.mode == "opf":
+
+        if self.mode in ["opf", "vsi"]:
             if loadflow:
+                generators = network.get_generators()
+                generators["target_p"] = -generators["p"]
+                network.update_generators(generators[["target_p"]])
+                loads = network.get_loads()
+                loads["p0"] = loads["p"]
+                network.update_loads(loads[["p0"]])
                 params = ps.loadflow.Parameters(balance_type=ps.loadflow.BalanceType.PROPORTIONAL_TO_LOAD)
-                ps.loadflow.run_dc(network, params)
+                if self.mode == "opf":
+                    ps.loadflow.run_dc(network, params)
 
             pp_net = powsybl2pandapower(network, governor_kgover)
             if self.mode == "opf":
@@ -261,7 +271,8 @@ class ContingencyFinder:
 
             self.load_groups = self.prepare_group_power_contingencies(substation_clusters, "load")
             self.gen_groups = self.prepare_group_power_contingencies(substation_clusters, "gen")
-            self.sensitivity_factors = DCSensitivityFactors(pp_net, network.get_operational_limits())
+            if self.mode == "opf":
+                self.sensitivity_factors = DCSensitivityFactors(pp_net, network.get_operational_limits())
         else:
             voltage_levels = network.get_voltage_levels()
             voltage_levels = voltage_levels[voltage_levels["nominal_v"] > 100]
@@ -345,8 +356,8 @@ class ContingencyFinder:
         else:
             return "group"
 
-    def find_contingency(self, include_failing=True, voltage_thresh=0, mode="opf", include_pairs=False):
-        if mode == "opf":
+    def find_contingency(self, include_failing=True, voltage_thresh=0, include_pairs=False):
+        if self.mode == "opf":
             if include_pairs:
                 elements, pairs, overloads = self.sensitivity_factors.get_problematic_n_minus_2(voltage_thresh)
             else:
@@ -374,12 +385,15 @@ class ContingencyFinder:
             else:
                 elements = list(lines.index) 
                 elements += list(transformers.index) # + list(generators.index)
+            elements = elements[:100]
+            load_groups = self.load_groups
+            gen_groups = self.gen_groups
 
         print("Starting contingency analysis")
         if self.n_jobs > 1:
             ctx = mp.get_context('fork')
             with ctx.Pool(self.n_jobs) as pool:
-                if mode == "opf":
+                if self.mode in ["opf", "vsi"]:
                     load_results = pool.starmap_async(load_contingency, load_groups)
                     gen_results = pool.starmap_async(gen_contingency, gen_groups)
 
@@ -400,7 +414,7 @@ class ContingencyFinder:
                     contingencies = pd.concat(all_contingencies)
                     failing_contingencies = pd.concat(all_failing_contingencies)
         else:
-            if mode == "opf":
+            if self.mode in ["opf", "vsi"]:
                 contingencies = []
 
                 for i, load_group in load_groups:
@@ -417,11 +431,13 @@ class ContingencyFinder:
             else:
                 contingencies, failing_contingencies = run_security_analysis(elements)
 
-        if mode == "opf":
+        if self.mode == "opf":
             contingencies = pd.DataFrame(contingencies, columns=["id", "difficulty", "difficulty_10", "difficulty_100", "cost", "total redispatch"])
             contingencies = contingencies.set_index("id")
             contingencies["time_available"] = contingencies.index.map(lambda name: time_available_by_contingency.get(name, -1))
-
+        elif self.mode == "vsi":
+            contingencies = pd.DataFrame(contingencies, columns=["id", "min_singular_value", "l_index"])
+            contingencies = contingencies.set_index("id")
         elif include_failing:
             contingencies = pd.concat((contingencies, failing_contingencies))
 
@@ -431,7 +447,8 @@ class ContingencyFinder:
                 contingencies = contingencies.drop(contingency)
 
         if len(contingencies) > 0:
-            contingencies = contingencies.sort_values(ascending=False, by="difficulty_10" if mode == "opf" else "PI")
+            if self.mode != "vsi":
+                contingencies = contingencies.sort_values(ascending=False, by="difficulty_10" if self.mode == "opf" else "PI")
             # contingencies = contingencies.to_frame()
             contingencies["component_type"] = contingencies.apply(lambda row: self.get_contingency_type(row.name), axis=1)
             self.contingencies = contingencies
