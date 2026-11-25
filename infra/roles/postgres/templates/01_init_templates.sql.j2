@@ -1,0 +1,14 @@
+CREATE TABLE IF NOT EXISTS templates (
+    id VARCHAR PRIMARY KEY,
+    name VARCHAR NOT NULL,
+    s3_object_key VARCHAR,
+    is_directory BOOLEAN DEFAULT FALSE,
+    parent_id VARCHAR,
+
+    CONSTRAINT fk_template_parent
+        FOREIGN KEY (parent_id)
+        REFERENCES templates (id)
+        ON DELETE CASCADE
+);
+
+CREATE INDEX IF NOT EXISTS idx_templates_parent_id ON templates (parent_id);

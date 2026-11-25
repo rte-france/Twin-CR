@@ -1,0 +1,87 @@
+#!/usr/bin/env bash
+#MISE description="Push local twin-cr-* Docker images to the internal infra registry"
+#MISE depends=["setup"]
+
+set -euo pipefail
+
+REGISTRY_HOST="${TWINCR_REGISTRY:-127.0.0.1:5000}"
+
+# If running Linux target container and port 5000 is not forwarded on localhost, bridge it temporarily
+SOCAT_PID=""
+if [ "$(uname -s)" = "Linux" ] && ! curl -s --noproxy '*' -f "http://127.0.0.1:5000/v2/" >/dev/null 2>&1; then
+    if docker ps --format '{{.Names}}' | grep -q '^twincr_target$' && command -v socat >/dev/null 2>&1; then
+        TARGET_IP=$(docker inspect twincr_target --format '{{.NetworkSettings.Networks.twincr_net.IPAddress}}' 2>/dev/null || docker exec twincr_target hostname -I | awk '{print $1}')
+        if [ -n "$TARGET_IP" ]; then
+            socat TCP-LISTEN:5000,bind=127.0.0.1,fork,reuseaddr "TCP:${TARGET_IP}:5000" &
+            SOCAT_PID=$!
+            trap 'kill $SOCAT_PID 2>/dev/null || true' EXIT
+            sleep 0.5
+        fi
+    fi
+fi
+
+# Auto-detect if direct port 5000 or Traefik HTTPS ingress is used
+REGISTRY_PROTO="http"
+REGISTRY_CURL_OPT=(--noproxy "*")
+if curl -s "${REGISTRY_CURL_OPT[@]}" -f "http://${REGISTRY_HOST}/v2/" >/dev/null 2>&1; then
+    REGISTRY_PROTO="http"
+elif curl -s "${REGISTRY_CURL_OPT[@]}" -k -f -H "Host: registry.localhost" "https://127.0.0.1/v2/" >/dev/null 2>&1; then
+    REGISTRY_HOST="registry.localhost"
+    REGISTRY_PROTO="https"
+    REGISTRY_CURL_OPT=(--noproxy "*" -k)
+fi
+
+echo "==> Checking if registry is reachable at ${REGISTRY_PROTO}://${REGISTRY_HOST}/v2/ ..."
+RETRIES=15
+while ! curl -s "${REGISTRY_CURL_OPT[@]}" -f "${REGISTRY_PROTO}://${REGISTRY_HOST}/v2/" >/dev/null 2>&1; do
+    RETRIES=$((RETRIES - 1))
+    if [ "$RETRIES" -le 0 ]; then
+        echo "ERROR: Registry is not responding at ${REGISTRY_PROTO}://${REGISTRY_HOST}/v2/" >&2
+        echo "Make sure the infrastructure is started (mise run infra)." >&2
+        exit 1
+    fi
+    echo "    Waiting for registry to be ready... ($RETRIES retries left)"
+    sleep 2
+done
+
+echo "==> Registry is ready! Pushing Twin-CR images to ${REGISTRY_HOST}..."
+
+# Mapping: local image name -> target name in internal registry
+IMAGES=(
+    "configurator-client"
+    "session-manager"
+    "twincr-core"
+    "automata"
+)
+
+# Optional variants if built (e.g. argus-backends: latest, private, public)
+for backend in argus-backend-scada argus-backend-gm; do
+    for tag in latest private public; do
+        if docker image inspect "${backend}:${tag}" >/dev/null 2>&1; then
+            echo "  -> Tagging ${backend}:${tag} as ${REGISTRY_HOST}/${backend}:latest"
+            docker tag "${backend}:${tag}" "${REGISTRY_HOST}/${backend}:latest"
+            docker push "${REGISTRY_HOST}/${backend}:latest"
+            break
+        fi
+    done
+done
+
+for name in "${IMAGES[@]}"; do
+    SRC_IMG="twin-cr-${name}:latest"
+    # Fallback to RTE variant if present and standard missing
+    if ! docker image inspect "$SRC_IMG" >/dev/null 2>&1; then
+        SRC_IMG="twin-cr-rte-${name}:latest"
+    fi
+
+    if docker image inspect "$SRC_IMG" >/dev/null 2>&1; then
+        TARGET_IMG="${REGISTRY_HOST}/${name}:latest"
+        echo "  -> Tagging $SRC_IMG as $TARGET_IMG"
+        docker tag "$SRC_IMG" "$TARGET_IMG"
+        echo "  -> Pushing $TARGET_IMG"
+        docker push "$TARGET_IMG"
+    else
+        echo "  WARN: Image $SRC_IMG not found locally, skipping."
+    fi
+done
+
+echo "==> All Twin-CR images pushed to registry successfully."

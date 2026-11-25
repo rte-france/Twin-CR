@@ -1,0 +1,41 @@
+#
+# Copyright (c) 2026, RTE (https://www.rte-france.com)
+# See AUTHORS.md
+# SPDX-License-Identifier: MPL-2.0
+# This file is part of Twin-CR, a platform for real-time cyber-physical
+# co-simulation of power systems.
+#
+
+---
+- name: Prepare services environment
+  hosts: all
+  become: true
+  environment: "{{ proxy_env | default({}) }}"
+  roles:
+    - base
+    - role: docker
+      tags: docker
+    - role: cni
+      tags: cni
+
+- name: Deploy HashiCorp Cluster
+  hosts: nomad_servers:nomad_workers
+  become: true
+  environment: "{{ proxy_env | default({}) }}"
+  roles:
+    - role: hashicorp
+      tags: hashicorp
+
+- name: Deploy Cluster Core Services
+  hosts: nomad_servers
+  become: true
+  environment: "{{ proxy_env | default({}) }}"
+  roles:
+    - role: postgres
+      tags: postgres
+    - role: registry
+      tags: registry
+    - role: garage
+      tags: garage
+    - role: keycloak
+      tags: keycloak

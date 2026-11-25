@@ -1,0 +1,126 @@
+#!/usr/bin/env bash
+#MISE description="Provision and deploy Twin-CR infrastructure on Linux (Docker)"
+
+set -euo pipefail
+
+NODES_COUNT="1"
+PASSTHROUGH_ARGS=()
+while [ $# -gt 0 ]; do
+    case "$1" in
+        --node|--nodes)
+            NODES_COUNT="$2"
+            shift 2
+            ;;
+        --node=*|--nodes=*)
+            NODES_COUNT="${1#*=}"
+            shift
+            ;;
+        NODES=*)
+            NODES_COUNT="${1#NODES=}"
+            shift
+            ;;
+        *)
+            PASSTHROUGH_ARGS+=("$1")
+            shift
+            ;;
+    esac
+done
+
+DOCKER_NETWORK="twincr_net"
+if ! docker network inspect "${DOCKER_NETWORK}" >/dev/null 2>&1; then
+    docker network create --subnet 172.28.0.0/16 "${DOCKER_NETWORK}"
+fi
+
+TARGET_CONTAINER="twincr_target"
+
+if ! docker ps --format '{{.Names}}' | grep -q "^${TARGET_CONTAINER}$"; then
+    if docker ps -a --format '{{.Names}}' | grep -q "^${TARGET_CONTAINER}$"; then
+        echo "Starting existing container ${TARGET_CONTAINER}..."
+        docker start "${TARGET_CONTAINER}"
+    else
+        echo "Creating and starting container ${TARGET_CONTAINER}..."
+        docker run -d --name "${TARGET_CONTAINER}" \
+          --network "${DOCKER_NETWORK}" \
+          --privileged \
+          --cgroupns=host \
+          -v /sys/fs/cgroup:/sys/fs/cgroup:rw \
+          -v twincr_docker_data:/var/lib/docker \
+          -v twincr_containerd_data:/var/lib/containerd \
+          -v "$(pwd)":/home/orchestrator \
+          -p 80:80 \
+          -p 443:443 \
+          -p 8080:8080 \
+          -p 4646:4646 \
+          -p 5000:5000 \
+          -p 8500:8500 \
+          -p 8200:8200 \
+          -p 7233:7233 \
+          -p 8333:8333 \
+          -p 9333:9333 \
+          -p 8090:8090 \
+          -p 8334:8334 \
+          -e http_proxy="${http_proxy:-}" \
+          -e https_proxy="${https_proxy:-}" \
+          -e no_proxy="${no_proxy:-},localhost,127.0.0.1,172.17.0.0/16,172.28.0.0/16,10.0.0.0/8" \
+          -e HTTP_PROXY="${http_proxy:-}" \
+          -e HTTPS_PROXY="${https_proxy:-}" \
+          -e NO_PROXY="${no_proxy:-},localhost,127.0.0.1,172.17.0.0/16,172.28.0.0/16,10.0.0.0/8" \
+          geerlingguy/docker-debian12-ansible
+    fi
+fi
+
+# Ensure primary target is connected only to twincr_net
+if ! docker inspect "${TARGET_CONTAINER}" --format '{{json .NetworkSettings.Networks}}' | grep -q "${DOCKER_NETWORK}"; then
+    docker network connect "${DOCKER_NETWORK}" "${TARGET_CONTAINER}" || true
+fi
+if docker inspect "${TARGET_CONTAINER}" --format '{{json .NetworkSettings.Networks}}' | grep -q '"bridge":'; then
+    docker network disconnect bridge "${TARGET_CONTAINER}" || true
+fi
+
+# Provision worker containers if NODES_COUNT > 1
+WORKERS_INI=""
+if [ "$NODES_COUNT" -gt 1 ]; then
+    NUM_WORKERS=$((NODES_COUNT - 1))
+    echo "==> Multi-node mode (Linux Docker): configuring $NUM_WORKERS worker container(s)..."
+    for i in $(seq 1 "$NUM_WORKERS"); do
+        WORKER_NAME="twincr_worker_$i"
+        if ! docker ps --format '{{.Names}}' | grep -q "^${WORKER_NAME}$"; then
+            if docker ps -a --format '{{.Names}}' | grep -q "^${WORKER_NAME}$"; then
+                echo "Starting existing worker ${WORKER_NAME}..."
+                docker start "${WORKER_NAME}"
+            else
+                echo "Creating and starting worker ${WORKER_NAME}..."
+                docker run -d --name "${WORKER_NAME}" \
+                  --network "${DOCKER_NETWORK}" \
+                  --privileged \
+                  --cgroupns=host \
+                  -v /sys/fs/cgroup:/sys/fs/cgroup:rw \
+                  -v "twincr_worker_${i}_docker_data":/var/lib/docker \
+                  -v "twincr_worker_${i}_containerd_data":/var/lib/containerd \
+                  -e http_proxy="${http_proxy:-}" \
+                  -e https_proxy="${https_proxy:-}" \
+                  -e no_proxy="${no_proxy:-},localhost,127.0.0.1,172.17.0.0/16,172.28.0.0/16,10.0.0.0/8" \
+                  geerlingguy/docker-debian12-ansible
+            fi
+        fi
+        WORKERS_INI="${WORKERS_INI}twincr_worker$i ansible_connection=docker ansible_host=${WORKER_NAME} ansible_user=root"$'\n'
+    done
+fi
+
+mkdir -p inventories
+cat <<EOF > inventories/dev.ini
+[nomad_servers]
+twincr ansible_connection=docker ansible_host=twincr_target ansible_user=root
+
+[nomad_workers]
+${WORKERS_INI}
+
+[twincr_dev:children]
+nomad_servers
+nomad_workers
+
+[all:children]
+twincr_dev
+EOF
+
+make dev ${PASSTHROUGH_ARGS[@]+"${PASSTHROUGH_ARGS[@]}"}

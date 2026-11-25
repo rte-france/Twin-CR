@@ -1,0 +1,16 @@
+datacenter = "dc1"
+data_dir = "/opt/consul"
+bind_addr = "0.0.0.0"
+client_addr = "0.0.0.0"
+advertise_addr = "{{ ansible_facts['default_ipv4']['address'] }}"
+
+server = {{ 'true' if inventory_hostname in groups['nomad_servers'] else 'false' }}
+{% if inventory_hostname in groups['nomad_servers'] %}
+bootstrap_expect = 1
+{% else %}
+retry_join = ["{{ hostvars[groups['nomad_servers'][0]]['ansible_facts']['default_ipv4']['address'] }}"]
+{% endif %}
+
+ui_config {
+  enabled = true
+}

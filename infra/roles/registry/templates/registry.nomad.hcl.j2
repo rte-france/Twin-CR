@@ -1,0 +1,63 @@
+job "registry" {
+  datacenters = ["dc1"]
+  type        = "service"
+
+  group "registry" {
+    constraint {
+      attribute = "${node.class}"
+      value     = "control-plane"
+    }
+
+    network {
+      port "registry_http" {
+        static = 5000
+        to     = 5000
+      }
+    }
+
+    task "registry" {
+      driver = "docker"
+
+      config {
+        image = "registry:2"
+        ports = ["registry_http"]
+
+        volumes = [
+          "/opt/registry/data:/var/lib/registry"
+        ]
+      }
+
+      env {
+        REGISTRY_STORAGE_DELETE_ENABLED = "true"
+
+        REGISTRY_HTTP_HEADERS_Access_Control_Allow_Origin  = "['*']"
+        REGISTRY_HTTP_HEADERS_Access_Control_Allow_Methods = "['HEAD', 'GET', 'OPTIONS', 'DELETE']"
+        REGISTRY_HTTP_HEADERS_Access_Control_Allow_Headers = "['Authorization', 'Accept', 'Cache-Control']"
+        REGISTRY_HTTP_HEADERS_Access_Control_Expose_Headers= "['Docker-Content-Digest']"
+      }
+
+      resources {
+        memory = 512
+      }
+    }
+
+    service {
+      name     = "docker-registry"
+      port     = "registry_http"
+      provider = "consul"
+
+      tags = [
+        "traefik.enable=true",
+        "traefik.http.routers.registry.rule=Host(`registry.{{ base_domain }}`)",
+        "traefik.http.routers.registry.entrypoints=web,websecure",
+        "traefik.http.routers.registry.tls=true"
+      ]
+
+      check {
+        type     = "tcp"
+        interval = "10s"
+        timeout  = "2s"
+      }
+    }
+  }
+}
