@@ -10,6 +10,7 @@ import { invoke } from "@tauri-apps/api/core";
 
 export interface AppConfig {
   keycloak_url: string;
+  keycloak_dev_url?: string;
   keycloak_realm: string;
   keycloak_client_id: string;
   session_manager_url: string;
