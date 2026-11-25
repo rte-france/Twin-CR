@@ -550,6 +550,9 @@ def _pypowsybl_to_pandapower(psn, governor_kgover=None):
     all_lim = psn.get_operational_limits()
     # Remove limits of lines < 200kv
     lines = psn.get_lines()
+    # Lines open at one end have no bus id on that side, so the filter below drops them; they are
+    # handled separately further down (equivalent shunt at their connected end).
+    open_end_lines = lines[lines["connected1"] != lines["connected2"]]
     # lines = lines.join(vlevels, on="voltage_level1_id")
     # all_lim = all_lim[~all_lim.index.isin(lines.loc[lines["nominal_v"] < 200].index)]
     cur_lim = all_lim[all_lim.index.get_level_values("type") == "CURRENT"]
@@ -795,6 +798,59 @@ def _pypowsybl_to_pandapower(psn, governor_kgover=None):
                 batteries["connected"].values if "connected" in batteries else True
             ),
             controllable=False,
+        )
+
+    # ---- static var compensators (bulk) ----
+    # Modelled as PQ injections at the stored reactive output (sgen, q = -IIDM q), like batteries.
+    # They exchange no active power (p is 0 in the stored state, asserted by the private tests), so
+    # they only matter for AC, where on the big network they inject up to ~73 MVAr.
+    svcs = psn.get_static_var_compensators()
+    svcs = svcs[svcs["bus_id"].isin(bus_lookup.index)]
+    if len(svcs):
+        pp.create_sgens(
+            net,
+            buses=svcs["bus_id"].map(bus_lookup).astype(int).values,
+            p_mw=0.0,
+            q_mvar=-svcs["q"].fillna(0.0).values,
+            name=svcs.index.tolist(),
+            in_service=(svcs["connected"].values if "connected" in svcs else True),
+            controllable=False,
+        )
+
+    # ---- lines open at one end (bulk) ----
+    # The line is out of service in pandapower (it needs both ends), but in IIDM its connected end still
+    # sees the line's series impedance in front of the far-end charging, i.e. a voltage-independent
+    # shunt admittance: y_eq = y_shunt_near + y_series * y_shunt_far / (y_series + y_shunt_far).
+    # ~600 such lines draw ~1000 MVAr of (negative) reactive power on the big network; dropping them
+    # lifts/lowers local voltages by several percent and shifts flows by several MW.
+    if len(open_end_lines):
+        near_is_side1 = open_end_lines["connected1"].values
+        series_admittance = 1.0 / (open_end_lines["r"].values + 1j * open_end_lines["x"].values)
+        shunt_near = np.where(
+            near_is_side1,
+            open_end_lines["g1"].values + 1j * open_end_lines["b1"].values,
+            open_end_lines["g2"].values + 1j * open_end_lines["b2"].values,
+        )
+        shunt_far = np.where(
+            near_is_side1,
+            open_end_lines["g2"].values + 1j * open_end_lines["b2"].values,
+            open_end_lines["g1"].values + 1j * open_end_lines["b1"].values,
+        )
+        near_bus_ids = np.where(near_is_side1, open_end_lines["bus1_id"].values, open_end_lines["bus2_id"].values)
+        has_near_bus = pd.Series(near_bus_ids).isin(bus_lookup.index).values
+        open_end_lines = open_end_lines[has_near_bus]
+        near_bus_ids = near_bus_ids[has_near_bus]
+        series_admittance = series_admittance[has_near_bus]
+        shunt_near, shunt_far = shunt_near[has_near_bus], shunt_far[has_near_bus]
+        equivalent_admittance = shunt_near + series_admittance * shunt_far / (series_admittance + shunt_far)
+        near_bus_vn_kv = vn_kv.reindex(near_bus_ids).values
+        pp.create_shunts(
+            net,
+            buses=pd.Series(near_bus_ids).map(bus_lookup).astype(int).values,
+            p_mw=equivalent_admittance.real * near_bus_vn_kv ** 2,
+            q_mvar=-equivalent_admittance.imag * near_bus_vn_kv ** 2,
+            vn_kv=near_bus_vn_kv,
+            name=(open_end_lines.index + "_open_end").tolist(),
         )
 
     # ---- shunt compensators (bulk) ----
