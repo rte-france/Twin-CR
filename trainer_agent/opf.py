@@ -678,22 +678,52 @@ def _pypowsybl_to_pandapower(psn, governor_kgover=None):
     )
 
     # ---- generators (bulk) ----
-    generators = psn.get_generators()
+    generators = psn.get_generators(all_attributes=True)
     generators = generators[generators["bus_id"].isin(bus_lookup.index)]
     # Generators of foreign synchronous components (e.g. UK, only linked through HVDC) are not modelled
     generators = generators[generators["bus_id"].map(synchronous_component_by_bus) == main_synchronous_component]
-    gen_in_service = (
-        generators["connected"].values if "connected" in generators else True
+    generator_in_service = (
+        generators["connected"] if "connected" in generators else pd.Series(True, index=generators.index)
     )
 
     nans = np.isnan(generators["p"])
     # nan generators are disconnected one way or another, correct pandapower value is 0
     generators.loc[nans, "p"] = 0
+    generators.loc[generators["q"].isna(), "q"] = 0
+
+    # Generators that do not regulate voltage are PQ injections, not PV nodes. Modelling them as PV
+    # pins their bus at a made-up voltage (1.0 pu) and floods the grid with reactive power: on the big
+    # network it triples the active losses (~2600 MW -> ~7600 MW) and Newton-Raphson diverges.
+    # Like batteries they become sgens (not controllable: the redispatch OPF only moves PV generators).
+    is_voltage_regulating = generators["voltage_regulator_on"].astype(bool)
+    pq_generators = generators[~is_voltage_regulating]
+    generators = generators[is_voltage_regulating]
+    if len(pq_generators):
+        pp.create_sgens(
+            net,
+            buses=pq_generators["bus_id"].map(bus_lookup).astype(int).values,
+            p_mw=-pq_generators["p"].values,
+            q_mvar=-pq_generators["q"].values,
+            name=pq_generators.index.tolist(),
+            min_p_mw=pq_generators["min_p"].values,
+            max_p_mw=pq_generators["max_p"].values,
+            in_service=generator_in_service.loc[pq_generators.index].values,
+            type=pq_generators["energy_source"].str.lower().values,
+            controllable=False,
+        )
+
+    # pandapower cannot regulate a remote bus, so a generator that regulates another bus (possibly at
+    # another voltage level) holds the voltage of its own bus instead. Dividing its target_v by its own
+    # nominal voltage would give absurd setpoints (405 kV target on a 10 kV bus = 39 pu).
     gen_vn_kv = generators["voltage_level_id"].map(vlevels["nominal_v"])
-    # Non-regulating generators often carry target_v=0 as a placeholder. Since voltage is a
-    # nodal quantity, pandapower requires every generator at a bus to share one setpoint, so
-    # co-located units borrow the bus's one real (target_v > 0) setpoint instead of going to 0.
+    is_remote_regulation = generators["regulated_bus_id"].notna() & (
+        generators["regulated_bus_id"] != generators["bus_id"]
+    )
+    own_bus_vm_pu = generators["bus_id"].map(buses["v_mag"]) / gen_vn_kv
+    # Co-located generators must share one setpoint (see below); a remote regulator's own-bus voltage is
+    # only used when the stored state has one, otherwise it falls back to the 1.0 pu default.
     gen_raw_vm_pu = (generators["target_v"] / gen_vn_kv).where(generators["target_v"] > 0)
+    gen_raw_vm_pu = gen_raw_vm_pu.where(~is_remote_regulation, own_bus_vm_pu)
     gen_vm_pu = gen_raw_vm_pu.groupby(generators["bus_id"]).transform("first").fillna(1.0).values
 
     if governor_kgover is None:
@@ -712,7 +742,7 @@ def _pypowsybl_to_pandapower(psn, governor_kgover=None):
         slack=False,
         slack_weight=(generators["max_p"] + generators["p"]).clip(lower=0).fillna(0).values,
         type=generators["energy_source"].str.lower().values,
-        in_service=gen_in_service,
+        in_service=generator_in_service.loc[generators.index].values,
         governor_kgover=(0 if governor_kgover is None
                          else governor_kgover.reindex(generators.index).values),
         #controllable=np.logical_not(generators["energy_source"].str.lower().isin(["solar", "wind"]).values),
