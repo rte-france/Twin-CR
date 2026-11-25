@@ -30,6 +30,14 @@ INCREASE_LOAD_PERCENT = 30
 time_available_by_contingency = {}
 
 
+def _initialize_worker(worker_pp_net, worker_mode, worker_time_available_by_contingency):
+    """Pool initializer: spawned workers do not inherit the parent's globals, so they are set here."""
+    global pp_net, global_mode, time_available_by_contingency
+    pp_net = worker_pp_net
+    global_mode = worker_mode
+    time_available_by_contingency = worker_time_available_by_contingency
+
+
 def change_contingency_state_ps(network, contingency_name, connected):
         if contingency_name in network.get_branches().index:
             network.update_branches(id=contingency_name, connected1=connected, connected2=connected)
@@ -385,14 +393,22 @@ class ContingencyFinder:
             else:
                 elements = list(lines.index) 
                 elements += list(transformers.index) # + list(generators.index)
-            elements = elements[:100]
+
             load_groups = self.load_groups
             gen_groups = self.gen_groups
 
         print("Starting contingency analysis")
         if self.n_jobs > 1:
-            ctx = mp.get_context('fork')
-            with ctx.Pool(self.n_jobs) as pool:
+            if self.mode == "vsi":
+                # Forking after BLAS / pypowsybl native runtimes were used hangs or corrupts the children
+                # (e.g. ARPACK in svds). Workers are spawned and receive the globals explicitly.
+                ctx = mp.get_context('spawn')
+                pool_kwargs = dict(initializer=_initialize_worker,
+                                   initargs=(pp_net, self.mode, time_available_by_contingency))
+            else:
+                ctx = mp.get_context('fork')
+                pool_kwargs = {}
+            with ctx.Pool(self.n_jobs, **pool_kwargs) as pool:
                 if self.mode in ["opf", "vsi"]:
                     load_results = pool.starmap_async(load_contingency, load_groups)
                     gen_results = pool.starmap_async(gen_contingency, gen_groups)
