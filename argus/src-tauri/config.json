@@ -1,5 +1,5 @@
 {
-  "keycloak_url": "https://localhost",
+  "keycloak_url": "https://keycloak.localhost",
   "keycloak_realm": "twincr",
   "keycloak_client_id": "session-manager-client",
   "session_manager_url": "http://localhost:8090",

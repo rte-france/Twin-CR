@@ -82,7 +82,7 @@ http:
     auth-redirect-middleware:
       redirectRegex:
         regex: "^https?://auth\\.[^/]+/(.*)"
-        replacement: "{{ public_url }}/$${1}"
+        replacement: "https://keycloak.{{ base_domain }}/$${1}"
         permanent: false
   services:
     nomad-svc:

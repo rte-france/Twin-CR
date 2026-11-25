@@ -64,12 +64,20 @@ Per machine, in a git-ignored `mise.local.toml` next to `mise.toml` (`[env]` sec
 | `TWINCR_COMPOSE_DIR` | the repository including Twin-CR as a submodule if it has a `docker-compose.yaml`, else Twin-CR | Compose project whose images are pushed |
 | `TWINCR_DYNAWO_RULES_DIR` | `dynawo_rules/` of that repository, if any | Extra Dynawo model rules of the session manager |
 
-Ansible variables (`infra/group_vars/all.yml`): `public_url` (`https://localhost`) is the address of the services used
-by Argus; set it to the DNS name of the cluster entry point for a remote cluster.
+Ansible variables (`infra/group_vars/all.yml`):
+- `base_domain` (`localhost`): Keycloak at `https://keycloak.<base_domain>`, and the admin interfaces (`nomad.`,
+  `consul.`, `vault.`, `registry.`, `s3.`). Names under `localhost` are the machine itself (RFC 6761): no DNS or hosts
+  entry for a local cluster.
+- `public_url` (`https://localhost`): the session manager (`<public_url>/lobby`) and the sessions
+  (`<public_url>/sessions/...`).
+
+For a remote cluster, set both to DNS names of its entry point (e.g. `base_domain: twin.example.org` with a wildcard
+record `*.twin.example.org`, and `public_url: https://twin.example.org`): every machine running Argus or a browser must
+resolve them, through the DNS or hosts entries.
 
 ### Remote cluster
 
-Copy `infra/inventories/remote.ini.example` to `infra/inventories/<env>.ini`, set `public_url`, then
+Copy `infra/inventories/remote.ini.example` to `infra/inventories/<env>.ini`, set `base_domain` and `public_url`, then
 `make -C infra deploy ENV=<env>`, push the images to the registry of that cluster, and `make -C infra apps ENV=<env>`.
 
 ## Access
@@ -78,7 +86,8 @@ Copy `infra/inventories/remote.ini.example` to `infra/inventories/<env>.ini`, se
 
 In the Argus config (`config.json` in its config folder, e.g. on macOS
 `~/Library/Application Support/com.twincr.com.twincr.argus/config.json`):
-- `keycloak_url`: `https://localhost` (default; with compose: `https://localhost:8443`)
+- `keycloak_url`: `https://keycloak.localhost` (default; remote cluster: `https://keycloak.<base_domain>`; compose:
+  `https://localhost:8443`)
 - `session_manager_url`: `http://localhost:8090` (default) or `https://localhost/lobby`
 
 An existing `config.json` keeps its values: edit it after an upgrade. The login opens Keycloak in the browser.
@@ -95,7 +104,7 @@ Predefined users (development only, the password is the user name):
 
 | Service | Address | Notes |
 |---|---|---|
-| Keycloak | `https://localhost` | Admin console `https://localhost/admin` (master realm admin: Vault `secret/keycloak`) |
+| Keycloak | `https://keycloak.localhost` | Admin console `https://keycloak.localhost/admin` (master realm admin: Vault `secret/keycloak`) |
 | Session manager | `https://localhost/lobby`, `http://localhost:8090` | API docs: `http://localhost:8090/docs` (not behind `/lobby`) |
 | Services of a session | `https://localhost/sessions/session-<id>/{argus-scada,argus-gm,twincr-core,configurator-client,clickhouse}` | ClickHouse query page: `.../clickhouse/play`, with `https://localhost/sessions/session-<id>/clickhouse/` in its URL field |
 | Nomad UI | `http://localhost:4646/ui` | Token: `docker exec twincr_target cat /etc/nomad.d/nomad.token` |
@@ -110,8 +119,7 @@ The HTTPS certificate is issued by the certificate authority of the cluster (Vau
 the cluster is recreated.
 
 Interactive API docs behind a path (`.../configurator-client/docs`, the Swagger pages of the Argus backends) do not
-load: they request their files at the root. The admin interfaces also have host names (`nomad.twin.local`...), unused
-without DNS entries.
+load: they request their files at the root. The admin interfaces also have host names (`https://nomad.localhost`...).
 
 ## Contexts (templates)
 

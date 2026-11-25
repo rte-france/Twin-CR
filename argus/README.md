@@ -13,7 +13,7 @@ Argus reads a config file to set up some variables needed at startup. A default 
 It contains URLs for keycloak, session_manager and lobby :
 ```
 {
-  "keycloak_url": "https://localhost",
+  "keycloak_url": "https://keycloak.localhost",
   "keycloak_realm": "twineu",
   "keycloak_client_id": "session-manager-client",
   "session_manager_url": "http://localhost:8090",
@@ -31,8 +31,9 @@ Argus needs Keycloak served over HTTPS. Follow the setup in
 [keycloak/README.md](../keycloak/README.md) first — generating the certificate,
 trusting it, and mapping the `keycloak` hostname.
 
-The default `keycloak_url` (`https://localhost`) is the Keycloak of the Nomad infrastructure (see
-[docs/infra/README.md](../docs/infra/README.md)). With docker compose, Keycloak listens on `KEYCLOAK_PORT` (8443): set
+The default `keycloak_url` (`https://keycloak.localhost`) is the Keycloak of a local Nomad infrastructure (see
+[docs/infra/README.md](../docs/infra/README.md)): Argus resolves `*.localhost` to the loopback address itself, also on
+Windows, whose resolver does not. With docker compose, Keycloak listens on `KEYCLOAK_PORT` (8443): set
 `keycloak_url` to `https://localhost:8443`, or enter it on the sign-in page.
 
 `session_manager_url` does differ by mode: `http://localhost:8090` natively,
