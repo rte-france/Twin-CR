@@ -1,5 +1,7 @@
 # Multi-session infrastructure (Nomad)
 
+*Work in progress*
+
 With docker compose, a machine runs one simulation session at a time. The Nomad infrastructure runs several: each
 session is a Nomad job (`twincr-session.nomad.hcl`, in this folder) with its own NATS, ClickHouse, orchestrator,
 configurator, Argus backends and automata, created and stopped by the session manager from Argus.
