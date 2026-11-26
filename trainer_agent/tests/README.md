@@ -60,3 +60,32 @@ Each has a `test_regression_*` test.
 
 Nordic has no phase shifters, batteries, HVDC or negative-reactance transformers,
 so further regressions on those elements are covered by larger private networks.
+
+# pypowsybl → ANDES conversion tests
+
+`test_pypowsybl_to_andes.py` validates `pypowsybl_to_andes.pypowsybl_to_andes` (direct conversion to an ANDES
+system) against pypowsybl's own AC load flow on Nordic. It reuses the comparison functions of
+`trainer_agent/check_pypowsybl_to_andes.py`, which can also be run standalone for a printed report on any network:
+
+```bash
+pytest trainer_agent/tests/test_pypowsybl_to_andes.py -v                  # <1 s
+python trainer_agent/check_pypowsybl_to_andes.py path/to/network.iidm [--no-reactive-limits]
+```
+
+Checks (main synchronous component, ANDES slack set to pypowsybl's reference bus):
+
+| Check | Tolerance | Measured on Nordic |
+|---|---|---|
+| ANDES power flow converges | - | converged |
+| Bus voltage magnitude | 1e-3 pu | 1e-5 pu |
+| Bus angle (after removing the median offset between slacks) | 0.05 deg | 1.1e-3 deg |
+| Line and transformer P / Q at side 1 | 0.5 MW / Mvar | 0.028 MW / 0.014 Mvar |
+| Total losses | 1 MW | 0.0 MW difference |
+
+Like the tests above, they skip when `Nordic.iidm` is absent.
+
+The checks themselves live in `andes_conversion_checks.py` (not collected on its own). A test module per network
+does `from andes_conversion_checks import *` and defines a module-scoped `network_path` fixture; it can also
+override the `conversion_tolerances` fixture. `tests_private/test_mqis_andes_conversion.py` reuses them this way for
+the MQIS network, with looser voltage and reactive-flow tolerances (the cause of the larger reactive gaps there is not
+established; see the comment in that file).

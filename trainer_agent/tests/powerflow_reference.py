@@ -1,10 +1,9 @@
 """
-Copyright (c) 2025-2026, RTE (http://www.rte-france.com)
-This Source Code Form is subject to the terms of the Mozilla Public
-License, v. 2.0. If a copy of the MPL was not distributed with this
-file, You can obtain one at http://mozilla.org/MPL/2.0/.
+Copyright (c) 2025-2026, RTE (https://www.rte-france.com)
+See AUTHORS.md
 SPDX-License-Identifier: MPL-2.0
-This file is part of the TwinEU-core project.
+This file is part of Twin-CR, a platform for real-time cyber-physical
+co-simulation of power systems.
 
 Reference harness for validating `opf._pypowsybl_to_pandapower` against
 pypowsybl's own load flow.
@@ -171,6 +170,107 @@ def run_ac_comparison(iidm_path, exclude=(), preferred_slack=None):
     return pp_net, compare_line_flows(pp_net, reference, exclude=exclude)
 
 
+def pin_ac_injections(psn):
+    """Make pypowsybl's AC inputs equal to the solved state the conversion reads.
+
+    The conversion takes generator/load P and Q from the *stored* solution
+    (``p``/``q``), whereas pypowsybl solves from setpoints (``target_p``,
+    ``p0``/``q0``, ``target_q``). Pinning the setpoints to the stored values
+    makes both tools solve the same problem. MUTATES `psn` in place.
+    """
+    generators = psn.get_generators()
+    psn.update_generators(
+        pd.DataFrame(
+            {"target_p": -generators["p"], "target_q": -generators["q"]},
+            index=generators.index,
+        ).fillna(0.0)
+    )
+    loads = psn.get_loads()
+    psn.update_loads(
+        pd.DataFrame({"p0": loads["p"], "q0": loads["q"]}, index=loads.index).fillna(0.0)
+    )
+
+
+def pandapower_equivalent_ac_parameters(slack_bus_name):
+    """pypowsybl AC parameters that match what a plain pandapower runpp models.
+
+    pandapower has no tap/PST/shunt regulation, no Q limits and a single slack,
+    so all of those are switched off here. DC-values initialisation is needed on
+    MQIS: with the default flat start pypowsybl's own Newton-Raphson stalls
+    (MAX_ITERATION_REACHED) on the main synchronous component.
+    """
+    return ps.loadflow.Parameters(
+        transformer_voltage_control_on=False,
+        shunt_compensator_voltage_control_on=False,
+        phase_shifter_regulation_on=False,
+        distributed_slack=False,
+        use_reactive_limits=False,
+        voltage_init_mode=ps.loadflow.VoltageInitMode.DC_VALUES,
+        provider_parameters={
+            "slackBusSelectionMode": "NAME",
+            "slackBusesIds": slack_bus_name,
+        },
+    )
+
+
+def total_branch_losses(line_results, trafo_results):
+    """Sum of active-power losses over line and transformer result frames (MW)."""
+    return float(line_results.sum() + trafo_results.sum())
+
+
+def run_ac_vs_pypowsybl_ac(iidm_path, exclude=(), preferred_slack=None):
+    """Solve the same AC problem with pypowsybl and with the converted pandapower net.
+
+    Unlike `run_ac_comparison` (which compares against the solution *stored* in
+    the file), this re-solves with pypowsybl, so it checks that the converted
+    network can actually be run through an AC load flow and behaves like it.
+
+    Order matters: the conversion reads the stored state, and a pypowsybl solve
+    overwrites it, so convert first.
+
+    Returns a dict with
+      pp_net, diffs (line-flow comparison), pypowsybl_results (ComponentResult list),
+      pandapower_converged (bool), pypowsybl_losses_mw, pandapower_losses_mw,
+      slack_p_pypowsybl_mw, slack_p_pandapower_mw.
+    """
+    psn = ps.network.load(str(iidm_path))
+    pp_net = convert(psn, preferred_slack)
+    slack_gen_name = pp_net.gen.loc[pp_net.gen["slack"], "name"].iloc[0]
+    (slack_bus_name,) = slack_bus_names(pp_net)
+
+    pin_ac_injections(psn)
+    results = ps.loadflow.run_ac(psn, pandapower_equivalent_ac_parameters(slack_bus_name))
+    lines = psn.get_lines()
+    trafos = psn.get_2_windings_transformers()
+    reference = lines[["p1"]].copy()
+    pypowsybl_losses = total_branch_losses(
+        lines["p1"] + lines["p2"], trafos["p1"] + trafos["p2"]
+    )
+    slack_p_pypowsybl = -float(psn.get_generators().loc[slack_gen_name, "p"])
+
+    try:
+        pp.runpp(pp_net)
+        converged = True
+    except pp.LoadflowNotConverged:
+        converged = False
+
+    out = {
+        "pp_net": pp_net,
+        "pypowsybl_results": results,
+        "pandapower_converged": converged,
+        "pypowsybl_losses_mw": pypowsybl_losses,
+        "slack_p_pypowsybl_mw": slack_p_pypowsybl,
+    }
+    if converged:
+        out["diffs"] = compare_line_flows(pp_net, reference, exclude=exclude)
+        out["pandapower_losses_mw"] = total_branch_losses(
+            pp_net.res_line["pl_mw"], pp_net.res_trafo["pl_mw"]
+        )
+        slack_mask = pp_net.gen["name"] == slack_gen_name
+        out["slack_p_pandapower_mw"] = float(pp_net.res_gen.loc[slack_mask, "p_mw"].iloc[0])
+    return out
+
+
 def transformer_reactance_roundtrip(psn, pp_net):
     """Per-transformer reactance in ohms: IIDM input vs what pandapower rebuilt.
 
@@ -246,9 +346,15 @@ def bus_injection_mismatch(psn, pp_net):
         got = got.add(
             pp_net.res_sgen.groupby(pp_net.sgen["bus"])["p_mw"].sum(), fill_value=0.0
         )
-    if len(pp_net.shunt):
+    # Shunts named *_open_end stand in for lines open at one end (see opf.py): they are
+    # network branches in IIDM, not injections, so they are not part of this balance.
+    injected_shunts = ~pp_net.shunt["name"].astype(str).str.endswith("_open_end")
+    if injected_shunts.any():
         got = got.add(
-            -pp_net.res_shunt.groupby(pp_net.shunt["bus"])["p_mw"].sum(), fill_value=0.0
+            -pp_net.res_shunt[injected_shunts]
+            .groupby(pp_net.shunt.loc[injected_shunts, "bus"])["p_mw"]
+            .sum(),
+            fill_value=0.0,
         )
     if len(pp_net.dcline):
         got = got.add(

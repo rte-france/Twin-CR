@@ -6,21 +6,25 @@ This file is part of Twin-CR, a platform for real-time cyber-physical
 co-simulation of power systems.
 """
 
-import numpy as np
 import andes
+import numpy as np
+import pypowsybl as ps
+
 from matplotlib import pyplot as plt
+
+from pypowsybl_to_andes import pypowsybl_to_andes
+
+net = ps.network.load("temp copy.xiidm")
 
 andes.config_logger(stream_level=20)
 
-ss = andes.load(andes.get_case('ieee14/ieee14.json'))
+# ss = andes.load(andes.get_case('ieee14/ieee14.json'))
+ss = pypowsybl_to_andes(net)
 ss.PFlow.run()
 
 ss.CPF.run(load_scale=2.0)
 
 print(ss.CPF.max_lam)
-
-fig, ax = ss.CPF.plot(bus_idx=14, show=False)
-plt.show()
 
 lam = ss.CPF.lam
 nose = np.argmax(lam)
