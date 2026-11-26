@@ -23,7 +23,7 @@ from fastapi.responses import JSONResponse
 
 from src.ServerState import ServerState
 from src.config import CLICKHOUSE_HOST, CLICKHOUSE_PORT, NATS_URL
-from src.context.s3_client import S3_Client
+from src.context.s3_client import ContextLoadError, S3_Client
 
 load_dotenv()
 
@@ -122,7 +122,11 @@ async def init(
             clickhouse_client, context_id, scenario_id, simulation_id, config_path
         )
 
-    await asyncio.to_thread(prepare_clickhouse)
+    try:
+        await asyncio.to_thread(prepare_clickhouse)
+    except ContextLoadError as e:
+        # Garage or ClickHouse failed to provide a file of the context: the session cannot start without it
+        raise HTTPException(status_code=502, detail=str(e))
 
     # Send init command to orchestrator
     init_message = {
