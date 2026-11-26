@@ -7,15 +7,11 @@ co-simulation of power systems.
 """
 
 import logging
-import tempfile
-from pathlib import Path
 
 import boto3
-import toml
 
 from src.export_clickhouse_tables import Clickhouse_Tables
-from src.game_master_client import GameMasterClient
-from src.config import BUCKET, DSL_SERVER_URL, S3_ENDPOINT, S3_ACCESS_KEY, S3_PRIVATE_KEY, BUCKET_ARCHIVE
+from src.config import BUCKET, S3_ENDPOINT, S3_ACCESS_KEY, S3_PRIVATE_KEY, BUCKET_ARCHIVE
 from src.context.context_client import Context_Client
 
 
@@ -89,59 +85,6 @@ class S3_Client(Context_Client):
                     )
                 except Exception as e:
                     self.logger.error(e)
-
-    def init_game_master(self, config_path, context_id, scenario_id, simulation_id):
-        paginator = self.s3.get_paginator("list_objects_v2")
-        pages = paginator.paginate(Bucket=BUCKET, Prefix=self.get_context_prefix(context_id))
-        iidm_key = None
-        dsl_key = None
-        for page in pages:
-            for obj in page["Contents"]:
-                key = obj["Key"]
-                if self.is_iidm(key):
-                    iidm_key = key
-                    self.logger.info(f"found iidm key {key}")
-                if scenario_id and key.endswith(scenario_id):
-                    dsl_key = key
-                    self.logger.info(f"found dsl key {key}")
-        config_key = self.get_context_prefix(context_id) + config_path
-        self.upload_game_master_files(config_key, iidm_key, dsl_key, simulation_id)
-
-    def upload_game_master_files(self, config_key, iidm_key, dsl_key, simulation_id):
-        game_master_client = GameMasterClient(DSL_SERVER_URL)
-        game_master_artifact = "Nordic"
-
-        with tempfile.NamedTemporaryFile(suffix=".iidm", delete_on_close=False) as tmp:
-            self.s3.download_file(BUCKET, iidm_key, tmp.name)
-            self.logger.info(f"Uploading {iidm_key} to game master")
-            reply = game_master_client.upload_iidm(Path(tmp.name), game_master_artifact)
-            # Use the artifact_id from server if provided; otherwise keep the current one
-            game_master_artifact = reply.get("artifact_id", game_master_artifact)
-            self.logger.info("IIDM upload received the following reply\n", reply)
-        if dsl_key is not None:
-            with tempfile.NamedTemporaryFile(suffix=".dsl", delete_on_close=False) as tmp:
-                self.s3.download_file(BUCKET, dsl_key, tmp.name)
-                tmp.close()
-                self.logger.info(f"Uploading DSL file {dsl_key}")
-                reply = game_master_client.init_simulation(Path(tmp.name), simulation_id, game_master_artifact)
-        else:
-            with tempfile.NamedTemporaryFile(mode="w", suffix=".toml", delete=True) as tmp_config:
-                self.s3.download_file(BUCKET, config_key, tmp_config.name)
-                config = toml.load(tmp_config.name)
-            # Create a temporary empty dsl file and send it
-            with tempfile.NamedTemporaryFile(mode="w", suffix=".dsl", delete=True) as tmp:
-                empty_dsl_path = tmp.name
-                with open(empty_dsl_path, 'w') as f:
-                    f.write(
-                        "set simulation duration to 999999999 seconds;\n"
-                        f"set time step to {config['master']['period']} seconds;\n"
-                    )
-                self.logger.info("Uploading empty DSL file")
-                reply = game_master_client.init_simulation(Path(empty_dsl_path), simulation_id, game_master_artifact)
-        self.logger.info("DSL upload received the following reply\n", reply)
-
-    def is_iidm(self, key):
-        return key.endswith(".iidm") or key.endswith(".xiidm")
 
     def get_context_prefix(self, context_id):
         return f"CONTEXTS/{context_id}/DATA/"
