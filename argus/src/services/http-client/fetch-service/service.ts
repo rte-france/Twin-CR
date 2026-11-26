@@ -257,6 +257,7 @@ const executeWithSignal = <E, R>(
 const createWebResponse = (
   response: HttpClientResponse.HttpClientResponse,
   scope: Scope.CloseableScope,
+  signal?: AbortSignal | null,
 ): Effect.Effect<Response> => {
   const headers = sanitizeResponseHeaders(
     response.headers as Record<string, string>,
@@ -280,10 +281,17 @@ const createWebResponse = (
       Stream.ensuring(Scope.close(scope, Exit.void)),
     );
 
-    return new Response(Stream.toReadableStream(streamWithScope), {
-      status: response.status,
-      headers,
-    });
+    const body = Stream.toReadableStream(streamWithScope);
+
+    // As with fetch, aborting after the response arrived errors the body
+    // with the abort reason and cancels the underlying request.
+    return new Response(
+      signal ? body.pipeThrough(new TransformStream(), { signal }) : body,
+      {
+        status: response.status,
+        headers,
+      },
+    );
   });
 };
 
@@ -394,7 +402,7 @@ export const FetchBridgeLive = Layer.effect(
           yield* Effect.annotateCurrentSpan("http.status", response.status);
 
           // Convert to Web Response; guarantee scope cleanup if Response instantiation fails
-          return yield* createWebResponse(response, scope).pipe(
+          return yield* createWebResponse(response, scope, signal).pipe(
             Effect.onError(() => Scope.close(scope, Exit.void)),
           );
         }).pipe(

@@ -19,7 +19,7 @@ import {
 import uPlot, { type Options, type AlignedData } from "uplot";
 import "uplot/dist/uPlot.min.css";
 import { FiList, FiChevronRight } from "solid-icons/fi";
-import { ChartDataRow } from "@/services/chart";
+import { ChartDataRow, getUniqueKey } from "@/services/chart";
 import { GmSseData } from "@/services/game-master";
 
 export function debounce<T extends (...args: any[]) => void>(fn: T, ms = 400) {
@@ -51,14 +51,6 @@ const COLORS = [
 ];
 
 const WINDOW_TIME = 200;
-
-const getUniqueKey = (item: any) => {
-  const eqId = item.equipmentId || "";
-  const type = item.isEstim ? "estim" : "tmts";
-  return item.id
-    ? `${item.id}-${type}`
-    : `${eqId}-${item.kind}-${item.side || ""}-${type}`;
-};
 
 export const SelectionChart: Component<SelectionChartProps> = (props) => {
   let chartRef!: HTMLDivElement;
@@ -447,82 +439,105 @@ export const SelectionChart: Component<SelectionChartProps> = (props) => {
     ),
   );
 
+  // Redraws when the time or the points change (history responses, live
+  // points), at most once per frame.
+  let redrawFrame: number | undefined;
   createEffect(
     on(
-      () => props.currentTime,
-      (currTime) => {
-        if (currTime === 0 || !chartInstance || props.selectedData.length === 0)
-          return;
-
-        const sCount = props.selectedData.length + 1;
-        const batch = props.latestBatch;
-
-        if (!props.historicalData || props.historicalData.length === 0) {
-          chartData = Array(sCount)
-            .fill(null)
-            .map(() => []);
-        }
-
-        const eventsByTime = new Map<number, Map<number, number>>();
-
-        batch.forEach((event) => {
-          const seriesIdx = idToSeriesIndex.get(event.id);
-
-          if (seriesIdx === undefined) return;
-
-          if (!eventsByTime.has(event.time)) {
-            eventsByTime.set(event.time, new Map());
-          }
-          eventsByTime.get(event.time)!.set(seriesIdx, event.value);
+      [() => props.currentTime, () => props.latestBatch],
+      () => {
+        if (redrawFrame !== undefined) return;
+        redrawFrame = requestAnimationFrame(() => {
+          redrawFrame = undefined;
+          redraw();
         });
-
-        const sortedTimes = Array.from(eventsByTime.keys()).sort(
-          (a, b) => a - b,
-        );
-
-        sortedTimes.forEach((time) => {
-          chartData[0].push(time);
-
-          const updates = eventsByTime.get(time)!;
-          for (let j = 1; j < sCount; j++) {
-            if (updates.has(j)) {
-              chartData[j].push(updates.get(j)!);
-            } else {
-              chartData[j].push(null);
-            }
-          }
-        });
-
-        const lastIdx = chartData[0].length - 1;
-        const lastTime = lastIdx >= 0 ? chartData[0][lastIdx] : -1;
-
-        if (currTime > (lastTime as number)) {
-          chartData[0].push(currTime);
-          for (let j = 1; j < sCount; j++) {
-            let lastKnownValue: number | null = null;
-            for (let k = chartData[j].length - 1; k >= 0; k--) {
-              if (chartData[j][k] !== null) {
-                lastKnownValue = chartData[j][k];
-                break;
-              }
-            }
-            chartData[j].push(lastKnownValue);
-          }
-        }
-
-        chartInstance.setData(chartData as AlignedData);
-        setDataTick((t) => t + 1);
-
-        if (!isUserZoomed) {
-          chartInstance.setScale("x", {
-            min: Math.max(0, currTime - WINDOW_TIME),
-            max: currTime,
-          });
-        }
       },
       { defer: true },
     ),
   );
+  onCleanup(() => {
+    if (redrawFrame !== undefined) cancelAnimationFrame(redrawFrame);
+  });
+
+  function redraw() {
+    const currTime = props.currentTime;
+    if (currTime === 0 || !chartInstance || props.selectedData.length === 0)
+      return;
+
+    const sCount = props.selectedData.length + 1;
+    const batch = props.latestBatch;
+
+    if (!props.historicalData || props.historicalData.length === 0) {
+      chartData = Array(sCount)
+        .fill(null)
+        .map(() => []);
+    }
+
+    const eventsByTime = new Map<number, Map<number, number>>();
+
+    batch.forEach((event) => {
+      const seriesIdx = idToSeriesIndex.get(event.id);
+
+      if (seriesIdx === undefined) return;
+
+      if (!eventsByTime.has(event.time)) {
+        eventsByTime.set(event.time, new Map());
+      }
+      eventsByTime.get(event.time)!.set(seriesIdx, event.value);
+    });
+
+    const sortedTimes = Array.from(eventsByTime.keys()).sort(
+      (a, b) => a - b,
+    );
+
+    sortedTimes.forEach((time) => {
+      chartData[0].push(time);
+
+      const updates = eventsByTime.get(time)!;
+      for (let j = 1; j < sCount; j++) {
+        if (updates.has(j)) {
+          chartData[j].push(updates.get(j)!);
+        } else {
+          chartData[j].push(null);
+        }
+      }
+    });
+
+    const lastKnownValue = (series: (number | null)[]) => {
+      for (let k = series.length - 1; k >= 0; k--) {
+        if (series[k] !== null) return series[k];
+      }
+      return null;
+    };
+
+    const lastIdx = chartData[0].length - 1;
+    const lastTime = lastIdx >= 0 ? (chartData[0][lastIdx] as number) : -1;
+    const now = Math.max(currTime, lastTime);
+
+    // Extend every curve to `now` with its last value.
+    if (now > lastTime) {
+      chartData[0].push(now);
+      for (let j = 1; j < sCount; j++) {
+        chartData[j].push(lastKnownValue(chartData[j]));
+      }
+    } else {
+      for (let j = 1; j < sCount; j++) {
+        if (chartData[j][lastIdx] === null) {
+          chartData[j][lastIdx] = lastKnownValue(chartData[j]);
+        }
+      }
+    }
+
+    chartInstance.setData(chartData as AlignedData);
+    setDataTick((t) => t + 1);
+
+    if (!isUserZoomed) {
+      chartInstance.setScale("x", {
+        min: Math.max(0, now - WINDOW_TIME),
+        max: now,
+      });
+    }
+  }
 
   return (
     <div class="w-full h-full min-h-[250px] flex flex-row flex-1 bg-[var(--bg)] text-[var(--fg)] overflow-hidden">

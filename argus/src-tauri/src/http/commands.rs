@@ -136,6 +136,8 @@ pub async fn sse(
             manager: Arc::new(manager_arc),
         };
 
+        // Exactly one terminal message: "ERROR: <reason>" on failure, "[CLOSE]" otherwise.
+        let mut terminal = "[CLOSE]".to_string();
         loop {
             tokio::select! {
                 _ = &mut cancel_rx => {
@@ -151,16 +153,18 @@ pub async fn sse(
                                 break;
                             }
                         }
-                        _ => {
-                            let _ = on_event.send("ERROR: Stream closed".to_string());
+                        Some(Err(e)) => {
+                            log::warn!(target: "HTTP_SSE", "SSE stream failed for {}: {}", req_id, e);
+                            terminal = format!("ERROR: {e}");
                             break;
                         }
+                        None => break,
                     }
                 }
             }
         }
 
-        let _ = on_event.send("[CLOSE]".to_string());
+        let _ = on_event.send(terminal);
     });
 
     Ok(())

@@ -17,16 +17,25 @@ import {
   Suspense,
   type Component,
 } from "solid-js";
-import { Effect, Schedule, Stream, Context } from "effect";
+import { Effect, Schedule, Stream } from "effect";
 import { systemRuntime } from "@/config/runtime";
 import { FiActivity, FiEdit3, FiX, FiLoader } from "solid-icons/fi";
 
 import { GmClient, GmHistoryItem, GmSseData } from "@/services/game-master/service";
 import { Mode } from "@/services/app-mode";
-import { EstimItem, ScadaClient, ScadaHistoryItem } from "@/services/scada/service";
+import { EstimItem, ScadaClient, ScadaHistoryItem, ScadaSseData } from "@/services/scada/service";
 import { SelectionChart } from "./SelectionChart";
-import { ChartDataRow, ChartService } from "@/services/chart";
+import { ChartDataRow, ChartService, getUniqueKey } from "@/services/chart";
+import { makeBackendClient } from "@/services/http-client";
 import { useAppMode } from "@/hooks/useAppMode";
+import { SimulationTime } from "@/services/time";
+
+/** An estimation history or live item, as a chart point. */
+const estimPoint = (item: EstimItem): GmSseData => ({
+  id: `${item.equipmentId}-${item.kind}-${item.side || ""}-estim`,
+  value: item.value,
+  time: item.time,
+});
 
 const ChartEditor = lazy(async () => {
   const module = await import("./ChartEditor");
@@ -92,7 +101,7 @@ export const CurveViewer: Component<CurveViewerProps> = (props) => {
 
     if (selectedItems.length === 0) return;
 
-    const tmTsTopics = [
+    const topics = [
       ...new Set(selectedItems.filter((i) => !i.isEstim).map((i) => i.topic)),
     ];
     const estimTopics = [
@@ -101,105 +110,116 @@ export const CurveViewer: Component<CurveViewerProps> = (props) => {
 
     const program = Effect.gen(function* () {
       const WINDOW_SIZE = 200;
-      const HISTORY_BUFFER = 3600;
-      let lastTime = 0;
+      const HISTORY_BUFFER = 6 * 3600;
 
-      const setupStream = (
-        client:
-          | Context.Tag.Service<typeof GmClient>
-          | Context.Tag.Service<typeof ScadaClient>,
-      ) => {
-        return Effect.gen(function* () {
-          const scada = yield* ScadaClient;
-          const timeStream = client.sseStream<{ current_time: number }>(
-            "/time",
-          );
+      // Same API as GmClient and ScadaClient, through the Argus HTTP client.
+      const scada = makeBackendClient((yield* ScadaClient).getUrl);
+      const client = currentMode === Mode.GameMaster
+        ? makeBackendClient((yield* GmClient).getUrl)
+        : scada;
 
-          yield* Stream.runForEach(timeStream, (timePayload) =>
-            Effect.gen(function* () {
-              const currTime = timePayload.current_time;
-              if (currTime > lastTime) {
-                const fetchMinTime = Math.max(
-                  0,
-                  currTime - WINDOW_SIZE - HISTORY_BUFFER,
-                );
-                const fetchTasks: Effect.Effect<GmSseData[], any, any>[] = [];
+      const selectedIds = new Set(selectedItems.map((item) => getUniqueKey(item)));
+      const isSelected = (entry: GmSseData) => selectedIds.has(entry.id);
 
-                for (const topic of tmTsTopics) {
-                  fetchTasks.push(
-                    client
-                      .get<
-                        any[]
-                      >(`/history/${topic}?min=${fetchMinTime}&max=${currTime}`)
-                      .pipe(
-                        Effect.map((data) =>
-                          data.map(
-                            (item: GmHistoryItem | ScadaHistoryItem): GmSseData => ({
-                              id: `${item.id}-tmts`,
-                              value: item.value,
-                              time: "time" in item ? item.time : item.time_received,
-                            }),
-                          ),
-                        ),
-                        Effect.catchAll(() =>
-                          Effect.succeed([] as GmSseData[]),
-                        ),
-                      ),
-                  );
-                }
-
-                for (const topic of estimTopics) {
-                  fetchTasks.push(
-                    scada
-                      .get<
-                        any[]
-                      >(`/history-estim/${topic}?min=${fetchMinTime}&max=${currTime}`)
-                      .pipe(
-                        Effect.map((data) =>
-                          data.map(
-                            (item: EstimItem): GmSseData => ({
-                              id: `${item.equipmentId}-${item.kind}-${item.side || ""}-estim`,
-                              value: item.value,
-                              time: item.time,
-                            }),
-                          ),
-                        ),
-                        Effect.catchAll(() =>
-                          Effect.succeed([] as GmSseData[]),
-                        ),
-                      ),
-                  );
-                }
-
-                const results = yield* Effect.all(fetchTasks, {
-                  concurrency: 5,
-                });
-
-                const mergedBatch = results
-                  .flat()
-                  .sort((a, b) => a.time - b.time);
-
-                yield* Effect.sync(() => {
-                  batch(() => {
-                    setLatestHistoryBatch(mergedBatch);
-                    setCurrentTime(currTime);
-                  });
-                });
-
-                lastTime = currTime;
-              }
-            }),
+      /** Appends `entries` and drops the points older than the history buffer. */
+      const appendToHistory = (entries: GmSseData[], now = currentTime()) =>
+        setLatestHistoryBatch((prev) => {
+          const minTime = now - WINDOW_SIZE - HISTORY_BUFFER;
+          return [...prev, ...entries.filter(isSelected)].filter(
+            (e) => e.time >= minTime,
           );
         });
-      };
 
-      if (currentMode === Mode.GameMaster) {
-        const client = yield* GmClient;
-        yield* Effect.repeat(setupStream(client), Schedule.spaced("2 seconds"));
-      } else if (currentMode === Mode.Scada) {
-        const client = yield* ScadaClient;
-        yield* Effect.repeat(setupStream(client), Schedule.spaced("2 seconds"));
-      }
+      // Fetch historical data at startup
+      const fetchInitialHistory = (now: number) => Effect.gen(function* () {
+        const fetchMinTime = Math.max(0, now - WINDOW_SIZE - HISTORY_BUFFER);
+
+        const fetchTasks: Effect.Effect<GmSseData[], never, never>[] = [
+          ...topics.map((topic) =>
+            client.get<(GmHistoryItem | ScadaHistoryItem)[]>(
+              `/history/${topic}?min=${fetchMinTime}&max=${now}`,
+            ).pipe(
+              Effect.map((data) => data.map((item): GmSseData => ({
+                id: item.id,
+                value: item.value,
+                time: "time" in item ? item.time : item.time_received,
+              }))),
+              Effect.catchAll(() => Effect.succeed([] as GmSseData[])),
+            )
+          ),
+          ...estimTopics.map((topic) =>
+            scada.get<EstimItem[]>(
+              `/history-estim/${topic}?min=${fetchMinTime}&max=${now}`,
+            ).pipe(
+              Effect.map((data) => data.map(estimPoint)),
+              Effect.catchAll(() => Effect.succeed([] as GmSseData[])),
+            )
+          ),
+        ];
+
+        yield* Effect.all(
+          fetchTasks.map((task) =>
+            task.pipe(Effect.tap((entries) => appendToHistory(entries, now))),
+          ),
+          { concurrency: 5 },
+        );
+      });
+
+      // Subscribe to time stream to track current time.
+      // The history is fetched at the first time received
+      let historyLoaded = false;
+      const trackTime = Stream.runForEach(
+        client.sseStream<SimulationTime>("/time"),
+        ({ current_time }) => Effect.gen(function* () {
+          setCurrentTime(current_time);
+          if (!historyLoaded) {
+            historyLoaded = true;
+            // Runs in the background as it takes quite some time
+            yield* Effect.fork(fetchInitialHistory(current_time));
+          }
+        }),
+      ).pipe(
+        Effect.retry(Schedule.spaced("2 seconds")),
+        Effect.catchAll(() => Effect.void),
+      );
+
+      // Subscribe to live SSE updates (except estim that is on a separate endpoint, see below)
+      const subscribeTopics = Effect.all(
+        topics.map((topic) =>
+          Stream.runForEach(
+            client.sseStream<GmSseData | ScadaSseData>(`/sub/${topic}`),
+            (item) => Effect.sync(() =>
+              appendToHistory([{
+                id: item.id,
+                value: item.value,
+                time: "time" in item ? item.time : item.time_received,
+              }])
+            ),
+          ).pipe(
+            Effect.retry(Schedule.spaced("2 seconds")),
+            Effect.catchAll(() => Effect.void),
+          )
+        ),
+        { concurrency: "unbounded" },
+      );
+
+      // Subscribe to live SSE updates for estim
+      const subscribeEstim = Effect.all(
+        estimTopics.map((topic) =>
+          Stream.runForEach(
+            scada.sseStream<EstimItem>(`/sub-estim/${topic}`),
+            (item) => Effect.sync(() => appendToHistory([estimPoint(item)])),
+          ).pipe(
+            Effect.retry(Schedule.spaced("2 seconds")),
+            Effect.catchAll(() => Effect.void),
+          )
+        ),
+        { concurrency: "unbounded" },
+      );
+
+      yield* Effect.all([trackTime, subscribeTopics, subscribeEstim], {
+        concurrency: "unbounded",
+      });
     });
 
     const typedProgram = program as Effect.Effect<
