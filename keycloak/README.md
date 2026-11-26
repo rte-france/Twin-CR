@@ -9,7 +9,7 @@ In keycloak folder, launch keycloak service with
 docker compose -f docker-compose.yaml up
 ```
 
-The service runs at `http://localhost:8443`
+The service runs at `https://localhost:8443` (port `KEYCLOAK_PORT`, 8443 by default).
 
 ## Description
 This version uses two files:

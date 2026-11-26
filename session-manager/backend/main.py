@@ -8,6 +8,7 @@ co-simulation of power systems.
 import asyncio
 import datetime
 import hmac
+import json
 import logging
 import mimetypes
 import re
@@ -37,7 +38,8 @@ from backend.db.models import GameSession, GameSessionCreate, GameSessionPrivate
     NodeType, NewFolder, SessionState, Template, TemplateFileRole, TemplateFilePublic, TemplateDetails, \
     TemplateFolder, AccessKey, AccessKeyTyped, GameSessionOwn, SessionConnect, TemplateRenamedResponse, TreeNodeResponse
 from backend.services import storage_service
-from backend.services.session_service import SessionService
+from backend.services.session_service import SessionService, nomad, session_private_view, SESSION_RESOURCE_TASKS, \
+    SESSION_JAVA_TASKS, session_resource_defaults, validate_session_resources
 from backend.services.storage_service import StorageService
 
 TEMPLATE_NAME_RE = re.compile(r"[A-Za-z0-9 ._-]{1,100}")
@@ -73,7 +75,9 @@ tree_router = APIRouter(prefix="/tree", tags=["Tree"])
 async def lifespan(app: FastAPI):
     create_db_and_tables()
     app.state.storage_service = StorageService()
-    task = asyncio.create_task(update_session_state_job())
+    # With compose, the state of the sessions follows the single configurator. In the Nomad infrastructure, each
+    # session has its own job, followed by the session monitor.
+    task = asyncio.create_task(update_session_state_job() if nomad is None else nomad_session_monitor())
     try:
         yield
     finally:
@@ -101,15 +105,36 @@ async def unhandled_errors_as_json(request: Request, call_next):
 
 # TODO : For now, the workflow is mono-session, because we launch only one session locally.
 #       Change this method when multi session will be available.
+NOMAD_SESSION_MONITOR_PERIOD = 3
+
+
+def monitor_nomad_sessions_once() -> None:
+    with Session(engine) as session:
+        SessionService(session).monitor_nomad_sessions()
+
+
+async def nomad_session_monitor() -> None:
+    """Follows the session jobs (launch progress, ready, failure, job lost) in the Nomad infrastructure."""
+    while True:
+        try:
+            await asyncio.to_thread(monitor_nomad_sessions_once)
+        except Exception as e:
+            logger.error("Could not follow the session jobs: %s", e)
+        await asyncio.sleep(NOMAD_SESSION_MONITOR_PERIOD)
+
+
 async def update_session_state_job() -> None:
     while True:
         try:
             configurator_status = await asyncio.to_thread(get_configurator_status)
-            session_state = None
             if configurator_status == "NOT READY":
                 session_state = SessionState.READY # session is ready to be initialized.
-            elif configurator_status == "READY":
-                session_state = SessionState.ONGOING  # session has been initialized. Configurator is ready to start simulation.
+            elif configurator_status in ("READY", "STARTED"):
+                # Session initialized (READY: ready to start the simulation; STARTED: simulation running)
+                session_state = SessionState.ONGOING
+            else:
+                # Transient status (e.g. STOPPED while archiving): the states are kept
+                continue
 
             with Session(engine) as session:
                 session_ids = session.exec(select(GameSession.id).where(GameSession.state != SessionState.ENDED)).all()
@@ -471,7 +496,7 @@ def create_session(game_session: GameSessionCreate, session_service: SessionServ
     :return:
     """
     db_session = session_service.create_session(current_user["preferred_username"], game_session)
-    return db_session
+    return session_private_view(db_session)
 
 @session_router.get("/keys/{session_id}", response_model=list[AccessKeyTyped])
 def get_access_keys(session_id: int, session_service: SessionServiceDep, session: SessionDep,
@@ -508,10 +533,10 @@ def get_session(session_id: int, session: SessionDep):
     return game_session
 
 @session_router.post("/{session_id}/launch", response_model=GameSession)
-def launch_session(session_id: int, session_service: SessionServiceDep, session: SessionDep,
+def launch_session(session_id: int, session_service: SessionServiceDep, session: SessionDep, storage: StorageDep,
                    current_user=Depends(require_role("session_launcher"))):
     own_session(session, session_id, current_user)
-    game_session = session_service.launch_session(session_id)
+    game_session = session_service.launch_session(session_id, storage)
     return game_session
 
 @session_router.post("/{session_id}/stop", response_model=GameSession)
@@ -594,10 +619,22 @@ def connect_session(connect: SessionConnect, session: SessionDep,
 
     session.commit()
 
-    return game_session
+    return session_private_view(game_session)
 
 
 ### TEMPLATES MANAGEMENT ###
+
+# Before /{template_id}, which would take "session_resources" as an id
+@template_router.get("/session_resources")
+def session_resources_defaults(current_user=Depends(require_role("template_manager"))):
+    """The services of a session whose resources a template can set ([resources.<service>] of its config.toml, used by
+    the Nomad infrastructure), with their defaults (session job). An empty java_opts default is that of the image."""
+    return {
+        "services": list(SESSION_RESOURCE_TASKS),
+        "java_services": list(SESSION_JAVA_TASKS),
+        "defaults": session_resource_defaults(),
+    }
+
 
 @template_router.get("/{template_id}", response_model=TemplateDetails)
 def template_details(session: SessionDep, storage: StorageDep, template_id: int):
@@ -739,6 +776,8 @@ def create_template(
     automata_commands: list[str] = Form(default_factory=list),
     period: float = Form(1),
     dynawo_variant: str = Form("public"),
+    # JSON {service: {cpu|memory|memory_max|java_opts: value}}: the settings that differ from the defaults
+    resources: str = Form(""),
     current_user=Depends(require_role("template_manager")),
 ):
     """
@@ -751,6 +790,10 @@ def create_template(
     config, unless one is uploaded.
     """
     user_name = current_user["preferred_username"]
+    try:
+        template_resources = validate_session_resources(json.loads(resources) if resources.strip() else {})
+    except (ValueError, AttributeError) as exc:
+        raise HTTPException(status_code=422, detail=f"Invalid session resources: {exc}")
     validate_template_name(template_name)
     if dynawo_variant not in DYNAWO_SCRIPT_PATHS:
         raise HTTPException(
@@ -898,6 +941,7 @@ def create_template(
                 dynawo_path=DYNAWO_SCRIPT_PATHS[dynawo_variant],
                 scada_suffix=scada_suffix,
                 period=period,
+                resources=template_resources,
             )
         )
         stored[config_path] = TemplateFileRole.config_toml.value
@@ -917,7 +961,8 @@ def build_config_toml(*, job_file: str, dsl_file: str | None, cyber_config_file:
                       scada_iidm_file: str | None, gm_iidm_file: str | None,
                       connectors_dyd: str, iidm_file: str, dynawo_path: str,
                       scada_suffix: str, period: float, other_files: list[str] | None = None,
-                      automata_commands: list[str] | None = None) -> str:
+                      automata_commands: list[str] | None = None,
+                      resources: dict[str, dict[str, int | str]] | None = None) -> str:
     """
     Write the config.toml for a guided upload.
 
@@ -985,6 +1030,16 @@ def build_config_toml(*, job_file: str, dsl_file: str | None, cyber_config_file:
     hmi = tomlkit.table()
     hmi["location"] = "SCADA"
     config["hmi"] = hmi
+
+    if resources:
+        # Resources of the session services in the Nomad infrastructure
+        resources_table = tomlkit.table(is_super_table=True)
+        for task, settings in resources.items():
+            task_table = tomlkit.table()
+            for name, value in settings.items():
+                task_table[name] = value
+            resources_table[task] = task_table
+        config["resources"] = resources_table
 
     return tomlkit.dumps(config)
 

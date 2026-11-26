@@ -29,7 +29,7 @@
     mode: "0644"
 
 - name: Deploy DB via Nomad CLI
-  ansible.builtin.command: nomad job run -detach /tmp/postgres.nomad
+  ansible.builtin.command: nomad job run /tmp/postgres.nomad
   register: nomad_run_db
   changed_when: "'Job registration successful' in nomad_run_db.stdout"
 

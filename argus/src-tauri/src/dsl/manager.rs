@@ -61,15 +61,16 @@ impl DslManager {
 
         server.configure(url_to_use);
 
-        let strategy = Arc::new(StandardHealthCheck::new("/status"));
-
-        if let Err(e) = server
-            .connect_with_strategy(strategy, app_handle.clone())
-            .await
-        {
+        let manager = Self(server);
+        if let Err(e) = manager.connect(app_handle.clone()).await {
             log::error!("Failed to auto-connect Dsl: {:?}", e);
         }
 
-        Self(server)
+        manager
+    }
+
+    pub async fn connect(&self, app_handle: AppHandle) -> crate::common::utils::server_manager::Result<()> {
+        let strategy = Arc::new(StandardHealthCheck::new("/status"));
+        self.0.connect_with_strategy(strategy, app_handle).await
     }
 }

@@ -32,7 +32,7 @@ job "traefik" {
       template {
         destination = "secrets/bundle.pem"
         data        = <<EOF
-{{ '{{' }} with secret "pki/issue/twincr-workloads" "common_name=traefik.{{ base_domain }}" "alt_names=keycloak.{{ base_domain }},nomad.{{ base_domain }},consul.{{ base_domain }},vault.{{ base_domain }},registry.{{ base_domain }},s3.{{ base_domain }},auth.{{ base_domain }}" "ip_sans=127.0.0.1,{{ ansible_facts['default_ipv4']['address'] }}" "ttl=8760h" {{ '}}' }}
+{{ '{{' }} with secret "pki/issue/twincr-workloads" "common_name=traefik.{{ base_domain }}" "alt_names={{ public_host }},keycloak.{{ base_domain }},nomad.{{ base_domain }},consul.{{ base_domain }},vault.{{ base_domain }},registry.{{ base_domain }},s3.{{ base_domain }},auth.{{ base_domain }}" "ip_sans=127.0.0.1,{{ ansible_facts['default_ipv4']['address'] }}" "ttl=8760h" {{ '}}' }}
 {{ '{{' }} .Data.certificate {{ '}}' }}
 {{ '{{' }} .Data.issuing_ca {{ '}}' }}
 {{ '{{' }} .Data.private_key {{ '}}' }}

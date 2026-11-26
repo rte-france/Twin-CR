@@ -1,7 +1,9 @@
 #!/usr/bin/env bash
-#MISE description="Provision and deploy Twin-CR infrastructure on Linux (Docker)"
+#MISE description="Provision and deploy Twin-CR infrastructure in Docker containers (Linux, or Docker Desktop on macOS)"
 
 set -euo pipefail
+
+cd "$(dirname "$0")/../../../infra"
 
 NODES_COUNT="1"
 PASSTHROUGH_ARGS=()
@@ -26,6 +28,14 @@ while [ $# -gt 0 ]; do
     esac
 done
 
+# Host port of the registry: 5000 is taken by the AirPlay receiver on macOS, hence 5001 there.
+# Keep in sync with the default in the push task.
+if [ "$(uname -s)" = "Darwin" ]; then
+    REGISTRY_HOST_PORT="${TWINCR_REGISTRY_PORT:-5001}"
+else
+    REGISTRY_HOST_PORT="${TWINCR_REGISTRY_PORT:-5000}"
+fi
+
 DOCKER_NETWORK="twincr_net"
 if ! docker network inspect "${DOCKER_NETWORK}" >/dev/null 2>&1; then
     docker network create --subnet 172.28.0.0/16 "${DOCKER_NETWORK}"
@@ -39,6 +49,7 @@ if ! docker ps --format '{{.Names}}' | grep -q "^${TARGET_CONTAINER}$"; then
         docker start "${TARGET_CONTAINER}"
     else
         echo "Creating and starting container ${TARGET_CONTAINER}..."
+        # The systemd-binfmt.service masked by /dev/null would overwrite the binfmt_misc shared by the whole Docker host (VM of Docker Desktop), breaking its amd64 emulation
         docker run -d --name "${TARGET_CONTAINER}" \
           --network "${DOCKER_NETWORK}" \
           --privileged \
@@ -46,12 +57,13 @@ if ! docker ps --format '{{.Names}}' | grep -q "^${TARGET_CONTAINER}$"; then
           -v /sys/fs/cgroup:/sys/fs/cgroup:rw \
           -v twincr_docker_data:/var/lib/docker \
           -v twincr_containerd_data:/var/lib/containerd \
+          -v /dev/null:/etc/systemd/system/systemd-binfmt.service:ro \
           -v "$(pwd)":/home/orchestrator \
           -p 80:80 \
           -p 443:443 \
           -p 8080:8080 \
           -p 4646:4646 \
-          -p 5000:5000 \
+          -p "${REGISTRY_HOST_PORT}":5000 \
           -p 8500:8500 \
           -p 8200:8200 \
           -p 7233:7233 \
@@ -90,6 +102,7 @@ if [ "$NODES_COUNT" -gt 1 ]; then
                 docker start "${WORKER_NAME}"
             else
                 echo "Creating and starting worker ${WORKER_NAME}..."
+                # The systemd-binfmt.service masked by /dev/null would overwrite the binfmt_misc shared by the whole Docker host (VM of Docker Desktop), breaking its amd64 emulation
                 docker run -d --name "${WORKER_NAME}" \
                   --network "${DOCKER_NETWORK}" \
                   --privileged \
@@ -97,6 +110,7 @@ if [ "$NODES_COUNT" -gt 1 ]; then
                   -v /sys/fs/cgroup:/sys/fs/cgroup:rw \
                   -v "twincr_worker_${i}_docker_data":/var/lib/docker \
                   -v "twincr_worker_${i}_containerd_data":/var/lib/containerd \
+                  -v /dev/null:/etc/systemd/system/systemd-binfmt.service:ro \
                   -e http_proxy="${http_proxy:-}" \
                   -e https_proxy="${https_proxy:-}" \
                   -e no_proxy="${no_proxy:-},localhost,127.0.0.1,172.17.0.0/16,172.28.0.0/16,10.0.0.0/8" \

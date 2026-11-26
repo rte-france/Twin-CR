@@ -88,6 +88,7 @@ impl Client<Disconnected> {
             .default_headers(default_headers)
             .danger_accept_invalid_certs(true)
             .danger_accept_invalid_hostnames(true)
+            .dns_resolver(crate::common::utils::localhost_resolver::LocalhostResolver)
             .pool_max_idle_per_host(100)
             .pool_idle_timeout(Duration::from_secs(90))
             .connect_timeout(Duration::from_secs(15))

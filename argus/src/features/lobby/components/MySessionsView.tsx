@@ -105,6 +105,11 @@ export function MySessionsView() {
                   >
                     {session.state}
                   </span>
+                  <Show when={session.status_detail}>
+                    <span class="text-xs text-amber-700" title={session.status_detail ?? ""}>
+                      {session.status_detail}
+                    </span>
+                  </Show>
 
                   <span class="text-xs text-slate-400">
                     #{session.id}
@@ -143,18 +148,16 @@ export function MySessionsView() {
                 </button>
 
                 <button
-                  class="px-3 py-1.5 text-xs font-medium border border-red-700 bg-red-700 text-white hover:bg-red-800 transition-colors flex items-center"
+                  class="px-3 py-1.5 text-xs font-medium border border-red-700 bg-red-700 text-white hover:bg-red-800 transition-colors flex items-center disabled:opacity-40 disabled:cursor-not-allowed"
+                  disabled={session.state === SessionState.Cleanup}
                   onClick={async () => {
-                    const updatedSession = await stopSession(session.id);
-
-                    setReadySessions(
-                      (readySessions() ?? []).filter((s) => s.id !== session.id)
-                    );
-
-                    setNotReadySessions([
-                      ...(notReadySessions() ?? []),
-                      updatedSession,
-                    ]);
+                    // In the Nomad infrastructure the stop is not waited (cleanup, then ended): the list follows
+                    try {
+                      await stopSession(session.id);
+                      await loadSessions();
+                    } catch (err) {
+                      setError(err instanceof Error ? err.message : String(err));
+                    }
                   }}
                 >
                   <Icon class="mr-1" icon="lucide:square" />
@@ -189,6 +192,11 @@ export function MySessionsView() {
                   >
                     {session.state}
                   </span>
+                  <Show when={session.status_detail}>
+                    <span class="text-xs text-amber-700" title={session.status_detail ?? ""}>
+                      {session.status_detail}
+                    </span>
+                  </Show>
 
                   <span class="text-sm text-gray-500">#{session.id}</span>
                 </div>

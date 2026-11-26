@@ -33,6 +33,8 @@ export interface GmHistoryItem {
 
 export interface GmClientService {
   readonly setUrl: (url: string) => Effect.Effect<void, GmError>;
+  /** URL of a joined session, not saved (the configured URL comes back at the next start) */
+  readonly setSessionUrl: (url: string) => Effect.Effect<void, GmError>;
   readonly getUrl: Effect.Effect<string, GmError>;
   readonly getStatus: Effect.Effect<string, GmError>;
   readonly connect: Effect.Effect<void, GmError>;
@@ -60,6 +62,12 @@ export const GmClientLive = Layer.succeed(
     setUrl: (url) =>
       Effect.tryPromise({
         try: () => invoke<void>("set_gm_url", { url }),
+        catch: parseGmError,
+      }),
+
+    setSessionUrl: (url) =>
+      Effect.tryPromise({
+        try: () => invoke<void>("set_gm_session_url", { url }),
         catch: parseGmError,
       }),
 

@@ -12,16 +12,27 @@
 python = "3.11"              # setup.sh, examples config.sh (dynawo_toolbox venv), NRT tests (same as the CI)
 uv = "latest"                # configurator_client, session-manager (they get their own Python 3.14 from uv)
 node = "24"                  # Argus native run (same as envs/Dockerfile.argus.AppImage)
-pnpm = "latest"
+pnpm = "10.18.3"
 jq = "latest"                # envs/fetch_simulators.sh
 go = "1.23.6"                # pre-commit gitleaks hook
 "pipx:pre-commit" = "4.7.0"   # Pinned: the git hook stores the path of this install, which contains the version
-nomad = "latest"
+nomad = "2.1.1"               # CLI of the infra: same version as nomad_version of infra/roles/hashicorp/defaults/main.yml
 
 [tasks.setup]
 description = "Setup environment and build docker images via setup.sh"
 alias = "setup"
 run = "./setup.sh"
+
+# Infra tasks (mise run infra, from Twin-CR or with mise -C Twin-CR from a superproject). Optional per-machine
+# settings, read from the environment: set them in a mise.local.toml next to this file, e.g.
+#   [env]
+#   TWINCR_INFRA_BACKEND = "docker"
+# - TWINCR_INFRA_BACKEND: orbstack (VMs, infra:mac) or docker (privileged containers, infra:linux; Linux or
+#   Docker Desktop). Default: orbstack on macOS if its CLI is installed, else docker.
+# - TWINCR_REGISTRY_PORT: host port of the infra registry. Default: 5000, 5001 on macOS (AirPlay uses 5000).
+# - TWINCR_REGISTRY: registry address used by infra:push. Default: 127.0.0.1:<TWINCR_REGISTRY_PORT>.
+# - TWINCR_COMPOSE_DIR: directory of the compose project whose images infra:push pushes. Default: the
+#   superproject including Twin-CR as a submodule if it has a docker-compose.yaml, else Twin-CR.
 
 [tasks.infra]
 description = "Deploy local infrastructure"
@@ -39,9 +50,9 @@ alias = "infra:stop"
 run = ".mise/tasks/infra/stop"
 
 [tasks."infra:linux"]
-description = "Deploy infrastructure on Linux"
+description = "Deploy infrastructure in Docker containers (Linux, or Docker Desktop on macOS)"
 run = ".mise/tasks/infra/linux"
 
 [tasks."infra:mac"]
-description = "Deploy infrastructure on macOS"
+description = "Deploy infrastructure in OrbStack VMs (macOS)"
 run = ".mise/tasks/infra/mac"

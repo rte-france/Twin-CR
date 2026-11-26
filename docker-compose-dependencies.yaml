@@ -9,7 +9,7 @@
 services:
   clickhouse:
     container_name: clickhouse
-    image: clickhouse/clickhouse-server:latest
+    image: clickhouse/clickhouse-server:26.6.1.1193
     ports:
       - "${CLICKHOUSE_EXPOSED_PORT}:${CLICKHOUSE_PORT}"
     environment:
@@ -28,7 +28,7 @@ services:
 
   nats:
     container_name: nats
-    image: nats:latest
+    image: nats:2.14.3
     volumes:
       - ./envs:/envs
     command: ["-c", "envs/nats.conf"]

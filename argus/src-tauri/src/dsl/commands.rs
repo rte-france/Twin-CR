@@ -37,7 +37,7 @@ pub async fn set_dsl_url(
         .await?;
 
     dsl_state.0.configure(url.clone());
-    dsl_state.0.connect(app_handle).await?;
+    dsl_state.connect(app_handle).await?;
 
     Ok(())
 }
@@ -69,7 +69,7 @@ pub async fn connect_dsl(
     dsl_state: State<'_, DslManager>,
     app_handle: tauri::AppHandle,
 ) -> Result<()> {
-    dsl_state.0.connect(app_handle).await?;
+    dsl_state.connect(app_handle).await?;
     Ok(())
 }
 
@@ -192,4 +192,16 @@ pub async fn delete_dsl_endpoint(
     let response = Client::<Connected>::parse_with_api_error::<Value>(status, &bytes, endpoint)?;
 
     Ok(response)
+}
+
+/// Points the client at the URL of a joined session without saving it in the settings (the configured URL comes back at the next start)
+#[tauri::command]
+pub async fn set_dsl_session_url(
+    app_handle: tauri::AppHandle,
+    dsl_state: State<'_, DslManager>,
+    url: String,
+) -> Result<()> {
+    dsl_state.0.configure(url);
+    dsl_state.connect(app_handle).await?;
+    Ok(())
 }

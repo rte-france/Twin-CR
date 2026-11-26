@@ -202,6 +202,24 @@ export async function deleteNode(
 
 // TEMPLATES
 
+/** Resources of the session services set by a template: service -> setting (cpu, memory, memory_max, java_opts) -> value */
+export type SessionResources = Record<string, Record<string, string>>;
+
+export interface SessionResourceDefaults {
+  services: string[];
+  /** Services that also take java_opts */
+  java_services: string[];
+  /** Defaults of the session job; an empty java_opts is the default of the image */
+  defaults: SessionResources;
+}
+
+/** Services whose resources a template can set ([resources.<service>] of its config.toml), with their defaults */
+export async function getSessionResourceDefaults(): Promise<SessionResourceDefaults> {
+  return apiFetch(`${getArgusConfig().session_manager_url}/templates/session_resources`, {
+    method: "GET",
+  });
+}
+
 export async function getTemplateDetails(
   template_id: number,
 ): Promise<TemplateDetails> {
@@ -223,6 +241,7 @@ export async function createTemplate(
   dynawoVariant: "public" | "rte",
   otherFiles: File[] = [],
   automataCommands: string[] = [],
+  resources: SessionResources = {},
 ) {
   const formData = new FormData();
   formData.append("template_name", templateName);
@@ -245,6 +264,9 @@ export async function createTemplate(
   }
   for (const command of automataCommands) {
     formData.append("automata_commands", command);
+  }
+  if (Object.keys(resources).length > 0) {
+    formData.append("resources", JSON.stringify(resources));
   }
 
   return apiFetch(

@@ -13,13 +13,25 @@ import { FiX, FiServer, FiLogIn, FiAlertCircle } from "solid-icons/fi";
 
 import { accessToken, authError, loginWithKeycloak } from "@/features/auth";
 import { getConfigSync, setCustomKeycloakUrl } from "@/hooks/useConfig";
+import { getArgusConfig } from "@/services/config";
 
 export const SignIn = () => {
   const appWindow = getCurrentWindow();
   const config = getConfigSync();
   const navigate = useNavigate();
 
+  // Keycloak of the configuration (Nomad infrastructure), and of a local compose stack in development
+  const argusConfig = getArgusConfig();
+  const infraUrl = argusConfig.keycloak_url;
+  const devUrl =
+    argusConfig.environment === "development"
+      ? argusConfig.keycloak_dev_url || ""
+      : "";
+
   const [authUrl, setAuthUrl] = createSignal<string>(config.keycloakUrl);
+  const [showOtherServer, setShowOtherServer] = createSignal(false);
+  // Keycloak URL of the login in progress, to show which button waits for the browser
+  const [pendingUrl, setPendingUrl] = createSignal<string | null>(null);
   // Token held when the browser login was started; undefined when not waiting.
   // Only leave this page once a new token arrives, so a wrong URL leaves the
   // user here to correct it instead of in a lobby with no way back.
@@ -40,21 +52,30 @@ export const SignIn = () => {
 
   const close = () => appWindow.close();
 
-  const handleLogin = async (e: Event) => {
-    e.preventDefault();
-
-    const customUrl = authUrl();
-    setCustomKeycloakUrl(customUrl);
+  // The chosen Keycloak is kept for the run (token refresh, logout), as a custom URL
+  const login = async (url: string) => {
+    setCustomKeycloakUrl(url);
+    setPendingUrl(url);
 
     await loginWithKeycloak({
       ...config,
-      keycloakUrl: customUrl,
+      keycloakUrl: url,
     });
 
     if (!authError()) {
       setWaitingFrom(accessToken());
+    } else {
+      setPendingUrl(null);
     }
   };
+
+  const handleLogin = (e: Event) => {
+    e.preventDefault();
+    void login(authUrl());
+  };
+
+  const waitingFor = (url: string) =>
+    waitingFrom() !== undefined && pendingUrl() === url;
 
   const handleLocalMode = (e: Event) => {
     e.preventDefault();
@@ -119,38 +140,86 @@ export const SignIn = () => {
                 )}
               </Show>
 
+              <div
+                class={`grid gap-3 ${devUrl ? "grid-cols-2" : "grid-cols-1"}`}
+              >
+                <button
+                  type="button"
+                  onClick={() => void login(infraUrl)}
+                  title={infraUrl}
+                  class="group flex flex-col items-center justify-center gap-1 p-4 w-full rounded-xl bg-[var(--links)] text-[var(--bg)] shadow-lg shadow-[var(--links)]/20 transition-all hover:-translate-y-1 outline-none focus-visible:ring-2 focus-visible:ring-white"
+                >
+                  <span class="flex items-center gap-2 text-sm font-bold uppercase tracking-wide">
+                    <Show when={waitingFor(infraUrl)} fallback="Sign in">
+                      Waiting for browser…
+                    </Show>
+                    <FiLogIn class="w-4 h-4 transition-transform group-hover:translate-x-1" />
+                  </span>
+                  <span class="text-[10px] font-mono opacity-70 truncate max-w-full">
+                    {infraUrl}
+                  </span>
+                </button>
+
+                <Show when={devUrl}>
+                  <button
+                    type="button"
+                    onClick={() => void login(devUrl)}
+                    title={devUrl}
+                    class="group flex flex-col items-center justify-center gap-1 p-4 w-full rounded-xl border border-dashed border-[var(--border-light)] bg-[var(--sidebar-bg)] transition-all hover:-translate-y-1 hover:border-[var(--links)] outline-none focus-visible:ring-2 focus-visible:ring-[var(--links)]"
+                  >
+                    <span class="flex items-center gap-2 text-sm font-bold uppercase tracking-wide">
+                      <Show when={waitingFor(devUrl)} fallback="Local compose">
+                        Waiting for browser…
+                      </Show>
+                      <FiLogIn class="w-4 h-4 transition-transform group-hover:translate-x-1" />
+                    </span>
+                    <span class="text-[10px] font-mono opacity-60 truncate max-w-full">
+                      dev · {devUrl}
+                    </span>
+                  </button>
+                </Show>
+              </div>
+
               <div class="flex flex-col gap-2">
-                <label class="text-[10px] font-mono uppercase tracking-widest opacity-60 ml-1">
-                  Authentification Server
-                </label>
-                <div class="relative flex items-center group">
-                  <div class="absolute left-4 text-[var(--links)] opacity-70 group-focus-within:opacity-100 transition-opacity">
-                    <FiServer class="w-5 h-5" />
+                <button
+                  type="button"
+                  onClick={() => setShowOtherServer(!showOtherServer())}
+                  class="self-start text-[10px] font-mono uppercase tracking-widest opacity-60 hover:opacity-100 ml-1"
+                >
+                  {showOtherServer() ? "▾" : "▸"} Other server
+                </button>
+                <Show when={showOtherServer()}>
+                  <div class="flex gap-2">
+                    <div class="relative flex-1 flex items-center group">
+                      <div class="absolute left-4 text-[var(--links)] opacity-70 group-focus-within:opacity-100 transition-opacity">
+                        <FiServer class="w-5 h-5" />
+                      </div>
+                      <input
+                        type="url"
+                        required
+                        value={authUrl()}
+                        onInput={(e) => setAuthUrl(e.currentTarget.value)}
+                        class="w-full bg-[var(--sidebar-bg)] border border-[var(--border-light)] rounded-xl py-3 pl-12 pr-4 text-sm focus:outline-none focus:border-[var(--links)] transition-all placeholder-opacity-30"
+                        placeholder={infraUrl}
+                      />
+                    </div>
+                    <button
+                      type="submit"
+                      title="Sign in with this Keycloak"
+                      class="flex items-center justify-center px-4 rounded-xl bg-[var(--links)] text-[var(--bg)] outline-none focus-visible:ring-2 focus-visible:ring-white"
+                    >
+                      <Show
+                        when={waitingFor(authUrl())}
+                        fallback={<FiLogIn class="w-4 h-4" />}
+                      >
+                        …
+                      </Show>
+                    </button>
                   </div>
-                  <input
-                    type="url"
-                    required
-                    value={authUrl()}
-                    onInput={(e) => setAuthUrl(e.currentTarget.value)}
-                    class="w-full bg-[var(--sidebar-bg)] border border-[var(--border-light)] rounded-xl py-4 pl-12 pr-4 text-sm focus:outline-none focus:border-[var(--links)] transition-all placeholder-opacity-30"
-                    placeholder={config.keycloakUrl}
-                  />
-                </div>
+                </Show>
               </div>
 
               <div class="flex flex-col items-center gap-4 mt-2">
-                <button
-                  type="submit"
-                  class="group relative flex items-center justify-center gap-3 p-4 w-full rounded-xl bg-[var(--links)] text-[var(--bg)] shadow-lg shadow-[var(--links)]/20 transition-all hover:-translate-y-1 outline-none focus-visible:ring-2 focus-visible:ring-white"
-                >
-                  <span class="text-sm font-bold uppercase tracking-wide">
-                    <Show when={waitingFrom() !== undefined} fallback="Login">
-                      Waiting for browser login…
-                    </Show>
-                  </span>
-                  <FiLogIn class="w-5 h-5 transition-transform group-hover:translate-x-1" />
-                </button>
-
                 <button
                   type="button"
                   onClick={handleLocalMode}

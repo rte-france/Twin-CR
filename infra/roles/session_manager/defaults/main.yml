@@ -1,0 +1,19 @@
+#
+# Copyright (c) 2026, RTE (https://www.rte-france.com)
+# See AUTHORS.md
+# SPDX-License-Identifier: MPL-2.0
+# This file is part of Twin-CR, a platform for real-time cyber-physical
+# co-simulation of power systems.
+#
+
+---
+# Extra Dynawo model rules of the session manager (EXTRA_RULES_PATH), e.g. private rules that a superproject mounts with
+# a compose override: TWINCR_DYNAWO_RULES_DIR, else the dynawo_rules folder of the superproject including Twin-CR as a
+# submodule (as infra:push finds the images). None if the folder does not exist.
+session_manager_rules_dir: >-
+  {{ lookup('env', 'TWINCR_DYNAWO_RULES_DIR')
+     or (lookup('pipe', 'git -C ' ~ playbook_dir ~ ' rev-parse --show-superproject-working-tree') ~ '/dynawo_rules') }}
+
+# Memory of the session manager (MB): little at rest, but creating a template loads its grid with pypowsybl, memory_max size for French network
+session_manager_memory: 512
+session_manager_memory_max: 4096

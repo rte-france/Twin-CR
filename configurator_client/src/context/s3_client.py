@@ -56,6 +56,7 @@ class S3_Client(Context_Client):
 
     def archive(self, clickhouse_client, context_id, simulation_id):
         # Contact click house and export all tables in export_clickhouse_tables in a dump
+        failed = []
         for table in Clickhouse_Tables:
             query = self.generate_sql_template(context_id, simulation_id, table.name)
             try:
@@ -63,6 +64,9 @@ class S3_Client(Context_Client):
                 self.logger.info(f"Archived {table.name} in S3")
             except Exception as e:
                 self.logger.error(f"Failed to execute query: {query, e}")
+                failed.append(f"{table.name} ({e})")
+        if failed:
+            raise RuntimeError(f"Archive of {simulation_id} failed for {len(failed)} table(s): {'; '.join(failed)}")
 
     def init_context_and_scenario_files(self, clickhouse_client, context_id, scenario_id, simulation_id, config_path):
         paginator = self.s3.get_paginator("list_objects_v2")

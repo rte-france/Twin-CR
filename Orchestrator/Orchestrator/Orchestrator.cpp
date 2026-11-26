@@ -20,7 +20,14 @@ co-simulation of power systems.
 #include <cstddef>
 #include <cstdlib>
 #include <optional>
+#include <random>
 #include <thread>
+
+// Random suffix of the default simulation name, avoids collisions for simulations started in the same second
+std::string randomSuffix() {
+    std::random_device device;
+    return fmt::format("{:06x}", std::uniform_int_distribution<unsigned int>(0, 0xFFFFFF)(device));
+}
 
 Orchestrator::Orchestrator(const std::filesystem::path& working_dir, const toml::table& config, double start_time, double end_time, const std::optional<std::string> simulation_name) :
 working_dir_(working_dir),
@@ -33,7 +40,7 @@ last_time_update_(start_time),
 end_time_(end_time),
 real_start_time_(steady_clock::now()),
 initial_clock_time_(std::chrono::system_clock::now()),
-simulation_name_(simulation_name.has_value() ? simulation_name.value() : "sim_" + getTimestamp()),
+simulation_name_(simulation_name.has_value() ? simulation_name.value() : "sim_" + getTimestamp() + "_" + randomSuffix()),
 main_thread_id_(std::this_thread::get_id()) {
     SignalHandler::create();
     speedup_ = config["master"]["speedup"].value_or(1.0);

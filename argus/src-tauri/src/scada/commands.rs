@@ -177,3 +177,15 @@ pub async fn post_scada_endpoint(
 
     Ok(response)
 }
+
+/// Points the client at the URL of a joined session without saving it in the settings (the configured URL comes back at the next start)
+#[tauri::command]
+pub async fn set_scada_session_url(
+    app_handle: tauri::AppHandle,
+    scada_state: State<'_, ScadaManager>,
+    url: String,
+) -> Result<()> {
+    scada_state.0.configure(url);
+    scada_state.0.connect(app_handle).await?;
+    Ok(())
+}

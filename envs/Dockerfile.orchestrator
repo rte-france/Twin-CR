@@ -78,3 +78,8 @@ RUN ldconfig
 
 # Set the working directory
 WORKDIR /home/orchestrator/
+
+COPY envs/docker-cmd-orchestrator.sh envs/fetch_simulators.sh envs/dynawo.version envs/healthcheck_orchestrator.sh /home/orchestrator/envs/
+# The start period covers the first extraction of the simulators by fetch_simulators.sh
+HEALTHCHECK --interval=5s --timeout=5s --start-period=300s CMD ["bash", "/home/orchestrator/envs/healthcheck_orchestrator.sh"]
+CMD ["bash", "/home/orchestrator/envs/docker-cmd-orchestrator.sh"]

@@ -7,4 +7,5 @@ co-simulation of power systems.
 */
 
 pub mod http_client;
+pub mod localhost_resolver;
 pub mod server_manager;

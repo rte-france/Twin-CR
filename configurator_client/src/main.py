@@ -12,6 +12,7 @@ import json
 import logging
 from contextlib import asynccontextmanager
 import os
+import secrets
 from pathlib import Path
 
 import clickhouse_connect
@@ -104,8 +105,10 @@ async def init(
     if state.status != "NOT READY":
         raise HTTPException(status_code=409, detail="A simulation is already active")
 
-    # Generate simulation ID
-    simulation_id = "sim_" + datetime.datetime.now(datetime.timezone.utc).strftime("%Y_%m_%d_%H_%M_%S")
+    # Generate simulation ID: timestamp (names sort chronologically) + random suffix, so that simulations started in the same second do not collide
+    simulation_id = (
+        "sim_" + datetime.datetime.now(datetime.timezone.utc).strftime("%Y_%m_%d_%H_%M_%S") + "_" + secrets.token_hex(3)
+    )
     print("Simulation id:", simulation_id)
 
     # ClickHouse and the context download are synchronous. On the event loop
@@ -212,26 +215,56 @@ def get_status():
     return {"status": state.status}
 
 
+def archive_simulation(state: ServerState, context_id: str, simulation_id: str) -> bool:
+    """Archives the ClickHouse tables of a simulation, unless already done. Returns whether it archived now."""
+    with state.archive_lock:
+        if simulation_id in state.archived_simulation_ids:
+            logger.info(f"Simulation {simulation_id} already archived")
+            return False
+        clickhouse_client = clickhouse_connect.get_client(
+            host=CLICKHOUSE_HOST, port=CLICKHOUSE_PORT
+        )
+        context_client.archive(clickhouse_client, context_id, simulation_id)
+        state.archived_simulation_ids.add(simulation_id)
+        return True
+
+
 @app.get("/archive")
 def get_archive(
-        context_id: str,
-        simulation_id: str
+        context_id: str = Query(default=None),
+        simulation_id: str = Query(default=None),
     ):
-    clickhouse_client = clickhouse_connect.get_client(
-        host=CLICKHOUSE_HOST, port=CLICKHOUSE_PORT
-    )
-
-    context_client.archive(clickhouse_client, context_id, simulation_id)
+    """Archives a simulation, the active one by default. Done once per simulation: a simulation already archived
+    (e.g. on the orchestrator stop message) is skipped, so it is safe to call after the end of a simulation."""
+    state: ServerState = app.state.state
+    if simulation_id is None:
+        if context_id is not None:
+            raise HTTPException(status_code=422, detail="simulation_id is required with context_id")
+        if state.current_simulation_id is None:
+            return {"simulation_id": None, "archived": False, "detail": "No active simulation"}
+        context_id, simulation_id = state.context_id, state.current_simulation_id
+    elif context_id is None:
+        raise HTTPException(status_code=422, detail="context_id is required with simulation_id")
+    try:
+        archived = archive_simulation(state, context_id, simulation_id)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    return {"simulation_id": simulation_id, "archived": archived}
 
 
 async def stop_message_handler(msg: nats.aio.msg.Msg):
     print("Received stop signal", msg.data.decode())
     state: ServerState = app.state.state
     state.status = "STOPPED"
-    # Connect to ClickHouse
-    clickhouse_client = clickhouse_connect.get_client(
-        host=CLICKHOUSE_HOST, port=CLICKHOUSE_PORT
-    )
-    context_client.archive(clickhouse_client, state.context_id, state.current_simulation_id)
+    if state.current_simulation_id is None:
+        logger.info("No active simulation to archive")
+    else:
+        # In a thread: archiving can be long and must not block the event loop (requests, NATS)
+        try:
+            await asyncio.to_thread(archive_simulation, state, state.context_id, state.current_simulation_id)
+        except Exception as e:
+            # The simulation is kept (not reset): GET /archive retries it (end of the orchestrator, session manager)
+            logger.error(f"Archive on stop failed: {e}")
+            return
     # TODO: drop db
     state.reset()

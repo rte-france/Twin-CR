@@ -25,6 +25,8 @@ export type ServerStatus =
 
 export interface DslClientService {
   readonly setUrl: (url: string) => Effect.Effect<void, DslError>;
+  /** URL of a joined session, not saved (the configured URL comes back at the next start) */
+  readonly setSessionUrl: (url: string) => Effect.Effect<void, DslError>;
   readonly getUrl: Effect.Effect<string, DslError>;
   readonly post: <T = any>(
     endpoint: string,
@@ -55,6 +57,12 @@ export const DslClientLive = Layer.succeed(
     setUrl: (url) =>
       Effect.tryPromise({
         try: () => invoke<void>("set_dsl_url", { url }),
+        catch: parseDslError,
+      }),
+
+    setSessionUrl: (url) =>
+      Effect.tryPromise({
+        try: () => invoke<void>("set_dsl_session_url", { url }),
         catch: parseDslError,
       }),
 

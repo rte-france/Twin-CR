@@ -15,6 +15,9 @@ const DEFAULT_CONFIG: &str = include_str!("../../config.json");
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AppConfig {
     pub keycloak_url: String,
+    /// Keycloak of a local docker compose stack, offered on the sign-in page next to keycloak_url in development (empty: not offered)
+    #[serde(default)]
+    pub keycloak_dev_url: String,
     pub keycloak_realm: String,
     pub keycloak_client_id: String,
     pub session_manager_url: String,
