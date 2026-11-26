@@ -82,6 +82,10 @@ Checks (main synchronous component, ANDES slack set to pypowsybl's reference bus
 | Line and transformer P / Q at side 1 | 0.5 MW / Mvar | 0.028 MW / 0.014 Mvar |
 | Total losses | 1 MW | 0.0 MW difference |
 
+Each bus/flow check has two limits: one on the worst element (above) and one on the 99.9th percentile of the errors
+(1e-4 pu, 0.005 deg, 0.1 MW / Mvar by default). The percentile limit catches a regression spread over many elements
+while tolerating a few known outliers, which matters on MQIS where the worst element is far above the typical one.
+
 Like the tests above, they skip when `Nordic.iidm` is absent.
 
 The checks themselves live in `andes_conversion_checks.py` (not collected on its own). A test module per network

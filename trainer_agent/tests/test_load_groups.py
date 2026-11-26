@@ -1,10 +1,9 @@
 """
-Copyright (c) 2025-2026, RTE (http://www.rte-france.com)
-This Source Code Form is subject to the terms of the Mozilla Public
-License, v. 2.0. If a copy of the MPL was not distributed with this
-file, You can obtain one at http://mozilla.org/MPL/2.0/.
+Copyright (c) 2025-2026, RTE (https://www.rte-france.com)
+See AUTHORS.md
 SPDX-License-Identifier: MPL-2.0
-This file is part of the TwinEU-core project.
+This file is part of Twin-CR, a platform for real-time cyber-physical
+co-simulation of power systems.
 
 Validates `DCSensitivityFactors.load_group_overloads` and `load_group_margins` (PTDF + FCR
 model of a load change in a group of loads) against pandapower.

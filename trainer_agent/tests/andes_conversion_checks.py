@@ -32,12 +32,19 @@ __all__ = [
     "test_total_losses_match_pypowsybl",
 ]
 
+# Two kinds of limits: the worst element (`*`, catches a single badly converted element) and the `quantile` of
+# the errors (`*_quantile`, catches a regression spread over many elements while tolerating a few known outliers).
 DEFAULT_TOLERANCES = {
     "voltage_pu": 1e-3,
     "angle_deg": 0.05,
     "flow_mw": 0.5,
     "flow_mvar": 0.5,
     "losses_mw": 1.0,
+    "quantile": 0.999,
+    "voltage_pu_quantile": 1e-4,
+    "angle_deg_quantile": 0.005,
+    "flow_mw_quantile": 0.1,
+    "flow_mvar_quantile": 0.1,
 }
 
 
@@ -69,6 +76,9 @@ def test_bus_voltages_match_pypowsybl(converted_network, conversion_tolerances):
     assert len(compared) > 0, "no buses matched between the two models"
     assert compared["voltage_error_pu"].max() < conversion_tolerances["voltage_pu"]
     assert compared["angle_error_deg"].max() < conversion_tolerances["angle_deg"]
+    quantile = conversion_tolerances["quantile"]
+    assert compared["voltage_error_pu"].quantile(quantile) < conversion_tolerances["voltage_pu_quantile"]
+    assert compared["angle_error_deg"].quantile(quantile) < conversion_tolerances["angle_deg_quantile"]
 
 
 @pytest.mark.parametrize("branch_type", ["lines", "transformers"])
@@ -79,6 +89,9 @@ def test_branch_flows_match_pypowsybl(converted_network, conversion_tolerances, 
     assert len(compared) > 0, f"no {branch_type} matched between the two models"
     assert compared["p_error_mw"].max() < conversion_tolerances["flow_mw"]
     assert compared["q_error_mvar"].max() < conversion_tolerances["flow_mvar"]
+    quantile = conversion_tolerances["quantile"]
+    assert compared["p_error_mw"].quantile(quantile) < conversion_tolerances["flow_mw_quantile"]
+    assert compared["q_error_mvar"].quantile(quantile) < conversion_tolerances["flow_mvar_quantile"]
 
 
 def test_total_losses_match_pypowsybl(converted_network, conversion_tolerances):
