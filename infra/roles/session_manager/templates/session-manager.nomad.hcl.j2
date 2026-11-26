@@ -110,8 +110,9 @@ EOT
 
       resources {
         cpu        = 300
-        memory     = 512
-        memory_max = 1024
+        # memory_max: pypowsybl heap when creating a template (see session_manager_memory_max)
+        memory     = {{ session_manager_memory }}
+        memory_max = {{ session_manager_memory_max }}
       }
     }
   }

@@ -13,3 +13,7 @@
 session_manager_rules_dir: >-
   {{ lookup('env', 'TWINCR_DYNAWO_RULES_DIR')
      or (lookup('pipe', 'git -C ' ~ playbook_dir ~ ' rev-parse --show-superproject-working-tree') ~ '/dynawo_rules') }}
+
+# Memory of the session manager (MB): little at rest, but creating a template loads its grid with pypowsybl, memory_max size for French network
+session_manager_memory: 512
+session_manager_memory_max: 4096
