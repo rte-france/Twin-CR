@@ -428,8 +428,8 @@ EOT
 
       resources {
         cpu        = lookup(lookup(var.resources, "configurator-client", {}), "cpu", "200")
-        memory     = lookup(lookup(var.resources, "configurator-client", {}), "memory", "256")
-        memory_max = lookup(lookup(var.resources, "configurator-client", {}), "memory_max", max(512, lookup(lookup(var.resources, "configurator-client", {}), "memory", "256")))
+        memory     = lookup(lookup(var.resources, "configurator-client", {}), "memory", "768")
+        memory_max = lookup(lookup(var.resources, "configurator-client", {}), "memory_max", max(2048, lookup(lookup(var.resources, "configurator-client", {}), "memory", "768")))
       }
     }
 
