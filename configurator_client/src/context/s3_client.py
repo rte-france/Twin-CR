@@ -7,12 +7,17 @@ co-simulation of power systems.
 """
 
 import logging
+from urllib.parse import quote
 
 import boto3
 
 from src.export_clickhouse_tables import Clickhouse_Tables
 from src.config import BUCKET, S3_ENDPOINT, S3_ACCESS_KEY, S3_PRIVATE_KEY, BUCKET_ARCHIVE
 from src.context.context_client import Context_Client
+
+
+class ContextLoadError(RuntimeError):
+    """A file of the context could not be loaded into ClickHouse (Garage or ClickHouse failure)."""
 
 
 class S3_Client(Context_Client):
@@ -64,27 +69,44 @@ class S3_Client(Context_Client):
         if failed:
             raise RuntimeError(f"Archive of {simulation_id} failed for {len(failed)} table(s): {'; '.join(failed)}")
 
+    # Query for Clickhouse to fetch the input files directly from Garage, so that the configurator does not have to load them
+    # RawBLOB = the whole object as one String
+    # compression 'none' moves compressed files as they are, instead of decompressing them by extension.
+    INPUT_FILE_QUERY = (
+        "INSERT INTO `{simulation_id}`.InputFiles (input_file, content) "
+        "SELECT {{input_file:String}}, raw_blob "
+        "FROM s3({{url:String}}, {{access_key:String}}, {{secret_key:String}}, 'RawBLOB', 'raw_blob String', 'none')"
+    )
+
     def init_context_and_scenario_files(self, clickhouse_client, context_id, scenario_id, simulation_id, config_path):
         paginator = self.s3.get_paginator("list_objects_v2")
         prefix = self.get_context_prefix(context_id)
         pages = paginator.paginate(Bucket=BUCKET, Prefix=prefix)
         for page in pages:
-            for obj in page["Contents"]:
+            for obj in page.get("Contents", []):
                 key = obj["Key"]
                 if key.endswith("/"):
                     continue
-                data = self.s3.get_object(Bucket=BUCKET, Key=key)
                 relative_key = key.removeprefix(prefix)
-                self.logger.info(f"Uploading {relative_key}")
+                self.logger.info(f"Uploading {relative_key} ({obj['Size']} bytes)")
                 try:
-                    contents = data["Body"].read()
-                    clickhouse_client.insert(
-                        f"{simulation_id}.InputFiles",
-                        [(relative_key, contents)],
-                        column_names=["input_file", "content"]
+                    if obj["Size"] == 0:
+                        # s3() may skip empty objects (option s3_skip_empty_files, e.g. an empty dsl file), so insert them directly
+                        clickhouse_client.insert(
+                            f"{simulation_id}.InputFiles", [(relative_key, b"")], column_names=["input_file", "content"]
+                        )
+                        continue
+                    clickhouse_client.command(
+                        self.INPUT_FILE_QUERY.format(simulation_id=simulation_id),
+                        parameters={
+                            "input_file": relative_key,
+                            "url": f"{S3_ENDPOINT}/{BUCKET}/{quote(key, safe='/')}",
+                            "access_key": S3_ACCESS_KEY,
+                            "secret_key": S3_PRIVATE_KEY,
+                        },
                     )
                 except Exception as e:
-                    self.logger.error(e)
+                    raise ContextLoadError(f"Could not load {relative_key} of context {context_id} into ClickHouse: {e}")
 
     def get_context_prefix(self, context_id):
         return f"CONTEXTS/{context_id}/DATA/"

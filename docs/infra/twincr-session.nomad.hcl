@@ -356,7 +356,8 @@ EOT
       resources {
         cpu        = lookup(lookup(var.resources, "clickhouse", {}), "cpu", "800")
         memory     = lookup(lookup(var.resources, "clickhouse", {}), "memory", "1536")
-        memory_max = lookup(lookup(var.resources, "clickhouse", {}), "memory_max", max(3072, lookup(lookup(var.resources, "clickhouse", {}), "memory", "1536")))
+        # memory_max: ClickHouse reads the context files from Garage at the init
+        memory_max = lookup(lookup(var.resources, "clickhouse", {}), "memory_max", max(4096, lookup(lookup(var.resources, "clickhouse", {}), "memory", "1536")))
       }
     }
 
@@ -427,8 +428,8 @@ EOT
 
       resources {
         cpu        = lookup(lookup(var.resources, "configurator-client", {}), "cpu", "200")
-        memory     = lookup(lookup(var.resources, "configurator-client", {}), "memory", "768")
-        memory_max = lookup(lookup(var.resources, "configurator-client", {}), "memory_max", max(2048, lookup(lookup(var.resources, "configurator-client", {}), "memory", "768")))
+        memory     = lookup(lookup(var.resources, "configurator-client", {}), "memory", "256")
+        memory_max = lookup(lookup(var.resources, "configurator-client", {}), "memory_max", max(512, lookup(lookup(var.resources, "configurator-client", {}), "memory", "256")))
       }
     }
 
