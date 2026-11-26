@@ -414,7 +414,6 @@ EOT
       env {
         NATS_URL            = "nats://127.0.0.1:4222"
         AWS_ENDPOINT_URL_S3 = var.garage_endpoint
-        STORAGE_TYPE        = "S3"
         BUCKET              = "context-library"
         BUCKET_ARCHIVE      = "archive"
         MODE                = "CLICKHOUSE"

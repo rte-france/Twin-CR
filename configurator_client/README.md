@@ -14,8 +14,6 @@ You can use the one specified in the configurator_server.
 ### Dev
 Dependency on configurator_server and it's credentials, please read first the README of that sub-repo to generate S3 credentials that are used later in this README.
 
-If you instead want to use the file system, set the env variable STORAGE_TYPE=filesystem
-
 1. Install uv
 2. In /configurator_client, to create the venv and install dependencies, run
 ~~~

@@ -7,20 +7,10 @@ co-simulation of power systems.
 """
 
 import os
-from pathlib import Path
-
-S3="S3"
-FILE_SYSTEM="FILE_SYSTEM"
 
 CLICKHOUSE_HOST = os.getenv("CLICKHOUSE_HOST", "localhost")
 CLICKHOUSE_PORT = int(os.getenv("CLICKHOUSE_PORT", "8123"))
-DSL_SERVER_HOST = os.getenv("DSL_SERVER_HOST", "localhost")
-DSL_SERVER_PORT = os.getenv("DSL_SERVER_PORT", "8000")
-DSL_SERVER_URL = f"http://{DSL_SERVER_HOST}:{DSL_SERVER_PORT}"
-EXAMPLES_DIR = Path(__file__).parent / "../../docs/orchestrator/examples/"
 NATS_URL = os.getenv("NATS_URL", "nats://localhost:4222")
-
-STORAGE_TYPE=os.getenv("STORAGE_TYPE", S3)
 
 BUCKET = os.getenv("BUCKET", "context-library")
 S3_ACCESS_KEY = os.getenv("AWS_ACCESS_KEY_ID", "")

@@ -11,7 +11,6 @@ import datetime
 import json
 import logging
 from contextlib import asynccontextmanager
-import os
 import secrets
 from pathlib import Path
 
@@ -23,12 +22,10 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from src.ServerState import ServerState
-from src.config import CLICKHOUSE_HOST, CLICKHOUSE_PORT, NATS_URL, STORAGE_TYPE, S3
-from src.context.filesystem_client import Filesystem_Client
+from src.config import CLICKHOUSE_HOST, CLICKHOUSE_PORT, NATS_URL
 from src.context.s3_client import S3_Client
 
 load_dotenv()
-WITH_LEGACY_DSL = os.getenv("WITH_LEGACY_DSL", "false").lower() in ("1", "true", "yes")
 
 logger = logging.getLogger("uvicorn.error")
 
@@ -84,13 +81,7 @@ async def unhandled_exception_handler(request: Request, exc: Exception):
     )
 
 
-context_client = None
-if STORAGE_TYPE == S3:
-    logger.info("Using S3 client")
-    context_client = S3_Client()
-else:
-    logger.info("Using filesystem client")
-    context_client = Filesystem_Client()
+context_client = S3_Client()
 
 
 
@@ -156,12 +147,6 @@ async def init(
                 "message": "Orchestrator init failed",
                 "orchestrator_reply": payload,
             },
-        )
-
-    # Init game master
-    if WITH_LEGACY_DSL:
-        await asyncio.to_thread(
-            context_client.init_game_master, config_path, context_id, scenario_id, simulation_id
         )
 
     state.status = "READY"
