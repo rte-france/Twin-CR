@@ -11,7 +11,10 @@ import {
   createTemplate,
   createTemplateExpert,
   dynawoDependencies,
+  getSessionResourceDefaults,
   getTemplateFolders,
+  type SessionResourceDefaults,
+  type SessionResources,
 } from "@/services/session-manager/service";
 import { parse } from "smol-toml";
 import { TemplateFolder } from "@/services/session-manager/types";
@@ -96,11 +99,33 @@ export function NewTemplateModal(props: NewTemplateModalProps) {
   const [scadaIidmFile, setScadaIidmFile] = createSignal<File>();
   const [gmIidmFile, setGmIidmFile] = createSignal<File>();
   const [period, setPeriod] = createSignal(1);
+  // Resources of the session services in the Nomad infrastructure: only the values entered (else the defaults)
+  const [resourceDefaults, setResourceDefaults] = createSignal<SessionResourceDefaults>();
+  const [resources, setResources] = createSignal<SessionResources>({});
+  const [showResources, setShowResources] = createSignal(false);
+  const setResource = (service: string, setting: string, value: string) =>
+    setResources({ ...resources(), [service]: { ...resources()[service], [setting]: value } });
+  // The values entered, without the empty ones
+  const enteredResources = (): SessionResources =>
+    Object.fromEntries(
+      Object.entries(resources())
+        .map(([service, settings]) => [
+          service,
+          Object.fromEntries(Object.entries(settings).filter(([, value]) => value.trim() !== "")),
+        ] as const)
+        .filter(([, settings]) => Object.keys(settings).length > 0),
+    );
   const [dynawoVariant, setDynawoVariant] = createSignal<"public" | "rte">(
     "rte",
   );
 
   const isSubmitDisabled = () => loading() || !canCreate();
+
+  onMount(() => {
+    getSessionResourceDefaults()
+      .then(setResourceDefaults)
+      .catch((e) => console.error("Could not load the session resource defaults", e));
+  });
 
   onMount(() => {
     const handler = (e: KeyboardEvent) => {
@@ -408,6 +433,7 @@ export function NewTemplateModal(props: NewTemplateModalProps) {
         templateName(), parent, job, dynawoFiles, optional, period(),
         dynawoVariant(), otherFiles(),
         automataCommands().split("\n").map((c) => c.trim()).filter((c) => c.length > 0),
+        enteredResources(),
       );
     } catch (err) {
       throw err;
@@ -761,6 +787,77 @@ export function NewTemplateModal(props: NewTemplateModalProps) {
                 <span class="-mt-1 text-[11px] leading-snug text-gray-400">
                   One command per line, run from the template folder to launch the automata (config.toml automata_commands).
                 </span>
+
+                <button
+                  type="button"
+                  class="self-start text-xs text-gray-500 hover:text-gray-800"
+                  onClick={() => setShowResources(!showResources())}
+                >
+                  {showResources() ? "▾" : "▸"} Session resources (Nomad infrastructure)
+                </button>
+                <Show when={showResources()}>
+                  <Show
+                    when={resourceDefaults()}
+                    fallback={<span class="text-[11px] text-gray-400">Defaults not available from the session manager.</span>}
+                  >
+                    {(info) => (
+                      <div class="flex flex-col gap-1">
+                        <div class="overflow-x-auto">
+                        <table class="text-xs">
+                          <thead>
+                            <tr class="text-left text-gray-500 whitespace-nowrap">
+                              <th class="font-normal pr-2">Service</th>
+                              <th class="font-normal pr-2">CPU (MHz)</th>
+                              <th class="font-normal pr-2">Mem. (MB)</th>
+                              <th class="font-normal pr-2">Max (MB)</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            <For each={info().services}>
+                              {(service) => (
+                                <tr>
+                                  <td class="pr-2 font-mono whitespace-nowrap">{service}</td>
+                                  <For each={["cpu", "memory", "memory_max"]}>
+                                    {(setting) => (
+                                      <td class="pr-2">
+                                        <input
+                                          type="number"
+                                          min="1"
+                                          class="w-16 border border-gray-300 rounded px-1 py-0.5 text-xs"
+                                          placeholder={info().defaults[service]?.[setting] ?? ""}
+                                          value={resources()[service]?.[setting] ?? ""}
+                                          onInput={(e) => setResource(service, setting, e.currentTarget.value)}
+                                        />
+                                      </td>
+                                    )}
+                                  </For>
+                                </tr>
+                              )}
+                            </For>
+                          </tbody>
+                        </table>
+                        </div>
+                        <For each={info().java_services}>
+                          {(service) => (
+                            <label class="flex items-center gap-2 text-xs">
+                              <span class="whitespace-nowrap text-gray-500">JVM options of <span class="font-mono">{service}</span></span>
+                              <input
+                                type="text"
+                                class="flex-1 min-w-0 border border-gray-300 rounded px-1 py-0.5 text-xs font-mono"
+                                placeholder={info().defaults[service]?.java_opts || "image default"}
+                                value={resources()[service]?.java_opts ?? ""}
+                                onInput={(e) => setResource(service, "java_opts", e.currentTarget.value)}
+                              />
+                            </label>
+                          )}
+                        </For>
+                        <span class="text-[11px] leading-snug text-gray-400">
+                          Empty: the default (shown). Memory is reserved on the cluster, max is the memory limit. JVM options such as -Xmx4g for the Argus backends.
+                        </span>
+                      </div>
+                    )}
+                  </Show>
+                </Show>
               </div>
             </Show>
           </div>

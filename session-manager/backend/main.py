@@ -8,6 +8,7 @@ co-simulation of power systems.
 import asyncio
 import datetime
 import hmac
+import json
 import logging
 import mimetypes
 import re
@@ -37,7 +38,8 @@ from backend.db.models import GameSession, GameSessionCreate, GameSessionPrivate
     NodeType, NewFolder, SessionState, Template, TemplateFileRole, TemplateFilePublic, TemplateDetails, \
     TemplateFolder, AccessKey, AccessKeyTyped, GameSessionOwn, SessionConnect, TemplateRenamedResponse, TreeNodeResponse
 from backend.services import storage_service
-from backend.services.session_service import SessionService, nomad, session_private_view
+from backend.services.session_service import SessionService, nomad, session_private_view, SESSION_RESOURCE_TASKS, \
+    SESSION_JAVA_TASKS, session_resource_defaults, validate_session_resources
 from backend.services.storage_service import StorageService
 
 TEMPLATE_NAME_RE = re.compile(r"[A-Za-z0-9 ._-]{1,100}")
@@ -622,6 +624,18 @@ def connect_session(connect: SessionConnect, session: SessionDep,
 
 ### TEMPLATES MANAGEMENT ###
 
+# Before /{template_id}, which would take "session_resources" as an id
+@template_router.get("/session_resources")
+def session_resources_defaults(current_user=Depends(require_role("template_manager"))):
+    """The services of a session whose resources a template can set ([resources.<service>] of its config.toml, used by
+    the Nomad infrastructure), with their defaults (session job). An empty java_opts default is that of the image."""
+    return {
+        "services": list(SESSION_RESOURCE_TASKS),
+        "java_services": list(SESSION_JAVA_TASKS),
+        "defaults": session_resource_defaults(),
+    }
+
+
 @template_router.get("/{template_id}", response_model=TemplateDetails)
 def template_details(session: SessionDep, storage: StorageDep, template_id: int):
     """
@@ -762,6 +776,8 @@ def create_template(
     automata_commands: list[str] = Form(default_factory=list),
     period: float = Form(1),
     dynawo_variant: str = Form("public"),
+    # JSON {service: {cpu|memory|memory_max|java_opts: value}}: the settings that differ from the defaults
+    resources: str = Form(""),
     current_user=Depends(require_role("template_manager")),
 ):
     """
@@ -774,6 +790,10 @@ def create_template(
     config, unless one is uploaded.
     """
     user_name = current_user["preferred_username"]
+    try:
+        template_resources = validate_session_resources(json.loads(resources) if resources.strip() else {})
+    except (ValueError, AttributeError) as exc:
+        raise HTTPException(status_code=422, detail=f"Invalid session resources: {exc}")
     validate_template_name(template_name)
     if dynawo_variant not in DYNAWO_SCRIPT_PATHS:
         raise HTTPException(
@@ -921,6 +941,7 @@ def create_template(
                 dynawo_path=DYNAWO_SCRIPT_PATHS[dynawo_variant],
                 scada_suffix=scada_suffix,
                 period=period,
+                resources=template_resources,
             )
         )
         stored[config_path] = TemplateFileRole.config_toml.value
@@ -940,7 +961,8 @@ def build_config_toml(*, job_file: str, dsl_file: str | None, cyber_config_file:
                       scada_iidm_file: str | None, gm_iidm_file: str | None,
                       connectors_dyd: str, iidm_file: str, dynawo_path: str,
                       scada_suffix: str, period: float, other_files: list[str] | None = None,
-                      automata_commands: list[str] | None = None) -> str:
+                      automata_commands: list[str] | None = None,
+                      resources: dict[str, dict[str, int | str]] | None = None) -> str:
     """
     Write the config.toml for a guided upload.
 
@@ -1008,6 +1030,16 @@ def build_config_toml(*, job_file: str, dsl_file: str | None, cyber_config_file:
     hmi = tomlkit.table()
     hmi["location"] = "SCADA"
     config["hmi"] = hmi
+
+    if resources:
+        # Resources of the session services in the Nomad infrastructure
+        resources_table = tomlkit.table(is_super_table=True)
+        for task, settings in resources.items():
+            task_table = tomlkit.table()
+            for name, value in settings.items():
+                task_table[name] = value
+            resources_table[task] = task_table
+        config["resources"] = resources_table
 
     return tomlkit.dumps(config)
 

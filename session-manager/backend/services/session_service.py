@@ -6,13 +6,16 @@ This file is part of Twin-CR, a platform for real-time cyber-physical
 co-simulation of power systems.
 """
 
+import functools
 import logging
+import re
 import secrets
 import threading
 import tomllib
 import time
 import warnings
 from datetime import datetime, timedelta, UTC
+from pathlib import Path
 from urllib.parse import quote, urlsplit
 
 import requests
@@ -63,6 +66,59 @@ def session_resources(config_toml: bytes) -> dict[str, dict[str, str]]:
                 continue
             resources.setdefault(task, {})[name] = str(value)
     return resources
+
+
+# Default of a resource in the session job: lookup(lookup(var.resources, "<task>", {}), "<setting>", "<default>"), the
+# memory_max default being max(<default>, <memory>)
+_RESOURCE_DEFAULT_RE = re.compile(
+    r'lookup\(lookup\(var\.resources, "([\w-]+)", \{\}\), "(\w+)", (?:"([^"]*)"|max\((\d+),)'
+)
+
+
+@functools.cache
+def session_resource_defaults() -> dict[str, dict[str, str]]:
+    """The default resources of the services of a session, read from the session job (SESSION_JOB_HCL): empty if it is
+    not readable. An empty java_opts means the default of the image."""
+    try:
+        text = Path(SESSION_JOB_HCL).read_text()
+    except OSError as exc:
+        logger.warning(f"Could not read the session resource defaults from {SESSION_JOB_HCL}: {exc}")
+        return {}
+    defaults: dict[str, dict[str, str]] = {}
+    for task, name, value, max_value in _RESOURCE_DEFAULT_RE.findall(text):
+        # In memory_max, the nested lookup of memory matches too, with the same default as memory itself
+        defaults.setdefault(task, {})[name] = max_value or value
+    return defaults
+
+
+def validate_session_resources(resources: dict) -> dict[str, dict[str, int | str]]:
+    """Resources set for a context (task -> setting -> value), checked before being written to its config.toml: known
+    tasks and settings, positive integers (MHz, MB), memory_max not below memory. Empty values are left out (default)."""
+    valid: dict[str, dict[str, int | str]] = {}
+    for task, settings in resources.items():
+        if task not in SESSION_RESOURCE_TASKS or not isinstance(settings, dict):
+            raise ValueError(f"Unknown service {task!r} (services: {', '.join(SESSION_RESOURCE_TASKS)})")
+        allowed = SESSION_RESOURCE_SETTINGS + (("java_opts",) if task in SESSION_JAVA_TASKS else ())
+        for name, value in settings.items():
+            if name not in allowed:
+                raise ValueError(f"Unknown setting {name!r} of {task} (settings: {', '.join(allowed)})")
+            if value is None or str(value).strip() == "":
+                continue
+            if name == "java_opts":
+                valid.setdefault(task, {})[name] = str(value).strip()
+                continue
+            try:
+                number = int(str(value).strip())
+            except ValueError:
+                raise ValueError(f"{task} {name} must be an integer, not {value!r}")
+            if number <= 0:
+                raise ValueError(f"{task} {name} must be positive, not {number}")
+            valid.setdefault(task, {})[name] = number
+        task_settings = valid.get(task, {})
+        if "memory" in task_settings and "memory_max" in task_settings \
+                and task_settings["memory_max"] < task_settings["memory"]:
+            raise ValueError(f"{task} memory_max ({task_settings['memory_max']}) is below memory ({task_settings['memory']})")
+    return valid
 
 
 # Endpoint answering once each service is ready
