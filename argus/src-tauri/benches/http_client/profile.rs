@@ -65,6 +65,7 @@ pub fn run() {
 
 async fn run_batch(
     client: &Arc<Client<Connected>>,
+    path: &str,
     current_idx: &Arc<AtomicUsize>,
     target_idx: usize,
     concurrency: usize,
@@ -75,20 +76,20 @@ async fn run_batch(
         let client = client.clone();
         let completed = completed.clone();
         let current_idx = current_idx.clone();
+        let path = path.to_string();
 
         handles.push(tokio::spawn(async move {
             loop {
-                let i = match current_idx.fetch_update(
-                    Ordering::Relaxed,
-                    Ordering::Relaxed,
-                    |i| (i < target_idx).then(|| i + 1),
-                ) {
+                let i = match current_idx.fetch_update(Ordering::Relaxed, Ordering::Relaxed, |i| {
+                    (i < target_idx).then(|| i + 1)
+                }) {
                     Ok(i) => i,
                     Err(_) => break,
                 };
                 let req_id = format!("req-{}", i);
-                if let Ok(rx) = client.get(req_id, "/test", HashMap::new()).await {
-                    if Client::<Connected>::wait_for_response(rx).await.is_ok() {
+                if let Ok(rx) = client.get(req_id, &path, HashMap::new()).await {
+                    if let Ok(resp) = Client::<Connected>::wait_for_response(rx).await {
+                        std::hint::black_box(resp.body);
                         completed.fetch_add(1, Ordering::Relaxed);
                     }
                 }
@@ -104,6 +105,7 @@ async fn run_batch(
 async fn run_async() {
     let (base_url, _) = start_hyper_echo_server().await;
     let client = Arc::new(setup_client(&base_url));
+    let path = std::env::var("PROFILE_PATH").unwrap_or_else(|_| "/large".to_string());
 
     let total_requests: usize = std::env::var("PROFILE_TOTAL")
         .ok()
@@ -118,7 +120,10 @@ async fn run_async() {
 
     println!("============================================================");
     println!("  HTTP ENGINE PROFILE: CPU, RAM & MEMORY LEAK ANALYSIS");
-    println!("  Total requests : {} (Phase 1: {}, Phase 2: {})", total_requests, n, n);
+    println!(
+        "  Total requests : {} (Phase 1: {}, Phase 2: {})",
+        total_requests, n, n
+    );
     println!("  Concurrency    : {}", concurrency);
     println!("============================================================");
 
@@ -127,7 +132,7 @@ async fn run_async() {
     // Phase 1: N requests (warmup / reach steady-state)
     println!("Running Phase 1 (0 -> N requests: warmup & steady-state)...");
     let p1_start = Instant::now();
-    run_batch(&client, &current_idx, n, concurrency, &completed).await;
+    run_batch(&client, &path, &current_idx, n, concurrency, &completed).await;
     let p1_elapsed = p1_start.elapsed();
     tokio::time::sleep(Duration::from_millis(200)).await;
     let rss_at_n = get_rss_bytes();
@@ -135,7 +140,7 @@ async fn run_async() {
     // Phase 2: N additional requests (steady-state measurement: N -> 2N)
     println!("Running Phase 2 (N -> 2N requests: steady-state leak measurement)...");
     let p2_start = Instant::now();
-    run_batch(&client, &current_idx, 2 * n, concurrency, &completed).await;
+    run_batch(&client, &path, &current_idx, 2 * n, concurrency, &completed).await;
     let p2_elapsed = p2_start.elapsed();
     tokio::time::sleep(Duration::from_millis(200)).await;
     let rss_at_2n = get_rss_bytes();

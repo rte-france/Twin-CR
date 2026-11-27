@@ -206,7 +206,7 @@ fn bench_payload_scaling(c: &mut Criterion) {
 
     for size in [256, 4096, 65536] {
         let payload = bytes::Bytes::from(vec![0x42u8; size]);
-        group.throughput(Throughput::Bytes(size as u64));
+        group.throughput(Throughput::Bytes((size * 2) as u64));
 
         group.bench_with_input(BenchmarkId::from_parameter(size), &payload, |b, data| {
             let data = data.clone();
@@ -216,7 +216,7 @@ fn bench_payload_scaling(c: &mut Criterion) {
                     let rx = client
                         .post(
                             black_box("req-bench-scale".into()),
-                            "/test",
+                            "/echo",
                             HashMap::new(),
                             black_box(data),
                         )

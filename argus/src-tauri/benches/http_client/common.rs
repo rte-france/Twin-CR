@@ -10,7 +10,7 @@ use std::convert::Infallible;
 use std::net::SocketAddr;
 
 use bytes::Bytes;
-use http_body_util::Full;
+use http_body_util::{BodyExt, Full};
 use hyper::service::service_fn;
 use hyper::{Request, Response};
 use hyper_util::rt::{TokioExecutor, TokioIo};
@@ -22,10 +22,10 @@ use argus_lib::http_client::utils::http_client::client::{Client, Connected};
 use argus_lib::http_client::utils::http_client::Disconnected;
 
 /// Fast loopback HTTP server with zero serialization overhead
-#[allow(dead_code)]
 pub async fn start_hyper_echo_server() -> (String, SocketAddr) {
     let listener = TcpListener::bind("127.0.0.1:0").await.unwrap();
     let addr = listener.local_addr().unwrap();
+    let large_payload = Bytes::from(vec![0x42u8; 64 * 1024]);
 
     tokio::spawn(async move {
         loop {
@@ -34,42 +34,50 @@ pub async fn start_hyper_echo_server() -> (String, SocketAddr) {
                 Err(_) => break,
             };
 
+            let large_payload = large_payload.clone();
             tokio::spawn(async move {
                 let io = TokioIo::new(stream);
-                let service = service_fn(|mut req: Request<hyper::body::Incoming>| async move {
-                    use http_body_util::BodyExt;
-                    // Drain the incoming request body so the HTTP connection remains clean for pipelining/keep-alive
-                    while let Some(frame) = req.body_mut().frame().await {
-                        if frame.is_err() {
-                            break;
-                        }
-                    }
+                let service = service_fn(move |req: Request<hyper::body::Incoming>| {
+                    let large_payload = large_payload.clone();
+                    async move {
+                        let path = req.uri().path().to_string();
 
-                    let path = req.uri().path();
-                    let (status, body) = match path {
-                        "/error" => (
-                            500,
-                            Bytes::from_static(b"{\"error\":\"internal_server_error\"}"),
-                        ),
-                        "/not_found" => (
-                            404,
-                            Bytes::from_static(b"{\"error\":\"not_found\"}"),
-                        ),
-                        _ => (
-                            200,
-                            Bytes::from_static(
-                                b"{\"status\":\"ok\",\"engine\":\"argus\",\"payload\":{\"nodes\":100,\"active\":true}}",
+                        // Collect incoming body (keeps HTTP/1.1 keep-alive clean and retrieves payload for /echo)
+                        let incoming_bytes = match req.into_body().collect().await {
+                            Ok(collected) => collected.to_bytes(),
+                            Err(_) => Bytes::new(),
+                        };
+
+                        let (status, content_type, body) = match path.as_str() {
+                            "/echo" => (200, "application/octet-stream", incoming_bytes),
+                            "/large" => (200, "application/octet-stream", large_payload),
+                            "/error" => (
+                                500,
+                                "application/json",
+                                Bytes::from_static(b"{\"error\":\"internal_server_error\"}"),
                             ),
-                        ),
-                    };
+                            "/not_found" => (
+                                404,
+                                "application/json",
+                                Bytes::from_static(b"{\"error\":\"not_found\"}"),
+                            ),
+                            _ => (
+                                200,
+                                "application/json",
+                                Bytes::from_static(
+                                    b"{\"status\":\"ok\",\"engine\":\"argus\",\"payload\":{\"nodes\":100,\"active\":true}}",
+                                ),
+                            ),
+                        };
 
-                    Ok::<_, Infallible>(
-                        Response::builder()
-                            .status(status)
-                            .header("content-type", "application/json")
-                            .body(Full::new(body))
-                            .unwrap(),
-                    )
+                        Ok::<_, Infallible>(
+                            Response::builder()
+                                .status(status)
+                                .header("content-type", content_type)
+                                .body(Full::new(body))
+                                .unwrap(),
+                        )
+                    }
                 });
 
                 let _ = Builder::new(TokioExecutor::new())

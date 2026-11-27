@@ -14,14 +14,14 @@ All HTTP client benchmarks are unified under a single entry point: `benches/http
 
 ### Available Benchmarks
 
-| Subcommand  | Module                             | Description                                                                                                         |
-| ----------- | ---------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
-| `criterion` | `benches/http_client/criterion.rs` | Micro-benchmarks for channel dispatch roundtrip, Tauri IPC serialization, and payload scaling (default).            |
-| `load`      | `benches/http_client/load.rs`      | Concurrency, backpressure, and in-flight cancellation stress using `hdrhistogram`.                                  |
-| `sse`       | `benches/http_client/sse.rs`       | High-throughput concurrent Server-Sent Events streaming and inter-event latency.                                    |
-| `profile`   | `benches/http_client/profile.rs`   | Real-time memory footprint (RSS) and leak detection over 200,000+ requests.                                         |
-| `trace`     | `benches/http_client/trace.rs`     | Async span timeline exporter (Chrome / Perfetto JSON) and Tokio Console server.                                     |
-| `all`       | All of the above                   | Executes all benchmarks sequentially.                                                                               |
+| Subcommand  | Module                             | Description                                                                                              |
+| ----------- | ---------------------------------- | -------------------------------------------------------------------------------------------------------- |
+| `criterion` | `benches/http_client/criterion.rs` | Micro-benchmarks for channel dispatch roundtrip, Tauri IPC serialization, and payload scaling (default). |
+| `load`      | `benches/http_client/load.rs`      | Concurrency, backpressure, and in-flight cancellation stress using `hdrhistogram`.                       |
+| `sse`       | `benches/http_client/sse.rs`       | High-throughput concurrent Server-Sent Events streaming and inter-event latency.                         |
+| `profile`   | `benches/http_client/profile.rs`   | Real-time memory footprint (RSS) and leak detection over 200,000+ requests.                              |
+| `trace`     | `benches/http_client/trace.rs`     | Async span timeline exporter (Chrome / Perfetto JSON) and Tokio Console server.                          |
+| `all`       | All of the above                   | Executes all benchmarks sequentially.                                                                    |
 
 ---
 
@@ -63,25 +63,15 @@ Full statistical run (default when no subcommand is specified):
 
 ```bash
 cargo bench --bench http_client
-# or explicitly:
-cargo bench --bench http_client -- criterion
 ```
 
 Fast run (reduced sampling iterations):
 
 ```bash
 cargo bench --bench http_client -- --quick
-# or directly:
-cargo bench --bench http_client -- criterion --quick
 ```
 
 HTML reports are generated automatically in `target/criterion/`.
-
-Pass `--profile-time <seconds>` directly to Criterion (do not prefix with `criterion`, as Criterion treats positional arguments as benchmark name filters); flamegraphs will be saved under `target/criterion/<group>/<benchmark>/profile/flamegraph.svg`:
-
-```bash
-cargo bench --bench http_client -- --profile-time 5
-```
 
 ### 3. SSE Streaming Benchmark (`sse`)
 
@@ -107,20 +97,11 @@ cargo bench --bench http_client -- profile
 Customizable via environment variables:
 
 ```bash
-PROFILE_TOTAL=300000 cargo bench --bench http_client -- profile
+PROFILE_TOTAL=300000 PROFILE_PATH="/large" cargo bench --bench http_client -- profile
 ```
 
 - `PROFILE_TOTAL`: Total requests to dispatch (default: `200000`).
-
-### 5. Async Tracing & Flamegraphs
-
-#### Flamegraphs (CPU profiling via Criterion + pprof)
-
-Run criterion micro-benchmarks; flamegraphs will be automatically saved under `target/criterion/<group>/<benchmark>/profile/flamegraph.svg`:
-
-```bash
-cargo bench --bench http_client -- criterion
-```
+- `PROFILE_PATH`: Target endpoint on the loopback server (`/large`, `/test`, `/error`, default: `/large`).
 
 #### Async Timeline Spans (Chrome / Perfetto JSON)
 
@@ -144,4 +125,12 @@ In another terminal, connect using:
 
 ```bash
 tokio-console
+```
+
+### 5. Flamegraphs
+
+Pass `--profile-time <seconds>` directly to Criterion (do not prefix with `criterion`, as Criterion treats positional arguments as benchmark name filters); flamegraphs will be saved under `target/criterion/<group>/<benchmark>/profile/flamegraph.svg`:
+
+```bash
+cargo bench --bench http_client -- --profile-time 5
 ```
