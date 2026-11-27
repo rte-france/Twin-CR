@@ -24,7 +24,6 @@ co-simulation of power systems.
     <name>SCADA</name>
 
     <modules>
-        <module>alarms-scada</module>
         <module>api-scada</module>
         <module>commands-scada</module>
         <module>core-scada</module>

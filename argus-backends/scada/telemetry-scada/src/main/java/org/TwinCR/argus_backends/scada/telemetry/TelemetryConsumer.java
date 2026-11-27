@@ -26,7 +26,6 @@ import org.TwinCR.argus_backends.common.core.bridge.SseNatsBridge;
 import org.TwinCR.argus_backends.common.datamodel.Value;
 import org.TwinCR.argus_backends.common.gridmodel.GridModel;
 import org.TwinCR.argus_backends.common.telemetry.TelemetryConsumerCommon;
-import org.TwinCR.argus_backends.scada.alarms.AlarmEngine;
 import io.nats.client.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -209,7 +208,7 @@ public class TelemetryConsumer extends TelemetryConsumerCommon {
         }
     }
 
-    public TelemetryConsumer(Connection conn, SseNatsBridge bridge, AlarmEngine alarmEngine, double estimPeriod,
+    public TelemetryConsumer(Connection conn, SseNatsBridge bridge, double estimPeriod,
                              ClickhouseClient clickhouseClient, String location) throws Exception {
         super(conn, bridge);
         this.clickhouseClient = clickhouseClient;
@@ -245,7 +244,6 @@ public class TelemetryConsumer extends TelemetryConsumerCommon {
                 if (isProtectionTelemetry) {
                     return;
                 }
-                if (alarmEngine != null) alarmEngine.evaluate(t);
                 handleTelemetry(t);
                 incrementGoodTelemetryMessage(subject);
             } catch (Exception e) {

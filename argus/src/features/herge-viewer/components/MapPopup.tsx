@@ -8,7 +8,7 @@ co-simulation of power systems.
 
 import { type Component, Show, For } from "solid-js";
 import { Popover } from "@kobalte/core/popover";
-import { openInCentral } from "@/utils/openInCentral";
+import { openSld } from "@/features/single-line-diagram/navigation";
 
 interface MapPopupProps {
   data: any | null;
@@ -19,15 +19,7 @@ interface MapPopupProps {
 export const MapPopup: Component<MapPopupProps> = (props) => {
   const handleOpenSubstation = (value: string) => {
     const equipmentId = value.split("-")[0];
-    openInCentral({
-      id: `sub - ${equipmentId}`,
-      title: `sub - ${equipmentId}`,
-      elementTag: "sld-viewer",
-      params: {
-        equipmentId,
-        type: "sub",
-      },
-    });
+    openSld(equipmentId, "sub");
   };
 
   return (

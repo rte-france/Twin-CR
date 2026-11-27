@@ -25,6 +25,7 @@ co-simulation of power systems.
 
     <modules>
         <module>core-common</module>
+        <module>alarms-common</module>
         <module>api-common</module>
         <module>ifl-common</module>
         <module>model-common</module>

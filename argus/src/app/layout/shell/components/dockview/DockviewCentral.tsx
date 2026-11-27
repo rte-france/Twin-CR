@@ -10,7 +10,7 @@ import { onMount, onCleanup } from "solid-js";
 import { render } from "solid-js/web";
 import { DockviewComponent } from "dockview-core";
 import { MfeLoader } from "../MfeLoader";
-import { type OpenCentralParams } from "@/utils/openInCentral";
+import { CENTRAL_READY_EVENT, type OpenCentralParams } from "@/utils/openInCentral";
 import { DockviewTab } from "./DockviewTab";
 import { LeftHeaderActions } from "./LeftHeaderActions";
 import { usePlacement } from "../../providers/PlacementProvider";
@@ -304,6 +304,8 @@ export const DockviewCentral = () => {
     window.addEventListener("argus:move-panel", onMovePanel);
     window.addEventListener("argus:add-central", handleAdd);
     window.addEventListener("argus:focus-tool", handleFocusTool);
+    // Panels that must always be open (e.g. alarms) can be added now that the saved layout is restored
+    window.dispatchEvent(new CustomEvent(CENTRAL_READY_EVENT));
     window.addEventListener("keydown", handleKeyDown);
 
     window.addEventListener("argus:close-active-panel", handleCloseActivePanel);

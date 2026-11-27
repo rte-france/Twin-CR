@@ -13,6 +13,8 @@ import { Show } from "solid-js";
 import { GmControls } from "@/features/gm-settings";
 import { Mode } from "@/services/app-mode";
 import { Clock } from "@/features/clock-simulation";
+import { AlarmBadge } from "@/features/alarms/components/AlarmBadge";
+import { OverloadMonitorBadge } from "@/features/alarms/components/OverloadMonitor";
 
 export const CentralMenu = () => {
   const [mode] = useAppMode();
@@ -32,8 +34,11 @@ export const CentralMenu = () => {
         </Show>
 
         <div class="w-px h-2.5 bg-divider rounded-full" />
-
         <Clock />
+
+        <div class="w-px h-2.5 bg-divider rounded-full" />
+        <AlarmBadge />
+        <OverloadMonitorBadge />
       </div>
     </div>
   );

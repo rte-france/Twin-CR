@@ -89,6 +89,12 @@ export const rightSidebarPanels: PanelManifest[] = [
 
 export const rightSidebarTools: PanelManifest[] = [
   {
+    id: "events",
+    label: "Events",
+    iconId: "mdi:format-list-bulleted",
+    elementTag: "event-list",
+  },
+  {
     id: "dynawo-timeline",
     label: "Dynawo Timeline",
     iconId: "mdi:receipt-text-clock-outline",

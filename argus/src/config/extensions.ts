@@ -14,6 +14,7 @@ import "@/features/single-line-diagram";
 import "@/features/network-area-diagram";
 import "@/features/dynawo-timeline";
 import "@/features/dynawo-constraints";
+import "@/features/alarms";
 import "@/features/gm-commands";
 import "@/features/scada-commands";
 import "@/features/clock-simulation";

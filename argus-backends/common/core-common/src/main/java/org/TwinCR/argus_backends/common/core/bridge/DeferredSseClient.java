@@ -36,6 +36,11 @@ public class DeferredSseClient implements SseClient {
         delegate.send(data);
     }
 
+    @Override
+    public void close() {
+        delegate.close();
+    }
+
     /** Sends the initial messages, then the live messages held back meanwhile, then sends the live messages directly */
     public void start(List<String> initialMessages) throws IOException {
         for (String data : initialMessages) {

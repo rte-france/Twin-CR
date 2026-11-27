@@ -48,6 +48,11 @@ class Broker {
         void publishIntermediaryMeasurement(const MeasurementReceived& info, const std::string& location);
         void publishIntermediaryControl(const ControlReceived& info, const std::string& location);
 
+        /**
+         * Publish a low-frequency message directly (not through the PerformanceBroker)
+         */
+        void publish(const std::string& subject, const std::string& payload);
+
     private:
         Broker();
         ~Broker();
