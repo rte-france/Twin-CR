@@ -37,7 +37,7 @@
             },
             "signalisation_type": {
               "type": "string",
-              "enum": ["TS", "TC", "TVC", "TM", "CG"],
+              "enum": ["TS", "TC", "TVC", "TM", "GI"],
               "description": "Signalisation type"
             },
             "cause": {

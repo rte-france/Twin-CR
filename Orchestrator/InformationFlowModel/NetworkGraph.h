@@ -138,6 +138,12 @@ class NetworkGraph {
             return names;
         }
 
+        std::string getNodeType(const std::string& node_name) const {
+            if (!node_name_to_id_.contains(node_name))
+                throw std::invalid_argument(node_name + " does not exist");
+            return getNode(node_name_to_id_.at(node_name)).getType();
+        }
+
         nlohmann::json getNodeConfig(const std::string& node_name) {
             if (!node_name_to_id_.contains(node_name))
                 throw std::invalid_argument(node_name + " does not exist");

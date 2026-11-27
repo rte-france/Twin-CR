@@ -154,8 +154,8 @@ class MonitoredPath : public std::enable_shared_from_this<MonitoredPath> {
         /**
          * Creates a MonitoredPath between source and destination.
          * Whenever, the path becomes available (i.e. all elements of the path are available, this includes communication links in both directions)
-         * a CG (contrôle général) is sent from source to destination.
-         * The destination is expected to resend all the TSes it has in memory when receiving a CG.
+         * a GI (general interrogation) is sent from source to destination.
+         * The destination is expected to resend all the TSes it has in memory when receiving a GI.
          * Always created as a shared_ptr as MonitoredPaths require shared_from_this.
          */
         static std::shared_ptr<MonitoredPath> create(const std::string& source, const std::string& destination, NetworkGraph& network_graph) {
@@ -193,7 +193,7 @@ class MonitoredPath : public std::enable_shared_from_this<MonitoredPath> {
         std::vector<graaf::vertex_id_t> path_;
         bool available_;
         std::vector<std::shared_ptr<CommunicationElement>> elements_;
-        NetworkGraph* network_graph_ = nullptr;  // Graph owning this path, used to get the uid of the CGs
+        NetworkGraph* network_graph_ = nullptr;  // Graph owning this path, used to get the uid of the GIs
 };
 
 #endif // COMMUNICATION_ELEMENTS_H
