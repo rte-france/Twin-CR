@@ -7,14 +7,17 @@ co-simulation of power systems.
 */
 
 use std::collections::HashMap;
+use std::hint::black_box;
 use std::time::Duration;
 
-use std::hint::black_box;
-
-use argus_lib::http_client::utils::http_client::client::{Client, Connected};
-use criterion::{BenchmarkId, Criterion, Throughput};
+use criterion::{BatchSize, BenchmarkId, Criterion, Throughput};
 #[cfg(unix)]
 use pprof::criterion::{Output, PProfProfiler};
+
+use argus_lib::http_client::{
+    types::TauriHttpResponse,
+    utils::http_client::client::{Client, Connected},
+};
 
 use super::common::{setup_client, start_hyper_echo_server};
 
@@ -171,8 +174,33 @@ fn bench_http_methods_roundtrip(c: &mut Criterion) {
         });
     });
 
-    // Tauri IPC serialization cost
-    group.bench_function("get_to_tauri_ipc_response", |b| {
+    // Pure Tauri IPC serialization cost (isolated from HTTP roundtrip)
+    let sample_headers = HashMap::from([
+        ("content-type".to_string(), "application/json".to_string()),
+        ("x-request-id".to_string(), "req-bench-ipc".to_string()),
+    ]);
+    let sample_body =
+        b"{\"status\":\"ok\",\"engine\":\"argus\",\"payload\":{\"nodes\":100,\"active\":true}}"
+            .to_vec();
+
+    group.bench_function("tauri_ipc_serialization", |b| {
+        b.iter_batched(
+            || TauriHttpResponse {
+                status: 200,
+                headers: sample_headers.clone(),
+                body: sample_body.clone(),
+            },
+            |resp| {
+                let ipc_resp: tauri::ipc::Response =
+                    black_box(resp).try_into().expect("ipc conversion");
+                black_box(ipc_resp);
+            },
+            BatchSize::SmallInput,
+        );
+    });
+
+    // End-to-end HTTP roundtrip + Tauri IPC serialization
+    group.bench_function("get_e2e_ipc", |b| {
         b.to_async(&rt).iter(|| async {
             let rx = client
                 .get(black_box("req-bench-ipc".into()), "/test", HashMap::new())
