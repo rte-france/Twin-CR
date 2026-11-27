@@ -70,12 +70,18 @@ cargo bench --bench http_client -- criterion
 Fast run (reduced sampling iterations):
 
 ```bash
-cargo bench --bench http_client -- criterion --quick
-# or directly:
 cargo bench --bench http_client -- --quick
+# or directly:
+cargo bench --bench http_client -- criterion --quick
 ```
 
 HTML reports are generated automatically in `target/criterion/`.
+
+Pass `--profile-time <seconds>` directly to Criterion (do not prefix with `criterion`, as Criterion treats positional arguments as benchmark name filters); flamegraphs will be saved under `target/criterion/<group>/<benchmark>/profile/flamegraph.svg`:
+
+```bash
+cargo bench --bench http_client -- --profile-time 5
+```
 
 ### 3. SSE Streaming Benchmark (`sse`)
 

@@ -8,7 +8,6 @@ co-simulation of power systems.
 
 use std::convert::Infallible;
 use std::net::SocketAddr;
-use std::time::Duration;
 
 use bytes::Bytes;
 use http_body_util::Full;
@@ -20,6 +19,7 @@ use tokio::net::TcpListener;
 
 use argus_lib::http_client::utils::http_client::actor::run_http_client_actor;
 use argus_lib::http_client::utils::http_client::client::{Client, Connected};
+use argus_lib::http_client::utils::http_client::Disconnected;
 
 /// Fast loopback HTTP server with zero serialization overhead
 #[allow(dead_code)]
@@ -85,13 +85,16 @@ pub async fn start_hyper_echo_server() -> (String, SocketAddr) {
 /// Sets up connected client instance wired directly to actor loop
 pub fn setup_client(base_url: &str) -> Client<Connected> {
     let (cmd_tx, cmd_rx) = tokio::sync::mpsc::channel(2048);
-    let reqwest_client = reqwest::Client::builder()
-        .no_proxy()
-        .pool_max_idle_per_host(200)
-        .pool_idle_timeout(Duration::from_secs(60))
-        .tcp_nodelay(true)
-        .build()
-        .expect("Failed to build reqwest client");
+
+    let disconnected_client = Client {
+        url: Some(base_url.to_string()),
+        state: Disconnected,
+    };
+
+    let reqwest_client = disconnected_client
+        .build_base_client(None, None)
+        .expect("Failed to build base reqwest client");
+
     let client = reqwest_middleware::ClientBuilder::new(reqwest_client).build();
 
     let url = base_url.to_string();

@@ -235,13 +235,18 @@ fn bench_payload_scaling(c: &mut Criterion) {
 }
 
 pub fn run(args: Vec<String>) {
-    let mut builder = if args.iter().any(|a| a == "--quick") {
+    let is_quick = args.iter().any(|a| a == "--quick");
+    let has_custom_criterion_args = args.iter().any(|a| a != "--bench" && a != "--quick");
+
+    let mut builder = if is_quick {
         Criterion::default()
             .sample_size(10)
             .warm_up_time(Duration::from_millis(500))
             .measurement_time(Duration::from_secs(1))
-    } else {
+    } else if has_custom_criterion_args {
         Criterion::default().configure_from_args()
+    } else {
+        Criterion::default()
     };
 
     #[cfg(unix)]
