@@ -146,7 +146,6 @@ async fn run_async() {
     let rss_at_2n = get_rss_bytes();
 
     let elapsed = p1_elapsed + p2_elapsed;
-    let rss_after_cooldown = get_rss_bytes();
 
     let success_count = completed.load(Ordering::Relaxed);
     let rps = (success_count as f64) / elapsed.as_secs_f64();
@@ -170,10 +169,6 @@ async fn run_async() {
     println!(
         "Steady RAM @ 2N req  : {:.2} MB",
         (rss_at_2n as f64) / (1024.0 * 1024.0)
-    );
-    println!(
-        "Post-cooldown RAM    : {:.2} MB",
-        (rss_after_cooldown as f64) / (1024.0 * 1024.0)
     );
     println!(
         "Steady drift (N->2N) : {:+.2} MB ({:+.2} bytes/req)",
