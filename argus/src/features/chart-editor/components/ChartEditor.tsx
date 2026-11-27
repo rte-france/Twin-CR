@@ -35,7 +35,7 @@ import {
 } from "solid-icons/fi";
 
 import { useMappingView } from "../hooks/useMappingView";
-import { ChartDataRow, ChartService } from "@/services/chart";
+import { ChartDataRow, ChartService, getUniqueKey } from "@/services/chart";
 import { useAppMode } from "@/hooks/useAppMode";
 import { agGridCustomTheme } from "@/styles/agGridCustomTheme";
 import { ChartEditorProps } from "../types";
@@ -55,15 +55,6 @@ function debounce<T extends (...args: any[]) => void>(
     timeoutId = setTimeout(() => func.apply(this, args), wait);
   } as T;
 }
-
-const getItemKey = (item: any, forceEstim?: boolean) => {
-  const eqId = item.equipmentId || "";
-  const isEstim = forceEstim !== undefined ? forceEstim : !!item.isEstim;
-  const type = isEstim ? "estim" : "tmts";
-  return item.id
-    ? `${item.id}-${type}`
-    : `${eqId}-${item.kind}-${item.side || ""}-${type}`;
-};
 
 export const ChartEditor: Component<ChartEditorProps> = (props) => {
   let gridContainerRef!: HTMLDivElement;
@@ -122,7 +113,7 @@ export const ChartEditor: Component<ChartEditorProps> = (props) => {
           viewMode() === "in-chart"
             ? !!params.data.isEstim
             : dataSource() === "estim";
-        return getItemKey(params.data, isEstimView);
+        return getUniqueKey(params.data, isEstimView);
       },
       pagination: true,
       paginationPageSize: 50,
@@ -154,9 +145,9 @@ export const ChartEditor: Component<ChartEditorProps> = (props) => {
           viewMode() === "in-chart"
             ? !!params.data.isEstim
             : dataSource() === "estim";
-        const currentId = getItemKey(params.data, isEstimView);
+        const currentId = getUniqueKey(params.data, isEstimView);
         const isInChart = savedSelection().some(
-          (s) => getItemKey(s) === currentId,
+          (s) => getUniqueKey(s) === currentId,
         );
         return isInChart
           ? "!bg-[var(--sidebar-active-bg)] border-l-2 border-l-[var(--links)]"
@@ -338,7 +329,7 @@ export const ChartEditor: Component<ChartEditorProps> = (props) => {
           const existingData = yield* chartSvc.getSelection(dId());
           const merged = [...existingData, ...newData];
           const unique = Array.from(
-            new Map(merged.map((item) => [getItemKey(item), item])).values(),
+            new Map(merged.map((item) => [getUniqueKey(item), item])).values(),
           );
           yield* chartSvc.setSelection(dId(), unique);
         }),
@@ -366,7 +357,7 @@ export const ChartEditor: Component<ChartEditorProps> = (props) => {
             viewMode() === "in-chart"
               ? !!node.data.isEstim
               : dataSource() === "estim";
-          return getItemKey(node.data, isEstimView);
+          return getUniqueKey(node.data, isEstimView);
         })
         .filter(Boolean),
     );
@@ -379,7 +370,7 @@ export const ChartEditor: Component<ChartEditorProps> = (props) => {
           const chartSvc = yield* ChartService;
           const existingData = yield* chartSvc.getSelection(dId());
           const filtered = existingData.filter(
-            (item) => !idsToRemove.has(getItemKey(item)),
+            (item) => !idsToRemove.has(getUniqueKey(item)),
           );
           yield* chartSvc.setSelection(dId(), filtered);
         }),

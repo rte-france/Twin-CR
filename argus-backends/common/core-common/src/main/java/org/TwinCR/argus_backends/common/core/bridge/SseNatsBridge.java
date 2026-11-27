@@ -18,10 +18,31 @@ public class SseNatsBridge {
     // Keyed by subscription pattern (may contain * or >)
     private final Map<String, Set<SseClient>> topicClients = new ConcurrentHashMap<>();
 
+    // Subjects for which the last payload is replayed to new subscribers,
+    // e.g. so a client connecting while the simulation is paused still gets the current time.
+    private static final Set<String> REPLAYED_SUBJECTS = Set.of("time");
+
+    // Last payload of each replayed subject, keyed by subject
+    private final Map<String, String> lastPayloads = new ConcurrentHashMap<>();
+
+    private final Object replayLock = new Object();
+
     public void register(String topic, SseClient client) {
-        topicClients
-            .computeIfAbsent(topic, k -> ConcurrentHashMap.newKeySet())
-            .add(client);
+        synchronized (replayLock) {
+            topicClients
+                .computeIfAbsent(topic, k -> ConcurrentHashMap.newKeySet())
+                .add(client);
+
+            for (Map.Entry<String, String> last : lastPayloads.entrySet()) {
+                if (!matches(topic, last.getKey())) continue;
+                try {
+                    client.send(last.getValue());
+                } catch (IOException e) {
+                    remove(client);
+                    return;
+                }
+            }
+        }
     }
 
     public void remove(SseClient client) {
@@ -29,6 +50,24 @@ public class SseNatsBridge {
     }
 
     public void forward(String subject, byte[] data) {
+        if (REPLAYED_SUBJECTS.contains(subject)) {
+            synchronized (replayLock) {
+                lastPayloads.put(subject, toSsePayload(data));
+                send(subject, data);
+            }
+        } else {
+            send(subject, data);
+        }
+    }
+
+    // Convert to single-line JSON to avoid SSE breaking
+    private static String toSsePayload(byte[] data) {
+        return new String(data, StandardCharsets.UTF_8)
+            .replace("\n", "")
+            .replace("\r", "");
+    }
+
+    private void send(String subject, byte[] data) {
         // Collect all clients whose subscription pattern matches the incoming subject
         Set<SseClient> matched = new HashSet<>();
         for (Map.Entry<String, Set<SseClient>> entry : topicClients.entrySet()) {
@@ -38,10 +77,7 @@ public class SseNatsBridge {
         }
         if (matched.isEmpty()) return;
 
-        // Convert to single-line JSON to avoid SSE breaking
-        String payload = new String(data, StandardCharsets.UTF_8)
-            .replace("\n", "")
-            .replace("\r", "");
+        String payload = toSsePayload(data);
 
         Iterator<SseClient> it = matched.iterator();
         while (it.hasNext()) {
