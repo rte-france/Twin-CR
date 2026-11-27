@@ -102,7 +102,7 @@ fn bench_http_methods_roundtrip(c: &mut Criterion) {
         });
     });
 
-    // Methods with body (standard 256 B payload)
+    // Methods with body (14 B JSON payload)
     let body = bytes::Bytes::from_static(b"{\"bench\":true}");
 
     let body_post = body.clone();
