@@ -137,16 +137,17 @@ async fn run_async() {
     let success_count = completed.load(Ordering::Relaxed);
     let cancel_count = cancelled.load(Ordering::Relaxed);
     let error_count = errors.load(Ordering::Relaxed);
+    let request_rate = (total_requests as f64) / elapsed.as_secs_f64();
     let effective_rps = (success_count as f64) / elapsed.as_secs_f64();
-    let throughput_total = (total_requests as f64) / elapsed.as_secs_f64();
 
     println!("\n--- LOAD TEST RESULTS ---");
     println!("Total time           : {:.2?}", elapsed);
     println!("Successful requests  : {}", success_count);
     println!("Cancelled requests   : {}", cancel_count);
     println!("Errors               : {}", error_count);
+    println!("Request rate         : {:.0} req/s", request_rate);
     println!("Effective throughput : {:.0} req/s", effective_rps);
-    println!("Total throughput     : {:.0} req/s", throughput_total);
+
     println!(
         "Service Latency p50  : {:?}",
         Duration::from_micros(histogram_service.value_at_quantile(0.50))
