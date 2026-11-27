@@ -18,7 +18,8 @@ mod dsl;
 mod game_master;
 mod herge;
 mod http;
-mod http_client;
+#[doc(hidden)]
+pub mod http_client;
 mod lobby;
 mod scada;
 mod sidecars;
