@@ -516,6 +516,13 @@ def launch_session(session_id: int, session_service: SessionServiceDep, session:
     game_session = session_service.launch_session(session_id)
     return game_session
 
+@session_router.post("/{session_id}/reset", response_model=GameSession)
+def reset_session(session_id: int, session_service: SessionServiceDep, session: SessionDep,
+                   current_user=Depends(require_role("session_launcher"))):
+    own_session(session, session_id, current_user)
+    game_session = session_service.reset_session(session_id)
+    return game_session
+
 @session_router.post("/{session_id}/stop", response_model=GameSession)
 def stop_session(session_id: int, session_service: SessionServiceDep, session: SessionDep,
                  current_user=Depends(require_role("session_launcher"))):
