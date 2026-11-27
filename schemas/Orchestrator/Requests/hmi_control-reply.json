@@ -1,0 +1,71 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "HMICommandReply",
+  "description": "Reply to a command sent to the topic 'HMIControl.<source>' (for scenario commands, see the reply of the corresponding command)",
+  "oneOf": [
+    { "$ref": "error_response.json" },
+    {
+      "type": "object",
+      "properties": {
+        "status": {
+          "type": "string",
+          "const": "OK"
+        },
+        "control_uid": {
+          "type": "integer",
+          "description": "Unique identifier of the control, carried by its acknowledgement (published on 'Acknowledgement.<location>.<subtopic>', or in the acknowledgement field below for real_time_critical controls)"
+        },
+        "acknowledgement": {
+          "description": "Only present for real_time_critical controls: acknowledgement of the control, null if the control or its acknowledgement was dropped",
+          "oneOf": [
+            { "type": "null" },
+            {
+              "type": "object",
+              "properties": {
+                "control_uid": {
+                  "type": "integer",
+                  "description": "Unique identifier of the acknowledged control"
+                },
+                "id": {
+                  "type": "string",
+                  "description": "Identifier of the acknowledged control"
+                },
+                "value": {
+                  "type": ["boolean", "integer", "number"],
+                  "description": "Value of the acknowledged control (as received by its destination)"
+                },
+                "source": {
+                  "type": "string",
+                  "description": "Cyber node sending the acknowledgement (destination of the control)"
+                },
+                "destination": {
+                  "type": "string",
+                  "description": "Cyber node receiving the acknowledgement (sender of the control)"
+                },
+                "control_time_sent": {
+                  "type": "number",
+                  "description": "Simulation time at which the control was sent (real-time clock)"
+                },
+                "time_sent": {
+                  "type": "number",
+                  "description": "Simulation time at which the control reached its destination, and the acknowledgement was sent"
+                },
+                "time_received": {
+                  "type": "number",
+                  "description": "Simulation time at which the acknowledgement reaches the sender of the control: the caller should wait until then"
+                },
+                "delay": {
+                  "type": "number",
+                  "description": "time_received - control_time_sent"
+                }
+              },
+              "required": ["control_uid", "id", "value", "source", "destination", "control_time_sent", "time_sent", "time_received", "delay"]
+            }
+          ]
+        }
+      },
+      "additionalProperties": false,
+      "required": ["status", "control_uid"]
+    }
+  ]
+}

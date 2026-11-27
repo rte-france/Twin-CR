@@ -28,7 +28,7 @@ struct SignalisationData {
  */
 class HMIInterface {
     public:
-        HMIInterface(const InformationFlowModel& information_flow_model, ScenarioHandler& scenario_handler, ClickHouseLogger& logger);
+        HMIInterface(InformationFlowModel& information_flow_model, ScenarioHandler& scenario_handler, ClickHouseLogger& logger);
 
         ~HMIInterface();
 
@@ -39,9 +39,15 @@ class HMIInterface {
         std::string handleMessage(const natsMsg* nats_message);
 
     private:
-        void handleControl(const nlohmann::json::basic_json::value_type& j);
+        /**
+         * Send the control described by 'j'. Returns the fields to add to the reply:
+         * - "control_uid": unique identifier of the control, carried by its acknowledgement (to match them)
+         * - "acknowledgement" (only if the flag real_time_critical is true): the acknowledgement, null if the control or the
+         *   acknowledgement was dropped by the IFL. The caller is responsible for implementing its delay.
+         */
+        nlohmann::json handleControl(const nlohmann::json::basic_json::value_type& j);
 
-        const InformationFlowModel& information_flow_model_;
+        InformationFlowModel& information_flow_model_;
         ScenarioHandler& scenario_handler_;
         ClickHouseLogger& logger_;
         std::string location_;

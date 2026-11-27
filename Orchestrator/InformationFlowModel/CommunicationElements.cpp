@@ -23,6 +23,10 @@ bool CommunicationElement::apply(ControlReceived& info) {
     return genericApply(info);
 }
 
+bool CommunicationElement::apply(AcknowledgementReceived& info) {
+    return genericApply(info);
+}
+
 void CommunicationElement::setDelayFunction(const nlohmann::json::basic_json::value_type& config, Mode mode) {
     if (config.empty()) {
         delay_function_.reset();
@@ -182,7 +186,8 @@ void CommunicationElement::notifyObservers() {
 MonitoredPath::MonitoredPath(const std::string& source, const std::string& destination, NetworkGraph& network_graph) :
 destination_(destination),
 path_(network_graph.getPath(source, destination)),
-available_(true) {
+available_(true),
+network_graph_(&network_graph) {
     //
 }
 
@@ -240,7 +245,8 @@ void MonitoredPath::updateAvailability() {
                 tase2::CAUSE_SPONTANEOUS,
                 tase2::QUALITY_VALIDITY_GOOD,
                 false
-            )));
+            ),
+            network_graph_->nextControlUid()));
     }
     available_ = all_available;
 }

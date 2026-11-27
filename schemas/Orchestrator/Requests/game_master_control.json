@@ -14,11 +14,7 @@
           "description": "Identifier of the control signal"
         },
         "value": {
-          "oneOf": [
-            { "type": "boolean" },
-            { "type": "integer" },
-            { "type": "number" }
-          ],
+          "type": ["boolean", "number"],
           "description": "Value of the signal"
         }
       },

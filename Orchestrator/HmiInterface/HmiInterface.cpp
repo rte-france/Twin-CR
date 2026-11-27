@@ -18,7 +18,7 @@ co-simulation of power systems.
 #include <nlohmann/json.hpp>
 #include <spdlog/spdlog.h>
 
-HMIInterface::HMIInterface(const InformationFlowModel& information_flow_model, ScenarioHandler& scenario_handler, ClickHouseLogger& logger) :
+HMIInterface::HMIInterface(InformationFlowModel& information_flow_model, ScenarioHandler& scenario_handler, ClickHouseLogger& logger) :
 information_flow_model_(information_flow_model),
 scenario_handler_(scenario_handler),
 logger_(logger) {
@@ -96,7 +96,7 @@ std::string HMIInterface::handleMessage(const natsMsg* nats_message) {
             reply = scenario_handler_.applyScenario(j, Mode::Execute);
 
         } else {
-            handleControl(j);
+            reply.update(handleControl(j));
         }
 
     } catch (const nlohmann::json::parse_error& e) {
@@ -113,7 +113,7 @@ std::string HMIInterface::handleMessage(const natsMsg* nats_message) {
     return reply.dump(4);
 }
 
-void HMIInterface::handleControl(const nlohmann::json::basic_json::value_type& j) {
+nlohmann::json HMIInterface::handleControl(const nlohmann::json::basic_json::value_type& j) {
     auto tase2_data = tase2::parseTase2Extension(j);
 
     std::string id;
@@ -130,6 +130,10 @@ void HMIInterface::handleControl(const nlohmann::json::basic_json::value_type& j
 
     Value value(j["value"]);
 
+    ControlFlags flags;
+    flags.with_fast_TS = j.value("with_fast_TS", false);
+    flags.real_time_critical = j.value("real_time_critical", false);
+
     if (!id_to_signalisation_data_.contains(id)) {
         throw std::invalid_argument("No inputs_routing_ defined for " + id + ", control signal will not be send");
     }
@@ -138,12 +142,39 @@ void HMIInterface::handleControl(const nlohmann::json::basic_json::value_type& j
     const std::string& destination = signalisation_data.destination;
     const auto& routing = signalisation_data.route;
     std::string topic = "HMI";
-    double current_time = Orchestrator::get().getCurrentTime();
+    int64_t control_uid = information_flow_model_.nextControlUid();
 
+    if (flags.real_time_critical) {
+        // Bypass the event queue (which may lag behind real time): timestamp from the real-time clock, and let
+        // the IFL compute the control and its acknowledgement from this thread
+        // Return the round-trip time delay and let the caller the responsibility to implement the delay
+        double clock_time = Orchestrator::get().getClockTime();
+        spdlog::debug("HMI interface creating real-time critical control signal: {} : {} at t={}", id, value, clock_time);
+        auto acknowledgement = information_flow_model_.handleRealTimeCriticalControl(
+            ControlSent(id, value, clock_time, destination, routing, topic, tase2_data, control_uid, flags));
+        if (!acknowledgement.has_value()) {
+            return {{"control_uid", control_uid}, {"acknowledgement", nullptr}};
+        }
+        nlohmann::json j_acknowledgement = {
+            {"control_uid", acknowledgement->control_uid},
+            {"id", acknowledgement->id},
+            {"value", acknowledgement->value.to_json()},
+            {"source", destination},
+            {"destination", acknowledgement->destination},
+            {"control_time_sent", acknowledgement->control_time_sent},
+            {"time_sent", acknowledgement->time_sent},
+            {"time_received", acknowledgement->time_received},
+            {"delay", acknowledgement->time_received - acknowledgement->control_time_sent},  // Round trip time delay
+        };
+        return {{"control_uid", control_uid}, {"acknowledgement", std::move(j_acknowledgement)}};
+    }
+
+    double current_time = Orchestrator::get().getCurrentTime();
     spdlog::debug("HMI interface creating control signal: {} : {}", id, value);
     // Direct event emission is not thread-safe, so we go through the main event queue with emit<X>Later instead
     Orchestrator::get().emitLater(
-        ControlSent(id, value, current_time, destination, routing, topic, tase2_data),
+        ControlSent(id, value, current_time, destination, routing, topic, tase2_data, control_uid, flags),
         current_time
     );
+    return {{"control_uid", control_uid}};
 }

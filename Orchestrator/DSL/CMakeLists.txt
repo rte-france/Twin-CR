@@ -88,6 +88,8 @@ target_include_directories(dsl BEFORE PRIVATE
     "${antlr4_runtime_SOURCE_DIR}/runtime/Cpp/runtime/src"
     "${ANTLR4_C3_DIR}"
 )
+# The antlr runtime headers (not SYSTEM, see above) hide overloaded virtual functions
+target_compile_options(dsl PRIVATE -Wno-overloaded-virtual)
 
 if(ORCHESTRATOR_BUILD_TESTS)
     add_subdirectory(tests)
