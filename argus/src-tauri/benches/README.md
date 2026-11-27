@@ -20,7 +20,7 @@ All HTTP client benchmarks are unified under a single entry point: `benches/http
 | `load`      | `benches/http_client/load.rs`      | Concurrency, backpressure, and in-flight cancellation stress using `hdrhistogram`.                       |
 | `sse`       | `benches/http_client/sse.rs`       | High-throughput concurrent Server-Sent Events streaming and inter-event latency.                         |
 | `profile`   | `benches/http_client/profile.rs`   | Real-time memory footprint (RSS) and leak detection over 200,000+ requests.                              |
-| `trace`     | `benches/http_client/trace.rs`     | Async span timeline exporter (Chrome / Perfetto JSON) and Tokio Console server.                          |
+| `trace`     | `benches/http_client/trace.rs`     | Top-level request span exporter (Chrome / Perfetto JSON) and Tokio Console server.                       |
 | `all`       | All of the above                   | Executes all benchmarks sequentially.                                                                    |
 
 ---
@@ -103,15 +103,15 @@ PROFILE_TOTAL=300000 PROFILE_PATH="/large" cargo bench --bench http_client -- pr
 - `PROFILE_TOTAL`: Total requests to dispatch (default: `200000`).
 - `PROFILE_PATH`: Target endpoint on the loopback server (`/large`, `/test`, `/error`, default: `/large`).
 
-#### Async Timeline Spans (Chrome / Perfetto JSON)
+#### Chrome / Perfetto JSON Trace
 
-Export a timeline trace file of async request spans:
+Export a trace file of top-level request spans (`http_request_span`) to visualize request concurrency and end-to-end duration:
 
 ```bash
 TRACE_FILE="trace.json" TRACE_TOTAL=5000 cargo bench --bench http_client -- trace
 ```
 
-Open `trace.json` in [https://ui.perfetto.dev/](https://ui.perfetto.dev/) or `chrome://tracing` to inspect `.await` latency and span timelines.
+Open `trace.json` in [https://ui.perfetto.dev/](https://ui.perfetto.dev/) or `chrome://tracing` to inspect concurrent request timelines.
 
 #### Tokio Console (Live async task monitor)
 
