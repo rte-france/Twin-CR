@@ -47,7 +47,7 @@
 
 - name: Install Nomad, Consul and Vault (Debian)
   ansible.builtin.apt:
-    name:  # Pinned versions (defaults/main.yml)
+    name: # Pinned versions (defaults/main.yml)
       - "nomad={{ nomad_version }}-1"
       - "consul={{ consul_version }}-1"
       - "vault={{ vault_version }}-1"
@@ -68,10 +68,11 @@
 
 - name: Install Nomad, Consul and Vault (RedHat)
   ansible.builtin.dnf:
-    name:  # Pinned versions (defaults/main.yml)
+    name:
       - "nomad-{{ nomad_version }}"
       - "consul-{{ consul_version }}"
-      - "vault-{{ vault_version }}"
+      - "openbao-{{ vault_version }}"
+      - "openbao-vault-compat-{{ vault_version }}"
       - jq
       - curl
     state: present

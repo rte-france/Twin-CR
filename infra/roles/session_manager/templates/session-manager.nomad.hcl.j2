@@ -46,10 +46,8 @@ job "session-manager" {
       ]
 
       check {
-        type     = "script"
-        task     = "session-manager"
-        command  = "bash"
-        args     = ["/home/session-manager/healthcheck.sh"]
+        type     = "http"
+        path     = "/status"
         interval = "5s"
         timeout  = "5s"
       }

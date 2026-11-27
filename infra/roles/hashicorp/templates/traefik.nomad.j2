@@ -117,6 +117,9 @@ EOF
           "--entrypoints.web.http.redirections.entrypoint.to=websecure",
           "--entrypoints.web.http.redirections.entrypoint.scheme=https",
           "--entrypoints.websecure.address=:443",
+          "--entrypoints.websecure.transport.respondingTimeouts.readTimeout=0s",
+          "--entrypoints.websecure.transport.respondingTimeouts.writeTimeout=0s",
+          "--entrypoints.websecure.transport.respondingTimeouts.idleTimeout=300s",
           "--entrypoints.traefik.address=:8080",
           "--entrypoints.lobby-api.address=:8000",
           "--log.level=INFO",
@@ -126,8 +129,8 @@ EOF
         ports = ["http", "https", "admin", "lobby-api"]
       }
       resources {
-        cpu    = 200
-        memory = 256
+        cpu    = 1000
+        memory = 512
       }
     }
   }
