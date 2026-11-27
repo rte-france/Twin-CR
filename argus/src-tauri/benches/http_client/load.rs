@@ -17,7 +17,7 @@ use tokio::sync::Semaphore;
 
 use argus_lib::http_client::utils::http_client::client::{Client, Connected};
 
-use super::common::{setup_client, start_hyper_echo_server};
+use super::common::{next_req_id, setup_client, start_hyper_echo_server};
 
 pub fn run() {
     let rt = tokio::runtime::Builder::new_multi_thread()
@@ -65,7 +65,7 @@ async fn run_async() {
     let start_instant = Instant::now();
     let mut handles = Vec::with_capacity(total_requests);
 
-    for i in 0..total_requests {
+    for _ in 0..total_requests {
         let sem = semaphore.clone();
         let client = client.clone();
         let tx = hist_tx.clone();
@@ -77,7 +77,7 @@ async fn run_async() {
             let scheduled_time = Instant::now();
             let _permit = sem.acquire().await.unwrap();
             let service_start = Instant::now();
-            let req_id = format!("req-{}", i);
+            let req_id = next_req_id("load-req");
 
             let should_cancel = cancel_rate > 0.0 && rand::rng().random_bool(cancel_rate);
 

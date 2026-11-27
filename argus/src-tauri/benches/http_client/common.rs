@@ -8,6 +8,7 @@ co-simulation of power systems.
 
 use std::convert::Infallible;
 use std::net::SocketAddr;
+use std::sync::atomic::{AtomicU64, Ordering};
 
 use bytes::Bytes;
 use http_body_util::{BodyExt, Full};
@@ -20,6 +21,12 @@ use tokio::net::TcpListener;
 use argus_lib::http_client::utils::http_client::actor::run_http_client_actor;
 use argus_lib::http_client::utils::http_client::client::{Client, Connected};
 use argus_lib::http_client::utils::http_client::Disconnected;
+
+static REQ_SEQ: AtomicU64 = AtomicU64::new(0);
+
+pub fn next_req_id(prefix: &str) -> String {
+    format!("{prefix}-{}", REQ_SEQ.fetch_add(1, Ordering::Relaxed))
+}
 
 /// Fast loopback HTTP server with zero serialization overhead
 pub async fn start_hyper_echo_server() -> (String, SocketAddr) {

@@ -13,7 +13,7 @@ use std::time::{Duration, Instant};
 
 use argus_lib::http_client::utils::http_client::client::{Client, Connected};
 
-use super::common::{setup_client, start_hyper_echo_server};
+use super::common::{next_req_id, setup_client, start_hyper_echo_server};
 
 fn get_rss_bytes() -> usize {
     #[cfg(target_os = "macos")]
@@ -80,13 +80,13 @@ async fn run_batch(
 
         handles.push(tokio::spawn(async move {
             loop {
-                let i = match current_idx.fetch_update(Ordering::Relaxed, Ordering::Relaxed, |i| {
+                let _ = match current_idx.fetch_update(Ordering::Relaxed, Ordering::Relaxed, |i| {
                     (i < target_idx).then(|| i + 1)
                 }) {
                     Ok(i) => i,
                     Err(_) => break,
                 };
-                let req_id = format!("req-{}", i);
+                let req_id = next_req_id("profile-req");
                 if let Ok(rx) = client.get(req_id, &path, HashMap::new()).await {
                     if let Ok(resp) = Client::<Connected>::wait_for_response(rx).await {
                         std::hint::black_box(resp.body);

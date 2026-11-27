@@ -19,7 +19,7 @@ use argus_lib::http_client::{
     utils::http_client::client::{Client, Connected},
 };
 
-use super::common::{setup_client, start_hyper_echo_server};
+use super::common::{next_req_id, setup_client, start_hyper_echo_server};
 
 fn bench_http_methods_roundtrip(c: &mut Criterion) {
     let rt = tokio::runtime::Builder::new_multi_thread()
@@ -40,7 +40,7 @@ fn bench_http_methods_roundtrip(c: &mut Criterion) {
     group.bench_function("get", |b| {
         b.to_async(&rt).iter(|| async {
             let rx = client
-                .get(black_box("req-bench-get".into()), "/test", HashMap::new())
+                .get(next_req_id("req-bench-get"), "/test", HashMap::new())
                 .await
                 .expect("send get");
             let resp = Client::<Connected>::wait_for_response(rx)
@@ -53,7 +53,7 @@ fn bench_http_methods_roundtrip(c: &mut Criterion) {
     group.bench_function("delete", |b| {
         b.to_async(&rt).iter(|| async {
             let rx = client
-                .delete(black_box("req-bench-del".into()), "/test", HashMap::new())
+                .delete(next_req_id("req-bench-del"), "/test", HashMap::new())
                 .await
                 .expect("send delete");
             let resp = Client::<Connected>::wait_for_response(rx)
@@ -66,7 +66,7 @@ fn bench_http_methods_roundtrip(c: &mut Criterion) {
     group.bench_function("head", |b| {
         b.to_async(&rt).iter(|| async {
             let rx = client
-                .head(black_box("req-bench-head".into()), "/test", HashMap::new())
+                .head(next_req_id("req-bench-head"), "/test", HashMap::new())
                 .await
                 .expect("send head");
             let resp = Client::<Connected>::wait_for_response(rx)
@@ -79,7 +79,7 @@ fn bench_http_methods_roundtrip(c: &mut Criterion) {
     group.bench_function("options", |b| {
         b.to_async(&rt).iter(|| async {
             let rx = client
-                .options(black_box("req-bench-opt".into()), "/test", HashMap::new())
+                .options(next_req_id("req-bench-opt"), "/test", HashMap::new())
                 .await
                 .expect("send options");
             let resp = Client::<Connected>::wait_for_response(rx)
@@ -92,7 +92,7 @@ fn bench_http_methods_roundtrip(c: &mut Criterion) {
     group.bench_function("trace", |b| {
         b.to_async(&rt).iter(|| async {
             let rx = client
-                .trace(black_box("req-bench-trace".into()), "/test", HashMap::new())
+                .trace(next_req_id("req-bench-trace"), "/test", HashMap::new())
                 .await
                 .expect("send trace");
             let resp = Client::<Connected>::wait_for_response(rx)
@@ -113,7 +113,7 @@ fn bench_http_methods_roundtrip(c: &mut Criterion) {
             async {
                 let rx = client
                     .post(
-                        black_box("req-bench-post".into()),
+                        next_req_id("req-bench-post"),
                         "/test",
                         HashMap::new(),
                         black_box(body),
@@ -136,7 +136,7 @@ fn bench_http_methods_roundtrip(c: &mut Criterion) {
             async {
                 let rx = client
                     .put(
-                        black_box("req-bench-put".into()),
+                        next_req_id("req-bench-put"),
                         "/test",
                         HashMap::new(),
                         black_box(body),
@@ -159,7 +159,7 @@ fn bench_http_methods_roundtrip(c: &mut Criterion) {
             async {
                 let rx = client
                     .patch(
-                        black_box("req-bench-patch".into()),
+                        next_req_id("req-bench-patch"),
                         "/test",
                         HashMap::new(),
                         black_box(body),
@@ -203,7 +203,7 @@ fn bench_http_methods_roundtrip(c: &mut Criterion) {
     group.bench_function("get_e2e_ipc", |b| {
         b.to_async(&rt).iter(|| async {
             let rx = client
-                .get(black_box("req-bench-ipc".into()), "/test", HashMap::new())
+                .get(next_req_id("req-bench-ipc"), "/test", HashMap::new())
                 .await
                 .expect("send get");
             let resp = Client::<Connected>::wait_for_response(rx)
@@ -243,7 +243,7 @@ fn bench_payload_scaling(c: &mut Criterion) {
                 async {
                     let rx = client
                         .post(
-                            black_box("req-bench-scale".into()),
+                            next_req_id("req-bench-scale"),
                             "/echo",
                             HashMap::new(),
                             black_box(data),

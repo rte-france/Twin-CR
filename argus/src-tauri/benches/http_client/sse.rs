@@ -22,7 +22,7 @@ use hyper_util::server::conn::auto::Builder;
 use tokio::net::TcpListener;
 use tokio::sync::mpsc;
 
-use super::common::setup_client;
+use super::common::{next_req_id, setup_client};
 
 async fn start_hyper_sse_server(events_count: usize) -> (String, SocketAddr) {
     let listener = TcpListener::bind("127.0.0.1:0").await.unwrap();
@@ -121,10 +121,10 @@ async fn run_async() {
     let start_instant = Instant::now();
     let mut handles = Vec::with_capacity(streams_count);
 
-    for s in 0..streams_count {
+    for _ in 0..streams_count {
         let client = client.clone();
         let tx = hist_tx.clone();
-        let req_id = format!("sse-stream-{}", s);
+        let req_id = next_req_id("sse-stream");
 
         handles.push(tokio::spawn(async move {
             let mut event_rx = match client.sse(req_id.clone(), "/events", HashMap::new()).await {
