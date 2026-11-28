@@ -18,6 +18,7 @@ import org.TwinCR.argus_backends.common.core.bridge.SseNatsBridge;
 import org.TwinCR.argus_backends.common.core.config.ConfigCommon;
 import org.TwinCR.argus_backends.common.datamodel.Value;
 import org.TwinCR.argus_backends.common.gridmodel.GridModel;
+import org.TwinCR.argus_backends.common.gridmodel.LatestValues;
 import org.TwinCR.argus_backends.common.telemetry.TelemetryConsumerCommon;
 import org.TwinCR.argus_backends.gm.gridmodel.GmMapping;
 import org.TwinCR.argus_backends.gm.gridmodel.GmOutput;
@@ -54,6 +55,13 @@ public class TelemetryConsumer extends TelemetryConsumerCommon {
         double time = timeNode.asDouble();
         // Keeps the most recent time: the value is the latest one if its time is the one kept
         return lastTimeById.merge(id, time, Math::max) == time;
+    }
+
+    private static void recordLatestValue(String id, JsonNode node) {
+        JsonNode rawValue = node.get("value");
+        if (rawValue != null && (rawValue.isNumber() || rawValue.isBoolean())) {
+            LatestValues.put(id, rawValue.isBoolean() ? (rawValue.asBoolean() ? 1 : 0) : rawValue.asDouble());
+        }
     }
 
     public void handleMsg(JsonNode natsNode, GmOutput gmOutput) {
@@ -110,6 +118,7 @@ public class TelemetryConsumer extends TelemetryConsumerCommon {
             if (!isLatest(id, node)) {
                 return;
             }
+            recordLatestValue(id, node);
             GmOutput gmOutput = GmMapping.id_2_gmOutput.get(id);
             if (gmOutput != null) {
                 handleMsg(node, gmOutput);
@@ -187,6 +196,7 @@ public class TelemetryConsumer extends TelemetryConsumerCommon {
                     continue;
                 }
                 Value value = mapper.treeToValue(item.get("value"), Value.class);
+                recordLatestValue(id, item);
 
                 GmOutput gmOutput = GmMapping.id_2_gmOutput.get(id);
                 if (gmOutput != null) {
