@@ -6,7 +6,7 @@
 # co-simulation of power systems.
 #
 
-FROM --platform=linux/amd64 devraymondsh/ubuntu-rust:jammy-latest AS wbuilder
+FROM --platform=linux/amd64 devraymondsh/ubuntu-rust:noble-latest AS wbuilder
 
 # Set environment variables to avoid interactive prompts during package installation
 ENV DEBIAN_FRONTEND=noninteractive
@@ -55,14 +55,17 @@ RUN rustup target add x86_64-pc-windows-msvc \
 RUN (rm /argus/bundlew.log.* || /bin/true) \
     && export LOG=bundlew.log.$(date +%Y%m%d.%H%M) \
     && (rm -r src-tauri/target || /bin/true) \
-    && (pnpm tauri build --no-bundle --runner cargo-xwin --target x86_64-pc-windows-msvc 2>&1 | tee -a $LOG) \
-    && (pnpm tauri build -d --no-bundle --runner cargo-xwin --target x86_64-pc-windows-msvc 2>&1 | tee -a $LOG) \
+    && (pnpm tauri build -d --runner cargo-xwin --target x86_64-pc-windows-msvc --bundles nsis 2>&1 | tee -a $LOG) \
+    && (pnpm tauri build --runner cargo-xwin --target x86_64-pc-windows-msvc --bundles nsis 2>&1 | tee -a $LOG) \
     && zstd --rm $LOG
+#     && (pnpm tauri build --no-bundle --runner cargo-xwin --target x86_64-pc-windows-msvc 2>&1 | tee -a $LOG) \
 
 FROM ubuntu:jammy
 
 WORKDIR /app
 
 COPY --from=wbuilder --chmod=555 /argus/src-tauri/target/x86_64-pc-windows-msvc/debug/argus.exe /app/argus-debug.exe
+COPY --from=wbuilder --chmod=555 /argus/src-tauri/target/x86_64-pc-windows-msvc/debug/bundle/nsis/argus_*_x64-setup.exe /app//argus_x64-debug-setup.exe
 COPY --from=wbuilder --chmod=555 /argus/src-tauri/target/x86_64-pc-windows-msvc/release/argus.exe /app/argus-release.exe
+COPY --from=wbuilder --chmod=555 /argus/src-tauri/target/x86_64-pc-windows-msvc/release/bundle/nsis/argus_*_x64-setup.exe /app//argus_x64-release-setup.exe
 COPY --from=wbuilder --chmod=555 /argus/bundlew.log.* /app/
